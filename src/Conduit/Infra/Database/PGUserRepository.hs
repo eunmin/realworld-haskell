@@ -1,18 +1,24 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PolyKinds #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Conduit.Infra.Database.PGUserRepository where
 
 import Conduit.Domain.User.Entity (Email (..), HashedPassword (..), User (..), UserName (..))
 import qualified Conduit.Infra.Component.Database as Database
-import Conduit.Util.BoundedText (BoundedText (..), mkBoundedText)
+import Conduit.Util.BoundedText (BoundedText (..))
 import Control.Error (headMay)
 import Data.Has (Has (getter))
 import Data.Pool (withResource)
 import Data.ULID (ULID)
 import Database.PostgreSQL.Simple (execute, query)
 import Database.PostgreSQL.Simple.FromField
+  ( FromField (..),
+    ResultError (ConversionFailed, UnexpectedNull),
+    returnError,
+  )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+-- import Database.PostgreSQL.Simple.Newtypes
 import Database.PostgreSQL.Simple.ToField (Action (Escape), ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
@@ -30,14 +36,13 @@ instance ToRow User where
 instance ToField ULID where
   toField = Escape . show
 
-instance ToField UserName where
-  toField (UserName (BoundedText userName)) = Escape $ encodeUtf8 userName
+deriving instance ToField (BoundedText min max)
 
-instance ToField Email where
-  toField (Email email) = Escape $ encodeUtf8 email
+deriving instance ToField UserName
 
-instance ToField HashedPassword where
-  toField (HashedPassword hashedPassword) = Escape $ encodeUtf8 hashedPassword
+deriving instance ToField Email
+
+deriving instance ToField HashedPassword
 
 instance FromRow User where
   fromRow = User <$> field <*> field <*> field <*> field <*> field <*> field
@@ -51,25 +56,13 @@ instance FromField ULID where
           Nothing -> returnError ConversionFailed f dat
           Just x -> pure x
 
-instance FromField UserName where
-  fromField f mbs =
-    case decodeUtf8 <$> mbs of
-      Nothing -> returnError UnexpectedNull f ""
-      Just dat -> case mkBoundedText dat of
-        Nothing -> returnError ConversionFailed f ""
-        Just t -> pure $ UserName t
+deriving instance FromField (BoundedText min max)
 
-instance FromField Email where
-  fromField f mbs =
-    case decodeUtf8 <$> mbs of
-      Nothing -> returnError UnexpectedNull f ""
-      Just dat -> pure $ Email dat
+deriving instance FromField UserName
 
-instance FromField HashedPassword where
-  fromField f mbs =
-    case decodeUtf8 <$> mbs of
-      Nothing -> returnError UnexpectedNull f ""
-      Just dat -> pure $ HashedPassword dat
+deriving instance FromField Email
+
+deriving instance FromField HashedPassword
 
 type Database r m = (Has Database.State r, MonadIO m, MonadReader r m)
 
@@ -96,6 +89,7 @@ findByUsername (UserName (BoundedText userName)) = do
   (Database.State pool) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     results <- query conn "SELECT * FROM users WHERE username = ?" (Only userName)
+    liftIO $ print results
     pure $ headMay results
 
 findByEmail :: (Database r m) => Email -> m (Maybe User)
