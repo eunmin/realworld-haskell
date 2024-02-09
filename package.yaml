@@ -1,4 +1,4 @@
-name:                haskell-conduit
+name:                conduit
 version:             0.1.0.0
 github:              "githubuser/haskell-conduit"
 license:             BSD-3-Clause
@@ -21,6 +21,25 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- relude
+- scotty
+- safe
+- safe-exceptions
+- http-types
+- wai
+- wai-extra
+- postgresql-simple
+- postgresql-migration
+- resource-pool
+- time
+- ulid
+- pcre-heavy
+- bcrypt
+- errors
+- aeson
+- aeson-casing
+- jwt
+- data-has
 
 ghc-options:
 - -Wall
@@ -33,11 +52,28 @@ ghc-options:
 - -Wpartial-fields
 - -Wredundant-constraints
 
+default-extensions:
+- NoImplicitPrelude
+- ConstraintKinds
+- DeriveGeneric
+- DerivingStrategies
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- OverloadedStrings
+- RecordWildCards
+- ScopedTypeVariables
+- StandaloneDeriving
+- TupleSections
+- TypeApplications
+- ViewPatterns
+
 library:
   source-dirs: src
 
 executables:
-  haskell-conduit-exe:
+  conduit-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -45,10 +81,20 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - haskell-conduit
+    - conduit
+
+  dev:
+    main:                Main.hs
+    source-dirs:         dev
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - conduit
 
 tests:
-  haskell-conduit-test:
+  conduit-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -56,4 +102,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - haskell-conduit
+    - conduit

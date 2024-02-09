@@ -1,4 +1,4 @@
-# Changelog for `haskell-conduit`
+# Changelog for `conduit`
 
 All notable changes to this project will be documented in this file.
 

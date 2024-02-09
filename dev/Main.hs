@@ -4,4 +4,4 @@ import qualified Conduit.App as App
 import Relude
 
 main :: IO ()
-main = App.main
+main = App.mainDev

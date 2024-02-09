@@ -1,0 +1,239 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           conduit
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/haskell-conduit#readme>
+homepage:       https://github.com/githubuser/haskell-conduit#readme
+bug-reports:    https://github.com/githubuser/haskell-conduit/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2024 Author name here
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/haskell-conduit
+
+library
+  exposed-modules:
+      Conduit.App
+      Conduit.Domain.User.Entity
+      Conduit.Domain.User.Error
+      Conduit.Domain.User.Gateway.Token
+      Conduit.Domain.User.Repo
+      Conduit.Domain.User.Service.Password
+      Conduit.Domain.User.UseCase
+      Conduit.Infra.Component.Database
+      Conduit.Infra.Component.HttpServer
+      Conduit.Infra.Database.PGUserRepository
+      Conduit.Infra.Gateway.JwtToken
+      Conduit.Infra.Json
+      Conduit.Infra.Service.BcryptPasswordService
+      Conduit.Infra.System
+      Conduit.Infra.Web.Controller.User
+      Conduit.Infra.Web.Routes
+      Conduit.Util.BoundedText
+      Conduit.Util.Env
+      Conduit.Util.Maybe
+  other-modules:
+      Paths_conduit
+  autogen-modules:
+      Paths_conduit
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , data-has
+    , errors
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+executable conduit-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_conduit
+  autogen-modules:
+      Paths_conduit
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , conduit
+    , data-has
+    , errors
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+executable dev
+  main-is: Main.hs
+  other-modules:
+      Paths_conduit
+  autogen-modules:
+      Paths_conduit
+  hs-source-dirs:
+      dev
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , conduit
+    , data-has
+    , errors
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+test-suite conduit-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_conduit
+  autogen-modules:
+      Paths_conduit
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , conduit
+    , data-has
+    , errors
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
