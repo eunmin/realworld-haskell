@@ -18,7 +18,6 @@ import Database.PostgreSQL.Simple.FromField
     returnError,
   )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
--- import Database.PostgreSQL.Simple.Newtypes
 import Database.PostgreSQL.Simple.ToField (Action (Escape), ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
