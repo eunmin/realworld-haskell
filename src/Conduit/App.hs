@@ -1,28 +1,36 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Conduit.App
   ( main,
     mainDev,
   )
 where
 
+import Conduit.Domain.Repo (Tx (..))
 import Conduit.Domain.User.Gateway.Token (TokenGateway (..))
 import Conduit.Domain.User.Repo (UserRepository (..))
 import Conduit.Domain.User.Service.Password (PasswordService (..))
 import qualified Conduit.Infra.Component.HttpServer as HttpServerConfig
 import qualified Conduit.Infra.Database.PGUserRepository as PGUserRepository
+import qualified Conduit.Infra.Database.Tx as Tx
 import qualified Conduit.Infra.Gateway.JwtToken as JwtTokenGateway
 import qualified Conduit.Infra.Service.BcryptPasswordService as BcryptPasswordService
 import qualified Conduit.Infra.System as System
 import Conduit.Infra.Web.Routes (routes)
-import Relude hiding (state)
+import Control.Monad.Catch
+import Relude
 import Web.Scotty.Trans
 
-newtype App a = App {unApp :: ReaderT System.State IO a}
-  deriving
+newtype App a = App {unApp :: StateT System.State IO a}
+  deriving newtype
     ( Applicative,
       Functor,
       Monad,
       MonadIO,
-      MonadReader System.State
+      MonadCatch,
+      MonadThrow,
+      MonadState System.State,
+      MonadMask
     )
 
 instance UserRepository App where
@@ -38,11 +46,14 @@ instance TokenGateway App where
 instance PasswordService App where
   hashPassword = BcryptPasswordService.hashPassword
 
+instance Tx App where
+  withTx = Tx.withTx
+
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do
   let port = config & System.configHttpServer & HttpServerConfig.configPort
-  System.withState config $ \state -> do
-    scottyT port (\app -> runReaderT (unApp app) state) routes
+  System.withState config $ \state' -> do
+    scottyT port (\app -> fst <$> runStateT (unApp app) state') routes
 
 main :: IO ()
 main = do

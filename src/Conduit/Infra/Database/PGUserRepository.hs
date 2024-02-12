@@ -11,7 +11,7 @@ import Control.Error (headMay)
 import Data.Has (Has (getter))
 import Data.Pool (withResource)
 import Data.ULID (ULID)
-import Database.PostgreSQL.Simple (execute, query)
+import Database.PostgreSQL.Simple (Connection, execute, query)
 import Database.PostgreSQL.Simple.FromField
   ( FromField (..),
     ResultError (ConversionFailed, UnexpectedNull),
@@ -63,37 +63,47 @@ deriving instance FromField Email
 
 deriving instance FromField HashedPassword
 
-type Database r m = (Has Database.State r, MonadIO m, MonadReader r m)
+type Database r m = (Has Database.State r, MonadIO m, MonadState r m)
 
 create :: (Database r m) => User -> m ()
 create user = do
-  (Database.State pool) <- asks getter
-  void $ liftIO $ withResource pool $ \conn -> do
-    void
-      $ execute
-        conn
-        "INSERT INTO users (id, username, email, hashed_password, created_at)\
-        \ VALUES (?, ?, ?, ?, ?)"
-        user
+  (Database.State pool conn) <- gets getter
+  case conn of
+    Nothing -> liftIO $ withResource pool runQuery
+    Just conn' -> runQuery conn'
+  where
+    runQuery conn =
+      liftIO
+        $ void
+        $ execute
+          conn
+          "INSERT INTO users (id, username, email, hashed_password, created_at)\
+          \ VALUES (?, ?, ?, ?, ?)"
+          user
 
 findById :: (Database r m) => ULID -> m (Maybe User)
 findById userId = do
-  (Database.State pool) <- asks getter
-  liftIO $ withResource pool $ \conn -> do
-    results <- query conn "SELECT * FROM users WHERE id = ?" (Only userId)
-    pure $ headMay results
+  (Database.State pool conn) <- gets getter
+  case conn of
+    Nothing -> liftIO $ withResource pool runQuery
+    Just conn' -> runQuery conn'
+  where
+    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE id = ?" (Only userId)
 
 findByUsername :: (Database r m) => UserName -> m (Maybe User)
 findByUsername (UserName (BoundedText userName)) = do
-  (Database.State pool) <- asks getter
-  liftIO $ withResource pool $ \conn -> do
-    results <- query conn "SELECT * FROM users WHERE username = ?" (Only userName)
-    liftIO $ print results
-    pure $ headMay results
+  (Database.State pool conn) <- gets getter
+  case conn of
+    Nothing -> liftIO $ withResource pool runQuery
+    Just conn' -> runQuery conn'
+  where
+    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE username = ?" (Only userName)
 
 findByEmail :: (Database r m) => Email -> m (Maybe User)
 findByEmail (Email email) = do
-  (Database.State pool) <- asks getter
-  liftIO $ withResource pool $ \conn -> do
-    results <- query conn "SELECT * FROM users WHERE email = ?" (Only email)
-    pure $ headMay results
+  (Database.State pool conn) <- gets getter
+  case conn of
+    Nothing -> liftIO $ withResource pool runQuery
+    Just conn' -> runQuery conn'
+  where
+    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE email = ?" (Only email)

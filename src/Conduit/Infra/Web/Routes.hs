@@ -2,19 +2,19 @@
 
 module Conduit.Infra.Web.Routes where
 
+import Conduit.Domain.Repo (Tx)
 import Conduit.Domain.User.Gateway.Token (TokenGateway)
 import Conduit.Domain.User.Repo (UserRepository)
 import Conduit.Domain.User.Service.Password (PasswordService)
-import qualified Conduit.Infra.System as System
 import qualified Conduit.Infra.Web.Controller.User as User
 import Relude
 import Web.Scotty.Trans
 
-routes :: (MonadIO m, UserRepository m, TokenGateway m, PasswordService m) => ScottyT LText m ()
+routes :: (MonadIO m, Tx m, UserRepository m, TokenGateway m, PasswordService m) => ScottyT LText m ()
 routes = do
   -- middleware logStdout
 
-  defaultHandler $ \e -> do
+  defaultHandler $ \_ -> do
     html "서버 에러 입니다"
 
   post "/api/users" User.register

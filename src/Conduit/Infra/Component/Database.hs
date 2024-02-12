@@ -1,15 +1,11 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Conduit.Infra.Component.Database where
 
 import Conduit.Util.Env (envRead)
 import Control.Exception (bracket)
 import Control.Exception.Safe (throwString)
 import Data.Pool
-  ( Pool,
-    defaultPoolConfig,
-    destroyAllResources,
-    newPool,
-    withResource,
-  )
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple
   ( ConnectInfo
@@ -45,7 +41,8 @@ data Config = Config
   deriving (Show, Eq)
 
 data State = State
-  { stateConnectionPool :: Pool Connection
+  { stateConnectionPool :: Pool Connection,
+    stateConnection :: Maybe Connection
   }
 
 withPool :: Config -> (Pool Connection -> IO a) -> IO a
@@ -77,7 +74,7 @@ withPool
 withState :: Config -> (State -> IO ()) -> IO ()
 withState config action =
   withPool config $ \pool -> do
-    let state = State pool
+    let state = State pool Nothing
     migrate state
     action state
 
@@ -93,7 +90,7 @@ configFromEnv =
     <*> envRead "DB_POOL_IDLE_TIMEOUT_SEC"
 
 migrate :: State -> IO ()
-migrate (State pool) = do
+migrate (State pool _) = do
   withResource pool $ \conn -> do
     result <- runMigrations conn defaultOptions cmds
     case result of

@@ -20,9 +20,9 @@ signJWT claims secret =
   where
     claimSet = mempty {unregisteredClaims = ClaimsMap claims}
 
-generate :: (Has Text r, MonadReader r m) => ULID -> m Token
+generate :: (Has Text r, MonadState r m) => ULID -> m Token
 generate userId = do
-  secret <- asks getter
+  secret <- gets getter
   pure $ Token $ signJWT (fromList [("userId", JSON.String $ show userId)]) secret
 
 verify :: Token -> m (Maybe ULID)

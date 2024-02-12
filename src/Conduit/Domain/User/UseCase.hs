@@ -1,5 +1,6 @@
 module Conduit.Domain.User.UseCase where
 
+import Conduit.Domain.Repo (Tx (withTx))
 import Conduit.Domain.User.Entity
 import Conduit.Domain.User.Error
 import Conduit.Domain.User.Gateway.Token (TokenGateway)
@@ -15,12 +16,13 @@ import Data.ULID (getULID)
 import Relude
 
 register ::
-  (MonadIO m, UserRepository m, TokenGateway m, PasswordService m) =>
+  (MonadIO m, UserRepository m, TokenGateway m, PasswordService m, Tx m) =>
   Text ->
   Text ->
   Text ->
   m (Either UserError AuthorizedUser)
-register userName email password = runExceptT $ do
+register userName email password = withTx $ runExceptT $ do
+  -- error "Not implemented"
   userName' <- hoistEither $ mkUserName userName
   email' <- hoistEither $ mkEmail email
   (justToNothing <$> UserRepo.findByUsername userName') !? UserAlreadyExists
