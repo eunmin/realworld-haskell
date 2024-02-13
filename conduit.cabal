@@ -44,8 +44,10 @@ library
       Conduit.Infra.Web.Controller.User
       Conduit.Infra.Web.Routes
       Conduit.Util.BoundedText
+      Conduit.Util.Database
       Conduit.Util.Env
       Conduit.Util.Maybe
+      Conduit.Util.Pool
   other-modules:
       Paths_conduit
   autogen-modules:

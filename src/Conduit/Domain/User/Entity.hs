@@ -95,3 +95,18 @@ mkPassword password =
 
 newtype HashedPassword = HashedPassword {unHashedPassword :: Text}
   deriving (Show, Eq, Generic)
+
+-- RegisterCommand
+data RegisterCommand = RegisterCommand
+  { registerCommandUserName :: UserName,
+    registerCommandEmail :: Email,
+    registerCommandPassword :: Password
+  }
+  deriving (Show, Eq, Generic)
+
+mkRegisterCommand :: Text -> Text -> Text -> Either UserError RegisterCommand
+mkRegisterCommand userName email password = do
+  userName' <- mkUserName userName
+  email' <- mkEmail email
+  password' <- mkPassword password
+  pure $ RegisterCommand userName' email' password'

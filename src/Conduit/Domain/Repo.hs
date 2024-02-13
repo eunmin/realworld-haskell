@@ -1,4 +1,6 @@
 module Conduit.Domain.Repo where
 
+import Relude
+
 class Tx m where
-  withTx :: m a -> m a
+  withTx :: ExceptT e m a -> ExceptT e m a

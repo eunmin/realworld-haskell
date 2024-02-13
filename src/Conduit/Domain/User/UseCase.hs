@@ -17,21 +17,17 @@ import Relude
 
 register ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordService m, Tx m) =>
-  Text ->
-  Text ->
-  Text ->
+  RegisterCommand ->
   m (Either UserError AuthorizedUser)
-register userName email password = withTx $ runExceptT $ do
-  -- error "Not implemented"
-  userName' <- hoistEither $ mkUserName userName
-  email' <- hoistEither $ mkEmail email
-  (justToNothing <$> UserRepo.findByUsername userName') !? UserAlreadyExists
-  (justToNothing <$> UserRepo.findByEmail email') !? UserAlreadyExists
-  password' <- hoistEither $ mkPassword password
-  hashedPassword <- PasswordService.hashPassword password' !? PasswordInvalid
+register (RegisterCommand userName email password) = runExceptT $ do
   userId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
-  user <- hoistEither $ mkUser userId userName' email' hashedPassword createdAt
-  lift $ UserRepo.create user
+  user <- withTx $ do
+    (justToNothing <$> UserRepo.findByUsername userName) !? UserAlreadyExists
+    (justToNothing <$> UserRepo.findByEmail email) !? UserAlreadyExists
+    hashedPassword <- PasswordService.hashPassword password !? PasswordInvalid
+    user <- hoistEither $ mkUser userId userName email hashedPassword createdAt
+    lift $ UserRepo.create user
+    pure user
   token <- lift $ TokenGateway.generate userId
   pure $ mkAuthorizedUser user token
