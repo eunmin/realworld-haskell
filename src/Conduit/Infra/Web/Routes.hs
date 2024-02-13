@@ -17,7 +17,9 @@ routes = do
   defaultHandler $ \_ -> do
     html "서버 에러 입니다"
 
-  post "/api/users" User.register
+  post "/api/users/login" User.authentication
+
+  post "/api/users" User.registration
 
   -- get (regex "^/hello/([0-9]+)$") $ do
   --   (Database.State pool, _) <- ask

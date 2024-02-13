@@ -5,3 +5,4 @@ import Relude
 
 class PasswordService m where
   hashPassword :: Password -> m (Maybe HashedPassword)
+  isValidPassword :: HashedPassword -> Password -> m Bool

@@ -45,6 +45,7 @@ instance TokenGateway App where
 
 instance PasswordService App where
   hashPassword = BcryptPasswordService.hashPassword
+  isValidPassword = BcryptPasswordService.isValidPassword
 
 instance Tx App where
   withTx = Repo.withTx
