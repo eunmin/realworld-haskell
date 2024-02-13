@@ -36,7 +36,7 @@ library
       Conduit.Infra.Component.Database
       Conduit.Infra.Component.HttpServer
       Conduit.Infra.Database.PGUserRepository
-      Conduit.Infra.Database.Tx
+      Conduit.Infra.Database.Repo
       Conduit.Infra.Gateway.JwtToken
       Conduit.Infra.Json
       Conduit.Infra.Service.BcryptPasswordService

@@ -12,7 +12,7 @@ import Conduit.Domain.User.Repo (UserRepository (..))
 import Conduit.Domain.User.Service.Password (PasswordService (..))
 import qualified Conduit.Infra.Component.HttpServer as HttpServerConfig
 import qualified Conduit.Infra.Database.PGUserRepository as PGUserRepository
-import qualified Conduit.Infra.Database.Tx as Tx
+import qualified Conduit.Infra.Database.Repo as Repo
 import qualified Conduit.Infra.Gateway.JwtToken as JwtTokenGateway
 import qualified Conduit.Infra.Service.BcryptPasswordService as BcryptPasswordService
 import qualified Conduit.Infra.System as System
@@ -47,7 +47,7 @@ instance PasswordService App where
   hashPassword = BcryptPasswordService.hashPassword
 
 instance Tx App where
-  withTx = Tx.withTx
+  withTx = Repo.withTx
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do

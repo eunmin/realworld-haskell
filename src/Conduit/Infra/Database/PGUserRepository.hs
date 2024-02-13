@@ -6,10 +6,14 @@ module Conduit.Infra.Database.PGUserRepository where
 
 import Conduit.Domain.User.Entity (Email (..), HashedPassword (..), User (..), UserName (..))
 import qualified Conduit.Infra.Component.Database as Database
+-- import Data.Pool (withResource)
+
+import Conduit.Infra.Database.Repo (withConnection)
 import Conduit.Util.BoundedText (BoundedText (..))
+import Conduit.Util.Pool (withResource)
 import Control.Error (headMay)
+import Control.Monad.Catch
 import Data.Has (Has (getter))
-import Data.Pool (withResource)
 import Data.ULID (ULID)
 import Database.PostgreSQL.Simple (Connection, execute, query)
 import Database.PostgreSQL.Simple.FromField
@@ -63,47 +67,30 @@ deriving instance FromField Email
 
 deriving instance FromField HashedPassword
 
-type Database r m = (Has Database.State r, MonadIO m, MonadState r m)
+type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m)
 
 create :: (Database r m) => User -> m ()
 create user = do
-  (Database.State pool conn) <- gets getter
-  case conn of
-    Nothing -> liftIO $ withResource pool runQuery
-    Just conn' -> runQuery conn'
-  where
-    runQuery conn =
-      liftIO
-        $ void
-        $ execute
-          conn
-          "INSERT INTO users (id, username, email, hashed_password, created_at)\
-          \ VALUES (?, ?, ?, ?, ?)"
-          user
+  withConnection $ \conn ->
+    liftIO
+      $ void
+      $ execute
+        conn
+        "INSERT INTO users (id, username, email, hashed_password, created_at)\
+        \ VALUES (?, ?, ?, ?, ?)"
+        user
 
 findById :: (Database r m) => ULID -> m (Maybe User)
 findById userId = do
-  (Database.State pool conn) <- gets getter
-  case conn of
-    Nothing -> liftIO $ withResource pool runQuery
-    Just conn' -> runQuery conn'
-  where
-    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE id = ?" (Only userId)
+  withConnection $ \conn ->
+    liftIO $ headMay <$> query conn "SELECT * FROM users WHERE id = ?" (Only userId)
 
 findByUsername :: (Database r m) => UserName -> m (Maybe User)
 findByUsername (UserName (BoundedText userName)) = do
-  (Database.State pool conn) <- gets getter
-  case conn of
-    Nothing -> liftIO $ withResource pool runQuery
-    Just conn' -> runQuery conn'
-  where
-    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE username = ?" (Only userName)
+  withConnection $ \conn ->
+    liftIO $ headMay <$> query conn "SELECT * FROM users WHERE username = ?" (Only userName)
 
 findByEmail :: (Database r m) => Email -> m (Maybe User)
 findByEmail (Email email) = do
-  (Database.State pool conn) <- gets getter
-  case conn of
-    Nothing -> liftIO $ withResource pool runQuery
-    Just conn' -> runQuery conn'
-  where
-    runQuery conn = liftIO $ headMay <$> query conn "SELECT * FROM users WHERE email = ?" (Only email)
+  withConnection $ \conn ->
+    liftIO $ headMay <$> query conn "SELECT * FROM users WHERE email = ?" (Only email)
