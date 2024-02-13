@@ -42,6 +42,7 @@ library
       Conduit.Infra.Service.BcryptPasswordService
       Conduit.Infra.System
       Conduit.Infra.Web.Controller.User
+      Conduit.Infra.Web.Error
       Conduit.Infra.Web.Routes
       Conduit.Util.BoundedText
       Conduit.Util.Database
