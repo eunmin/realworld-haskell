@@ -5,10 +5,13 @@ import Conduit.Domain.User.Entity
   ( AuthenticationCommand (..),
     AuthorizedUser,
     RegistrationCommand (..),
+    Token,
     User (userHashedPassword, userId),
   )
 import qualified Conduit.Domain.User.Entity as User
 import Conduit.Domain.User.Error
+  ( UserError (..),
+  )
 import Conduit.Domain.User.Gateway.Token (TokenGateway)
 import qualified Conduit.Domain.User.Gateway.Token as TokenGateway
 import Conduit.Domain.User.Repo (UserRepository)
@@ -48,4 +51,13 @@ authentication (AuthenticationCommand email password) = runExceptT $ do
   whenM (lift $ PasswordService.isValidPassword (userHashedPassword user) password)
     $ throwE PasswordInvalid
   token <- lift $ TokenGateway.generate (userId user)
+  pure $ User.mkAuthorizedUser user token
+
+getCurrentUser ::
+  (MonadIO m, UserRepository m, TokenGateway m) =>
+  Token ->
+  m (Either UserError AuthorizedUser)
+getCurrentUser token = runExceptT $ do
+  userId <- TokenGateway.verify token !? TokenInvalid
+  user <- UserRepo.findById userId !? UserNotFound
   pure $ User.mkAuthorizedUser user token

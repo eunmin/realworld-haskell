@@ -7,33 +7,37 @@ import Conduit.Domain.User.Gateway.Token (TokenGateway)
 import Conduit.Domain.User.Repo (UserRepository)
 import Conduit.Domain.User.Service.Password (PasswordService)
 import qualified Conduit.Infra.Web.Controller.User as User
-import Relude
+import Conduit.Infra.Web.ErrorResponse
+  ( ErrorResponse (ErrorResponse),
+    raiseNotFound,
+  )
+import Network.Wai.Middleware.RequestLogger (logStdout)
+import Relude hiding (get)
 import Web.Scotty.Trans
+  ( ScottyT,
+    defaultHandler,
+    get,
+    json,
+    middleware,
+    notFound,
+    post,
+    status,
+  )
 
-routes :: (MonadIO m, Tx m, UserRepository m, TokenGateway m, PasswordService m) => ScottyT LText m ()
+routes ::
+  (MonadIO m, Tx m, UserRepository m, TokenGateway m, PasswordService m) =>
+  ScottyT ErrorResponse m ()
 routes = do
-  -- middleware logStdout
+  middleware logStdout
 
-  defaultHandler $ \_ -> do
-    html "서버 에러 입니다"
+  defaultHandler $ \(ErrorResponse status' errors) -> do
+    status status'
+    json errors
 
   post "/api/users/login" User.authentication
 
   post "/api/users" User.registration
 
-  -- get (regex "^/hello/([0-9]+)$") $ do
-  --   (Database.State pool, _) <- ask
-  --   -- affected <-
-  --   --   liftIO
-  --   --     $ execute
-  --   --       conn
-  --   --       "insert into books (title, author, created_at) values (?, ?, now())"
-  --   --     $ NewBookParams "호랑이를 덫에 가두면" "태캘러"
-  --   -- results :: [Only Text] <- liftIO $ query conn "select author from books" ()
-  --   let bookId :: Int = 1
-  --   books :: [Book] <- liftIO $ withResource pool $ \conn -> do
-  --     query conn "select * from books where id = ?" (Only bookId)
-  --   -- (a : b : _) :: [Int] <- pure [1, 2, 3]
-  --   html $ show books
+  get "/api/user" User.getCurrentUser
 
-  notFound $ html "<h1>페이지를 찾을 수 없습니다.</h1>"
+  notFound $ raiseNotFound "Not found"

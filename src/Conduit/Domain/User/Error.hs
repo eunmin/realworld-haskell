@@ -8,4 +8,5 @@ data UserError
   | PasswordInvalid
   | UserNotFound
   | UserAlreadyExists
+  | TokenInvalid
   deriving (Show, Eq)

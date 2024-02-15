@@ -10,12 +10,11 @@ import qualified Conduit.Infra.Component.Database as Database
 
 import Conduit.Infra.Database.Repo (withConnection)
 import Conduit.Util.BoundedText (BoundedText (..))
-import Conduit.Util.Pool (withResource)
 import Control.Error (headMay)
 import Control.Monad.Catch
-import Data.Has (Has (getter))
+import Data.Has (Has)
 import Data.ULID (ULID)
-import Database.PostgreSQL.Simple (Connection, execute, query)
+import Database.PostgreSQL.Simple (execute, query)
 import Database.PostgreSQL.Simple.FromField
   ( FromField (..),
     ResultError (ConversionFailed, UnexpectedNull),
