@@ -1,0 +1,249 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           realworld-haskell
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/eunmin/realworld-haskell#readme>
+homepage:       https://github.com/eunmin/realworld-haskell#readme
+bug-reports:    https://github.com/eunmin/realworld-haskell/issues
+author:         Eunmin Kim
+maintainer:     telepopsound@gmail.com
+copyright:      2024 Eunmin Kim
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/eunmin/realworld-haskell
+
+library
+  exposed-modules:
+      RealWorld.App
+      RealWorld.Domain.Repo
+      RealWorld.Domain.User.Entity
+      RealWorld.Domain.User.Error
+      RealWorld.Domain.User.Gateway.Token
+      RealWorld.Domain.User.Repo
+      RealWorld.Domain.User.Service.Password
+      RealWorld.Domain.User.UseCase
+      RealWorld.Infra.Component.Database
+      RealWorld.Infra.Component.HttpServer
+      RealWorld.Infra.Database.PGUserRepository
+      RealWorld.Infra.Database.Repo
+      RealWorld.Infra.Gateway.JwtToken
+      RealWorld.Infra.Json
+      RealWorld.Infra.Service.BcryptPasswordService
+      RealWorld.Infra.System
+      RealWorld.Infra.Web.Controller.User
+      RealWorld.Infra.Web.ErrorResponse
+      RealWorld.Infra.Web.Routes
+      RealWorld.Util.BoundedText
+      RealWorld.Util.Controller
+      RealWorld.Util.Database
+      RealWorld.Util.Env
+      RealWorld.Util.Maybe
+      RealWorld.Util.Pool
+  other-modules:
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , data-has
+    , errors
+    , exceptions
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+executable dev
+  main-is: Main.hs
+  other-modules:
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      dev
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , data-has
+    , errors
+    , exceptions
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , realworld-haskell
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+executable realworld-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , data-has
+    , errors
+    , exceptions
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , realworld-haskell
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010
+
+test-suite realworld-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , aeson-casing
+    , base >=4.7 && <5
+    , bcrypt
+    , data-has
+    , errors
+    , exceptions
+    , http-types
+    , jwt
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , realworld-haskell
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , wai
+    , wai-extra
+  default-language: Haskell2010

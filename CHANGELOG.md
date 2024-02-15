@@ -1,4 +1,4 @@
-# Changelog for `conduit`
+# Changelog for `RealWorld`
 
 All notable changes to this project will be documented in this file.
 
