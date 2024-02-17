@@ -5,5 +5,5 @@ import RealWorld.Domain.User.Entity (Token)
 import Relude
 
 class TokenGateway m where
-  generate :: ULID -> m Token
+  generate :: ULID -> Int -> m Token
   verify :: Token -> m (Maybe ULID)

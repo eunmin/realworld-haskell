@@ -10,7 +10,8 @@ import RealWorld.Domain.User.Entity
     AuthorizedUser,
     RegistrationCommand (..),
     Token,
-    User (userHashedPassword, userId),
+    UpdateUserCommand (..),
+    User (userHashedPassword, userId, userUsername),
   )
 import qualified RealWorld.Domain.User.Entity as User
 import RealWorld.Domain.User.Error
@@ -29,17 +30,17 @@ registration ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordService m, Tx m) =>
   RegistrationCommand ->
   m (Either UserError AuthorizedUser)
-registration (RegistrationCommand userName email password) = runExceptT $ do
+registration (RegistrationCommand username email password) = runExceptT $ do
   userId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
   hashedPassword <- PasswordService.hashPassword password !? PasswordInvalid
   user <- withTx $ do
-    (justToNothing <$> UserRepo.findByUsername userName) !? UserAlreadyExists
+    (justToNothing <$> UserRepo.findByUsername username) !? UserAlreadyExists
     (justToNothing <$> UserRepo.findByEmail email) !? UserAlreadyExists
-    user <- hoistEither $ User.mkUser userId userName email hashedPassword createdAt
-    lift $ UserRepo.create user
+    user <- hoistEither $ User.mkUser userId username email hashedPassword createdAt
+    lift $ UserRepo.save user
     pure user
-  token <- lift $ TokenGateway.generate userId
+  token <- lift $ TokenGateway.generate userId User.tokeExpiresInSec
   pure $ User.mkAuthorizedUser user token
 
 authentication ::
@@ -48,9 +49,9 @@ authentication ::
   m (Either UserError AuthorizedUser)
 authentication (AuthenticationCommand email password) = runExceptT $ do
   user <- UserRepo.findByEmail email !? UserNotFound
-  whenM (lift $ PasswordService.isValidPassword (userHashedPassword user) password) $
-    throwE PasswordInvalid
-  token <- lift $ TokenGateway.generate (userId user)
+  whenM (lift $ PasswordService.isValidPassword (userHashedPassword user) password)
+    $ throwE PasswordInvalid
+  token <- lift $ TokenGateway.generate (userId user) User.tokeExpiresInSec
   pure $ User.mkAuthorizedUser user token
 
 getCurrentUser ::
@@ -60,4 +61,24 @@ getCurrentUser ::
 getCurrentUser token = runExceptT $ do
   userId <- TokenGateway.verify token !? TokenInvalid
   user <- UserRepo.findById userId !? UserNotFound
+  pure $ User.mkAuthorizedUser user token
+
+updateUser ::
+  (MonadIO m, UserRepository m, PasswordService m, TokenGateway m, Tx m) =>
+  UpdateUserCommand ->
+  m (Either UserError AuthorizedUser)
+updateUser (UpdateUserCommand token username email password bio image) = runExceptT $ do
+  liftIO $ print token
+  userId <- TokenGateway.verify token !? TokenInvalid
+  hashedPassword <- case password of
+    Nothing -> pure Nothing
+    Just password' -> Just <$> PasswordService.hashPassword password' !? PasswordInvalid
+  user <- withTx $ do
+    user <- UserRepo.findById userId !? UserNotFound
+    whenJust username $ \username' ->
+      when (username' /= userUsername user) $ do
+        (justToNothing <$> UserRepo.findByUsername username') !? UserAlreadyExists
+    let user' = User.update user username email hashedPassword bio image
+    lift $ UserRepo.save user'
+    pure user'
   pure $ User.mkAuthorizedUser user token

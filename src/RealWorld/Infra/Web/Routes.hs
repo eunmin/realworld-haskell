@@ -12,7 +12,7 @@ import RealWorld.Infra.Web.ErrorResponse
   ( ErrorResponse (ErrorResponse),
     raiseNotFound,
   )
-import Relude hiding (get)
+import Relude hiding (get, put)
 import Web.Scotty.Trans
   ( ScottyT,
     defaultHandler,
@@ -21,6 +21,7 @@ import Web.Scotty.Trans
     middleware,
     notFound,
     post,
+    put,
     status,
   )
 
@@ -39,5 +40,7 @@ routes = do
   post "/api/users" User.registration
 
   get "/api/user" User.getCurrentUser
+
+  put "/api/user" User.updateUser
 
   notFound $ raiseNotFound "Not found"

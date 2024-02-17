@@ -1,4 +1,4 @@
-module RealWorld.Util.Controller where
+module RealWorld.Infra.Web.Util where
 
 import qualified Data.Text as T
 import RealWorld.Domain.User.Entity (Token (Token))

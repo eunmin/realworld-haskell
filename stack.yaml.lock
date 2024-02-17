@@ -3,7 +3,35 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: aeson-2.2.0.0@sha256:deeab33f7f2a235c9e9ea76168f27a3669ad51bbdb363e830015352a3b2874ec,6217
+    pantry-tree:
+      sha256: 2c65659ff9ab19047728c8cc2f20869ba7ca78a09fe03cecf826f5857f3d4c95
+      size: 83036
+  original:
+    hackage: aeson-2.2.0.0
+- completed:
+    hackage: integer-conversion-0.1.0.1@sha256:0e57a82635323f015b5d6c242bcfbbeeaa9854fe9c8058e57052254dbb24bb14,2250
+    pantry-tree:
+      sha256: 5684bd08f7edbadbff77d84075b37cdf41309bd8a0dc23bcea6ffbf4497adb7f
+      size: 509
+  original:
+    hackage: integer-conversion-0.1.0.1
+- completed:
+    hackage: text-iso8601-0.1@sha256:ac86f2500ca751db3c0de029dd7e7826bef7366d59dc0085b00fc695c43b9f76,2407
+    pantry-tree:
+      sha256: 2ce4c1ddd0672388ba61a8c921c05869b6bd88c4663c4d9bbf7cd9de1a607634
+      size: 427
+  original:
+    hackage: text-iso8601-0.1
+- completed:
+    hackage: th-abstraction-0.5.0.0@sha256:4351cadf6bf0ca80c90225bae0b12f4cfdd550f30c333b050186af5a8bc19457,2236
+    pantry-tree:
+      sha256: f1e547789ee75cf1d880c2dd6498254e9a37de052842b573b43c4b4a1ebcfd6d
+      size: 670
+  original:
+    hackage: th-abstraction-0.5.0.0
 snapshots:
 - completed:
     sha256: a81fb3877c4f9031e1325eb3935122e608d80715dc16b586eb11ddbff8671ecd

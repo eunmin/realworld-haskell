@@ -1,15 +1,26 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module RealWorld.Infra.Json where
 
-import Data.Aeson (Options (unwrapUnaryRecords), ToJSON (toJSON), defaultOptions, genericToJSON, withText)
+import Data.Aeson
+  ( ToJSON (toJSON),
+    genericToJSON,
+    withText,
+  )
 import Data.Aeson.Casing (aesonDrop, camelCase)
-import Data.Aeson.TH (deriveJSON)
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
-import RealWorld.Domain.User.Entity (AuthorizedUser, Email (..), Token (..), UserName (..))
+import RealWorld.Domain.User.Entity
+  ( AuthorizedUser,
+    Bio (..),
+    Email (..),
+    Image (..),
+    Token (..),
+    Username (..),
+  )
 import RealWorld.Util.BoundedText (BoundedText (..))
 import Relude
 
@@ -18,18 +29,22 @@ instance ToJSON ULID where
 
 instance FromJSON ULID where
   parseJSON =
-    withText "ULID" $
-      maybe (fail "invalid ULID") pure
-        . readMaybe
-        . toString
+    withText "ULID"
+      $ maybe (fail "invalid ULID") pure
+      . readMaybe
+      . toString
 
-$(deriveJSON (defaultOptions {unwrapUnaryRecords = True}) 'BoundedText)
+deriving newtype instance ToJSON Email
 
-$(deriveJSON (defaultOptions {unwrapUnaryRecords = True}) 'UserName)
+deriving newtype instance ToJSON Bio
 
-$(deriveJSON (defaultOptions {unwrapUnaryRecords = True}) 'Email)
+deriving newtype instance ToJSON Image
 
-$(deriveJSON (defaultOptions {unwrapUnaryRecords = True}) 'Token)
+deriving newtype instance ToJSON Token
+
+deriving newtype instance ToJSON (BoundedText min max)
+
+deriving newtype instance ToJSON Username
 
 instance ToJSON AuthorizedUser where
   toJSON = genericToJSON $ aesonDrop 14 camelCase

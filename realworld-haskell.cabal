@@ -44,8 +44,8 @@ library
       RealWorld.Infra.Web.Controller.User
       RealWorld.Infra.Web.ErrorResponse
       RealWorld.Infra.Web.Routes
+      RealWorld.Infra.Web.Util
       RealWorld.Util.BoundedText
-      RealWorld.Util.Controller
       RealWorld.Util.Database
       RealWorld.Util.Env
       RealWorld.Util.Maybe

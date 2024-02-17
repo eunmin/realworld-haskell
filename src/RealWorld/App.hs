@@ -34,7 +34,7 @@ newtype App a = App {unApp :: StateT System.State IO a}
     )
 
 instance UserRepository App where
-  create = PGUserRepository.create
+  save = PGUserRepository.save
   findById = PGUserRepository.findById
   findByUsername = PGUserRepository.findByUsername
   findByEmail = PGUserRepository.findByEmail
