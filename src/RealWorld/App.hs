@@ -8,16 +8,18 @@ where
 
 import Control.Monad.Catch
 import RealWorld.Domain.Repo (Tx (..))
+import RealWorld.Domain.User.Gateway.Password (PasswordGateway (..))
 import RealWorld.Domain.User.Gateway.Token (TokenGateway (..))
 import RealWorld.Domain.User.Repo (UserRepository (..))
-import RealWorld.Domain.User.Service.Password (PasswordService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
+import qualified RealWorld.Infra.Database.PGQuery as PGQuery
 import qualified RealWorld.Infra.Database.PGUserRepository as PGUserRepository
 import qualified RealWorld.Infra.Database.Repo as Repo
 import qualified RealWorld.Infra.Gateway.JwtToken as JwtTokenGateway
 import qualified RealWorld.Infra.Service.BcryptPasswordService as BcryptPasswordService
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
+import RealWorld.Query.Types (Query (..))
 import Relude
 import Web.Scotty.Trans
 
@@ -30,7 +32,8 @@ newtype App a = App {unApp :: StateT System.State IO a}
       MonadCatch,
       MonadThrow,
       MonadState System.State,
-      MonadMask
+      MonadMask,
+      MonadFail
     )
 
 instance UserRepository App where
@@ -38,17 +41,29 @@ instance UserRepository App where
   findById = PGUserRepository.findById
   findByUsername = PGUserRepository.findByUsername
   findByEmail = PGUserRepository.findByEmail
+  follow = PGUserRepository.follow
+  unfollow = PGUserRepository.unfollow
+  hasFollowing = PGUserRepository.hasFollowing
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate
   verify = JwtTokenGateway.verify
 
-instance PasswordService App where
+instance PasswordGateway App where
   hashPassword = BcryptPasswordService.hashPassword
   isValidPassword = BcryptPasswordService.isValidPassword
 
 instance Tx App where
   withTx = Repo.withTx
+
+instance Query App where
+  getCurrentUser = PGQuery.getCurrentUser
+  getProfile = PGQuery.getProfile
+  listArticles = PGQuery.listArticles
+  feedArticles = PGQuery.feedArticles
+  getArticle = PGQuery.getArticle
+  getCommentsFromArticle = PGQuery.getCommentsFromArticle
+  getTags = PGQuery.getTags
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do

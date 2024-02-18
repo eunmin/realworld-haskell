@@ -26,15 +26,17 @@ source-repository head
 library
   exposed-modules:
       RealWorld.App
+      RealWorld.Domain.Article.Repo
+      RealWorld.Domain.Article.Types
       RealWorld.Domain.Repo
-      RealWorld.Domain.User.Entity
-      RealWorld.Domain.User.Error
+      RealWorld.Domain.User.Gateway.Password
       RealWorld.Domain.User.Gateway.Token
       RealWorld.Domain.User.Repo
-      RealWorld.Domain.User.Service.Password
+      RealWorld.Domain.User.Types
       RealWorld.Domain.User.UseCase
       RealWorld.Infra.Component.Database
       RealWorld.Infra.Component.HttpServer
+      RealWorld.Infra.Database.PGQuery
       RealWorld.Infra.Database.PGUserRepository
       RealWorld.Infra.Database.Repo
       RealWorld.Infra.Gateway.JwtToken
@@ -45,6 +47,7 @@ library
       RealWorld.Infra.Web.ErrorResponse
       RealWorld.Infra.Web.Routes
       RealWorld.Infra.Web.Util
+      RealWorld.Query.Types
       RealWorld.Util.BoundedText
       RealWorld.Util.Database
       RealWorld.Util.Env

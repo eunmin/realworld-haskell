@@ -5,7 +5,7 @@ import Crypto.BCrypt
     slowerBcryptHashingPolicy,
     validatePassword,
   )
-import RealWorld.Domain.User.Entity (HashedPassword (..), Password (..))
+import RealWorld.Domain.User.Types (HashedPassword (..), Password (..))
 import Relude
 
 hashPassword :: (MonadIO m) => Password -> m (Maybe HashedPassword)

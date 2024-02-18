@@ -13,11 +13,12 @@ import Data.Aeson
 import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
-import RealWorld.Domain.User.Entity
+import RealWorld.Domain.User.Types
   ( AuthorizedUser,
     Bio (..),
     Email (..),
     Image (..),
+    Profile,
     Token (..),
     Username (..),
   )
@@ -48,3 +49,6 @@ deriving newtype instance ToJSON Username
 
 instance ToJSON AuthorizedUser where
   toJSON = genericToJSON $ aesonDrop 14 camelCase
+
+instance ToJSON Profile where
+  toJSON = genericToJSON $ aesonDrop 7 camelCase

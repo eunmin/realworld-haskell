@@ -1,5 +1,8 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use newtype instead of data" #-}
 
 module RealWorld.Infra.Web.ErrorResponse where
 
@@ -15,7 +18,6 @@ import Network.HTTP.Types.Status
   )
 import Relude
 import Web.Scotty.Internal.Types (ScottyError (..))
-import Web.Scotty.Trans (ActionT, raise)
 
 data ErrorResponse = ErrorResponse
   { errroResponseStatus :: Status,
@@ -38,14 +40,14 @@ instance ScottyError ErrorResponse where
 mkErrorResponse :: Status -> Text -> ErrorResponse
 mkErrorResponse status message = ErrorResponse status $ Errors $ ErrorsBody [message]
 
-raiseInvalidate :: (Monad m) => Text -> ActionT ErrorResponse m ()
-raiseInvalidate message = raise $ mkErrorResponse status422 message
+invalid :: Text -> ErrorResponse
+invalid = mkErrorResponse status422
 
-raiseUnauthorized :: (Monad m) => Text -> ActionT ErrorResponse m ()
-raiseUnauthorized message = raise $ mkErrorResponse status401 message
+unauthorized :: Text -> ErrorResponse
+unauthorized = mkErrorResponse status401
 
-raiseForbidden :: (Monad m) => Text -> ActionT ErrorResponse m ()
-raiseForbidden message = raise $ mkErrorResponse status403 message
+forbidden :: Text -> ErrorResponse
+forbidden = mkErrorResponse status403
 
-raiseNotFound :: (Monad m) => Text -> ActionT ErrorResponse m ()
-raiseNotFound message = raise $ mkErrorResponse status404 message
+notFound :: Text -> ErrorResponse
+notFound = mkErrorResponse status404

@@ -18,7 +18,7 @@ import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (Action (Escape), ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
-import RealWorld.Domain.User.Entity
+import RealWorld.Domain.User.Types
   ( Bio (..),
     Email (..),
     HashedPassword (..),
@@ -87,7 +87,7 @@ deriving instance FromField Bio
 
 deriving instance FromField Image
 
-type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m)
+type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
 
 save :: (Database r m) => User -> m ()
 save user = do
@@ -122,3 +122,34 @@ findByEmail :: (Database r m) => Email -> m (Maybe User)
 findByEmail (Email email) = do
   withConnection $ \conn ->
     liftIO $ headMay <$> query conn "SELECT * FROM users WHERE email = ?" (Only email)
+
+follow :: (Database r m) => ULID -> ULID -> m Bool
+follow followerId followeeId = do
+  withConnection $ \conn ->
+    liftIO
+      $ (> 0)
+      <$> execute
+        conn
+        "INSERT INTO followings (user_id, following_id) VALUES (?, ?)"
+        (followerId, followeeId)
+
+unfollow :: (Database r m) => ULID -> ULID -> m Bool
+unfollow followerId followeeId = do
+  withConnection $ \conn ->
+    liftIO
+      $ (> 0)
+      <$> execute
+        conn
+        "DELETE FROM followings WHERE user_id = ? AND following_id = ?"
+        (followerId, followeeId)
+
+hasFollowing :: (Database r m) => ULID -> ULID -> m Bool
+hasFollowing followerId followeeId = do
+  withConnection $ \conn -> do
+    [Only (count :: Int)] <-
+      liftIO
+        $ query
+          conn
+          "SELECT count(*) FROM followings WHERE user_id = ? AND following_id = ?"
+          (followerId, followeeId)
+    pure $ count > 0
