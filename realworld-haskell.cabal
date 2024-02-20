@@ -26,28 +26,31 @@ source-repository head
 library
   exposed-modules:
       RealWorld.App
-      RealWorld.Domain.Article.Repo
-      RealWorld.Domain.Article.Types
-      RealWorld.Domain.Repo
-      RealWorld.Domain.User.Gateway.Password
-      RealWorld.Domain.User.Gateway.Token
-      RealWorld.Domain.User.Repo
-      RealWorld.Domain.User.Types
-      RealWorld.Domain.User.UseCase
+      RealWorld.Domain.Adapter.Gateway.PasswordGateway
+      RealWorld.Domain.Adapter.Gateway.TokenGateway
+      RealWorld.Domain.Adapter.Manager.TxManager
+      RealWorld.Domain.Adapter.Repository.UserRepository
+      RealWorld.Domain.Command.Article.Entity.Article
+      RealWorld.Domain.Command.Article.UseCase
+      RealWorld.Domain.Command.Article.Value
+      RealWorld.Domain.Command.User.Entity.User
+      RealWorld.Domain.Command.User.UseCase
+      RealWorld.Domain.Command.User.Value
+      RealWorld.Domain.Query.Data
+      RealWorld.Domain.Query.Service
       RealWorld.Infra.Component.Database
       RealWorld.Infra.Component.HttpServer
       RealWorld.Infra.Database.PGQuery
       RealWorld.Infra.Database.PGUserRepository
       RealWorld.Infra.Database.Repo
+      RealWorld.Infra.Gateway.BcryptPasswordGateway
       RealWorld.Infra.Gateway.JwtToken
       RealWorld.Infra.Json
-      RealWorld.Infra.Service.BcryptPasswordService
       RealWorld.Infra.System
       RealWorld.Infra.Web.Controller.User
       RealWorld.Infra.Web.ErrorResponse
       RealWorld.Infra.Web.Routes
       RealWorld.Infra.Web.Util
-      RealWorld.Query.Types
       RealWorld.Util.BoundedText
       RealWorld.Util.Database
       RealWorld.Util.Env

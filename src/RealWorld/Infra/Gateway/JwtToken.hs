@@ -9,7 +9,7 @@ import Data.Text (unpack)
 import Data.Time (NominalDiffTime)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.ULID (ULID)
-import RealWorld.Domain.User.Types (Token (..))
+import RealWorld.Domain.Command.User.Value (Token (..))
 import Relude hiding (State, exp)
 import Web.JWT
   ( ClaimsMap (..),

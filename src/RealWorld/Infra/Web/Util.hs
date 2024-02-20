@@ -1,7 +1,7 @@
 module RealWorld.Infra.Web.Util where
 
 import qualified Data.Text as T
-import RealWorld.Domain.User.Types (Token (Token))
+import RealWorld.Domain.Command.User.Value (Token (Token))
 import RealWorld.Infra.Web.ErrorResponse
   ( ErrorResponse,
     forbidden,

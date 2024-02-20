@@ -18,12 +18,14 @@ import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (Action (Escape), ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
-import RealWorld.Domain.User.Types
+import RealWorld.Domain.Command.User.Entity.User
+  ( User (..),
+  )
+import RealWorld.Domain.Command.User.Value
   ( Bio (..),
     Email (..),
     HashedPassword (..),
     Image (..),
-    User (..),
     Username (..),
   )
 import qualified RealWorld.Infra.Component.Database as Database

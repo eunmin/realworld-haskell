@@ -1,11 +1,11 @@
-module RealWorld.Infra.Service.BcryptPasswordService where
+module RealWorld.Infra.Gateway.BcryptPasswordGateway where
 
 import Crypto.BCrypt
   ( hashPasswordUsingPolicy,
     slowerBcryptHashingPolicy,
     validatePassword,
   )
-import RealWorld.Domain.User.Types (HashedPassword (..), Password (..))
+import RealWorld.Domain.Command.User.Value (HashedPassword (..), Password (..))
 import Relude
 
 hashPassword :: (MonadIO m) => Password -> m (Maybe HashedPassword)

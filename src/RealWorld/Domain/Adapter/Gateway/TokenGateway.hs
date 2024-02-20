@@ -1,7 +1,7 @@
-module RealWorld.Domain.User.Gateway.Token where
+module RealWorld.Domain.Adapter.Gateway.TokenGateway where
 
 import Data.ULID (ULID)
-import RealWorld.Domain.User.Types (Token)
+import RealWorld.Domain.Command.User.Value (Token)
 import Relude
 
 class TokenGateway m where

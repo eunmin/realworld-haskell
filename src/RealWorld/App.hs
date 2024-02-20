@@ -7,19 +7,19 @@ module RealWorld.App
 where
 
 import Control.Monad.Catch
-import RealWorld.Domain.Repo (Tx (..))
-import RealWorld.Domain.User.Gateway.Password (PasswordGateway (..))
-import RealWorld.Domain.User.Gateway.Token (TokenGateway (..))
-import RealWorld.Domain.User.Repo (UserRepository (..))
+import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
+import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway (..))
+import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
+import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
+import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
 import qualified RealWorld.Infra.Database.PGQuery as PGQuery
 import qualified RealWorld.Infra.Database.PGUserRepository as PGUserRepository
 import qualified RealWorld.Infra.Database.Repo as Repo
+import qualified RealWorld.Infra.Gateway.BcryptPasswordGateway as BcryptPasswordGateway
 import qualified RealWorld.Infra.Gateway.JwtToken as JwtTokenGateway
-import qualified RealWorld.Infra.Service.BcryptPasswordService as BcryptPasswordService
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
-import RealWorld.Query.Types (Query (..))
 import Relude
 import Web.Scotty.Trans
 
@@ -50,13 +50,13 @@ instance TokenGateway App where
   verify = JwtTokenGateway.verify
 
 instance PasswordGateway App where
-  hashPassword = BcryptPasswordService.hashPassword
-  isValidPassword = BcryptPasswordService.isValidPassword
+  hashPassword = BcryptPasswordGateway.hashPassword
+  isValidPassword = BcryptPasswordGateway.isValidPassword
 
-instance Tx App where
+instance TxManager App where
   withTx = Repo.withTx
 
-instance Query App where
+instance QueryService App where
   getCurrentUser = PGQuery.getCurrentUser
   getProfile = PGQuery.getProfile
   listArticles = PGQuery.listArticles

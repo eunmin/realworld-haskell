@@ -1,10 +1,8 @@
 {-# HLINT ignore "Use newtype instead of data" #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module RealWorld.Query.Types where
+module RealWorld.Domain.Query.Data where
 
-import Data.Aeson
 import Relude
 
 data GetCurrentUserParams = GetCurrentUserParams
@@ -47,31 +45,22 @@ data GetCommentsFromArticleParams = GetCommentsFromArticleParams
   }
   deriving (Show, Eq)
 
-class Query m where
-  getCurrentUser :: GetCurrentUserParams -> m (Maybe User)
-  getProfile :: GetProfileParams -> m (Maybe Profile)
-  listArticles :: ListArticlesParams -> m ArticleList
-  feedArticles :: FeedArticlesParams -> m ArticleList
-  getArticle :: GetArticleParams -> m (Maybe Article)
-  getCommentsFromArticle :: GetCommentsFromArticleParams -> m CommentList
-  getTags :: m TagList
-
 data User = User
-  { email :: Text,
-    token :: Text,
-    username :: Text,
-    bio :: Text,
-    image :: Maybe Text
+  { userEmail :: Text,
+    userToken :: Text,
+    userUsername :: Text,
+    userBio :: Text,
+    userImage :: Maybe Text
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data Profile = Profile
-  { username :: Text,
-    bio :: Text,
-    image :: Maybe Text,
-    following :: Bool
+  { profileUsername :: Text,
+    profileBio :: Text,
+    profileImage :: Maybe Text,
+    profileFollowing :: Bool
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data Article = Article
   { slug :: Text,
@@ -85,13 +74,13 @@ data Article = Article
     favoritesCount :: Int,
     author :: Profile
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data ArticleList = ArticleList
   { articles :: [Article],
     articlesCount :: Int
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data Comment = Comment
   { id :: Int,
@@ -100,14 +89,14 @@ data Comment = Comment
     body :: Text,
     author :: Profile
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data CommentList = CommentList
   { comments :: [Comment]
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)
 
 data TagList = TagList
   { tags :: [Text]
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq)

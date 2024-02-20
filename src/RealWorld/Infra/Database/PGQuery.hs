@@ -8,9 +8,9 @@ import Control.Error (headMay)
 import Data.Has (Has (..))
 import Data.Pool (withResource)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import Database.PostgreSQL.Simple.FromRow (FromRow)
+import RealWorld.Domain.Query.Data
 import qualified RealWorld.Infra.Component.Database as Database
-import RealWorld.Query.Types
 import Relude
 
 type QueryDatabase r m = (Has Database.State r, MonadIO m, MonadState r m)

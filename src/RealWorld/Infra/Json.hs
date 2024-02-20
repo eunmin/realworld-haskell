@@ -10,18 +10,17 @@ import Data.Aeson
     genericToJSON,
     withText,
   )
-import Data.Aeson.Casing (aesonDrop, camelCase)
+import Data.Aeson.Casing (aesonPrefix, camelCase)
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
-import RealWorld.Domain.User.Types
-  ( AuthorizedUser,
-    Bio (..),
+import RealWorld.Domain.Command.User.Value
+  ( Bio (..),
     Email (..),
     Image (..),
-    Profile,
     Token (..),
     Username (..),
   )
+import RealWorld.Domain.Query.Data (Profile, User)
 import RealWorld.Util.BoundedText (BoundedText (..))
 import Relude
 
@@ -47,8 +46,8 @@ deriving newtype instance ToJSON (BoundedText min max)
 
 deriving newtype instance ToJSON Username
 
-instance ToJSON AuthorizedUser where
-  toJSON = genericToJSON $ aesonDrop 14 camelCase
+instance ToJSON User where
+  toJSON = genericToJSON $ aesonPrefix camelCase
 
 instance ToJSON Profile where
-  toJSON = genericToJSON $ aesonDrop 7 camelCase
+  toJSON = genericToJSON $ aesonPrefix camelCase
