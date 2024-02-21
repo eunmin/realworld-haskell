@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS articles (
   body TEXT NOT NULL,
   tags VARCHAR[] NOT NULL,
   author_id VARCHAR NOT NULL,
-  favoritesCount INT DEFAULT 0,
+  favorites_count INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ
 );

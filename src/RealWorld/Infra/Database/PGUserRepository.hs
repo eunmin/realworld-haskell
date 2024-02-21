@@ -11,11 +11,9 @@ import Data.ULID (ULID)
 import Database.PostgreSQL.Simple (execute, query)
 import Database.PostgreSQL.Simple.FromField
   ( FromField (..),
-    ResultError (ConversionFailed, UnexpectedNull),
-    returnError,
   )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
-import Database.PostgreSQL.Simple.ToField (Action (Escape), ToField (..))
+import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
 import RealWorld.Domain.Command.User.Entity.User
@@ -50,9 +48,6 @@ instance ToRow User where
       toField userImage
     ]
 
-instance ToField ULID where
-  toField = Escape . show
-
 deriving instance ToField (BoundedText min max)
 
 deriving instance ToField Username
@@ -67,15 +62,6 @@ deriving instance ToField Image
 
 instance FromRow User where
   fromRow = User <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
-
-instance FromField ULID where
-  fromField f mbs =
-    case decodeUtf8 <$> mbs of
-      Nothing -> returnError UnexpectedNull f ""
-      Just dat ->
-        case readMaybe dat of
-          Nothing -> returnError ConversionFailed f dat
-          Just x -> pure x
 
 deriving instance FromField (BoundedText min max)
 

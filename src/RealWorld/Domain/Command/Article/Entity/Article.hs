@@ -4,6 +4,14 @@ module RealWorld.Domain.Command.Article.Entity.Article where
 
 import Data.Time (UTCTime)
 import Data.ULID (ULID)
+import RealWorld.Domain.Command.Article.Value
+  ( Body,
+    Description,
+    Slug,
+    Tag,
+    Title,
+    toSlug,
+  )
 import Relude
 
 ----------------------------------------------------------------------------------------------------
@@ -24,35 +32,18 @@ data Article = Article
   }
   deriving (Show, Eq, Generic)
 
-----------------------------------------------------------------------------------------------------
--- Slug
-
-newtype Slug = Slug {unSlug :: Text}
-  deriving (Show, Eq, Generic)
-
-----------------------------------------------------------------------------------------------------
--- Title
-
-newtype Title = Title {unTitle :: Text}
-  deriving (Show, Eq, Generic)
-
-mkTitle :: Text -> Maybe Title
-mkTitle = Just . Title
-
-----------------------------------------------------------------------------------------------------
--- Description
-
-newtype Description = Description {unDescription :: Text}
-  deriving (Show, Eq, Generic)
-
-----------------------------------------------------------------------------------------------------
--- Body
-
-newtype Body = Body {unBody :: Text}
-  deriving (Show, Eq, Generic)
-
-----------------------------------------------------------------------------------------------------
--- Tag
-
-newtype Tag = Tag {unTag :: Text}
-  deriving (Show, Eq, Generic)
+mkArticle :: ULID -> Title -> Description -> Body -> [Tag] -> UTCTime -> ULID -> Article
+mkArticle articleId title description body tags createdAt authorId =
+  Article
+    { articleId = articleId,
+      articleSlug = toSlug title,
+      articleTitle = title,
+      articleDescription = description,
+      articleBody = body,
+      articleTags = tags,
+      articleCreatedAt = createdAt,
+      articleUpdatedAt = Nothing,
+      articleFavorited = False,
+      articleFavoritesCount = 0,
+      articleAuthorId = authorId
+    }

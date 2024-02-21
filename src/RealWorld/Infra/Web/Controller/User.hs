@@ -8,9 +8,8 @@ module RealWorld.Infra.Web.Controller.User where
 
 import Data.Aeson
   ( FromJSON (parseJSON),
-    KeyValue ((.=)),
+    ToJSON,
     genericParseJSON,
-    object,
     withObject,
     (.:!),
   )
@@ -21,7 +20,7 @@ import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import qualified RealWorld.Domain.Command.User.UseCase as UserUseCase
-import RealWorld.Domain.Command.User.Value (Token (unToken))
+import RealWorld.Domain.Command.User.Value (Token (Token))
 import RealWorld.Domain.Query.Data (userToken)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.Service (QueryService)
@@ -37,10 +36,15 @@ import RealWorld.Infra.Web.Util (withToken, (!?))
 import Relude hiding (null, optional)
 import Web.Scotty.Trans (ActionT, json, jsonData, param, raise)
 
-data UserInput a = UserInput
+data UserWrapper a = UserWrapper
   { user :: a
   }
-  deriving (Show, Generic, FromJSON)
+  deriving (Show, Generic, FromJSON, ToJSON)
+
+data ProfileWrapper a = ProfileWrapper
+  { profile :: a
+  }
+  deriving (Show, Generic, FromJSON, ToJSON)
 
 ----------------------------------------------------------------------------------------------------
 -- Registration
@@ -59,10 +63,10 @@ registration ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
   ActionT ErrorResponse m ()
 registration = do
-  UserInput input <- jsonData
+  UserWrapper input <- jsonData
   result <- lift $ UserUseCase.registration $ toCommand input
   case result of
-    Right result' -> json $ object ["user" .= toUser input result']
+    Right result' -> json $ UserWrapper $ toUser input result'
     Left err -> raise $ invalid $ show err
   where
     toCommand :: RegistrationInput -> UserUseCase.RegistrationCommand
@@ -98,10 +102,10 @@ authentication ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m) =>
   ActionT ErrorResponse m ()
 authentication = do
-  UserInput input <- jsonData
+  UserWrapper input <- jsonData
   result <- lift $ UserUseCase.authentication $ toCommand input
   case result of
-    Right result' -> json $ object ["user" .= toUser input result']
+    Right result' -> json $ UserWrapper $ toUser input result'
     Left err -> raise $ invalid $ show err
   where
     toCommand :: AuthenticationInput -> UserUseCase.AuthenticationCommand
@@ -126,10 +130,12 @@ authentication = do
 getCurrentUser :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getCurrentUser = do
   withToken $ \token -> do
-    userId <- TokenGateway.verify token !? unauthorized "Unauthorized"
+    userId <-
+      TokenGateway.verify (RealWorld.Domain.Command.User.Value.Token token)
+        !? unauthorized "Unauthorized"
     let params = Query.GetCurrentUserParams $ show userId
     user <- QueryService.getCurrentUser params !? notFound "User not found"
-    json $ object ["user" .= user {userToken = unToken token}]
+    json $ UserWrapper $ user {userToken = token}
 
 ----------------------------------------------------------------------------------------------------
 -- Update User
@@ -162,10 +168,10 @@ updateUser ::
   ActionT ErrorResponse m ()
 updateUser = do
   withToken $ \token -> do
-    UserInput input <- jsonData
-    result <- lift $ UserUseCase.updateUser $ toCommand input (unToken token)
+    UserWrapper input <- jsonData
+    result <- lift $ UserUseCase.updateUser $ toCommand input token
     case result of
-      Right result' -> json $ object ["user" .= toUser result']
+      Right result' -> json $ UserWrapper $ toUser result'
       Left err -> raise $ unauthorized $ show err
   where
     toCommand :: UpdateUserInput -> Text -> UserUseCase.UpdateUserCommand
@@ -194,11 +200,13 @@ updateUser = do
 getProfile :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getProfile = do
   withToken $ \token -> do
-    userId <- TokenGateway.verify token !? unauthorized "Unauthorized"
+    userId <-
+      TokenGateway.verify (RealWorld.Domain.Command.User.Value.Token token)
+        !? unauthorized "Unauthorized"
     username <- param "username"
     let params = Query.GetProfileParams (Just $ show userId) username
     profile <- QueryService.getProfile params !? notFound "Profile not found"
-    json $ object ["profile" .= profile]
+    json $ ProfileWrapper profile
 
 ----------------------------------------------------------------------------------------------------
 -- Follow User
@@ -207,9 +215,9 @@ follow :: (MonadIO m, UserRepository m, TokenGateway m, TxManager m) => ActionT 
 follow = do
   withToken $ \token -> do
     username <- param "username"
-    result <- lift $ UserUseCase.followUser $ toCommand (unToken token) username
+    result <- lift $ UserUseCase.followUser $ toCommand token username
     case result of
-      Right result' -> json $ object ["profile" .= toProfile result']
+      Right result' -> json $ ProfileWrapper $ toProfile result'
       Left err -> raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> UserUseCase.FollowUserCommand
@@ -234,9 +242,9 @@ unfollow :: (MonadIO m, UserRepository m, TokenGateway m, TxManager m) => Action
 unfollow = do
   withToken $ \token -> do
     username <- param "username"
-    result <- lift $ UserUseCase.unfollowUser $ toCommand (unToken token) username
+    result <- lift $ UserUseCase.unfollowUser $ toCommand token username
     case result of
-      Right result' -> json $ object ["profile" .= toProfile result']
+      Right result' -> json $ ProfileWrapper $ toProfile result'
       Left err -> raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> UserUseCase.UnfollowUserCommand

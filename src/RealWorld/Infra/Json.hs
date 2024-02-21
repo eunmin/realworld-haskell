@@ -20,7 +20,7 @@ import RealWorld.Domain.Command.User.Value
     Token (..),
     Username (..),
   )
-import RealWorld.Domain.Query.Data (Profile, User)
+import RealWorld.Domain.Query.Data (Article, Profile, User)
 import RealWorld.Util.BoundedText (BoundedText (..))
 import Relude
 
@@ -50,4 +50,7 @@ instance ToJSON User where
   toJSON = genericToJSON $ aesonPrefix camelCase
 
 instance ToJSON Profile where
+  toJSON = genericToJSON $ aesonPrefix camelCase
+
+instance ToJSON Article where
   toJSON = genericToJSON $ aesonPrefix camelCase

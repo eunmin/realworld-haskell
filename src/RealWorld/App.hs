@@ -6,13 +6,17 @@ module RealWorld.App
   )
 where
 
-import Control.Monad.Catch
+import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway (..))
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
+import RealWorld.Domain.Adapter.Repository.ArticleRepository
+  ( ArticleRepository (..),
+  )
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
+import qualified RealWorld.Infra.Database.PGArticleRepository as PGArticleRepository
 import qualified RealWorld.Infra.Database.PGQuery as PGQuery
 import qualified RealWorld.Infra.Database.PGUserRepository as PGUserRepository
 import qualified RealWorld.Infra.Database.Repo as Repo
@@ -44,6 +48,10 @@ instance UserRepository App where
   follow = PGUserRepository.follow
   unfollow = PGUserRepository.unfollow
   hasFollowing = PGUserRepository.hasFollowing
+
+instance ArticleRepository App where
+  save = PGArticleRepository.save
+  findById = PGArticleRepository.findById
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate

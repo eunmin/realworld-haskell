@@ -3,6 +3,7 @@
 
 module RealWorld.Domain.Query.Data where
 
+import Data.Time (UTCTime)
 import Relude
 
 data GetCurrentUserParams = GetCurrentUserParams
@@ -62,41 +63,50 @@ data Profile = Profile
   }
   deriving (Generic, Show, Eq)
 
+userToProfile :: User -> Bool -> Profile
+userToProfile User {..} following =
+  Profile
+    { profileUsername = userUsername,
+      profileBio = userBio,
+      profileImage = userImage,
+      profileFollowing = following
+    }
+
 data Article = Article
-  { slug :: Text,
-    title :: Text,
-    description :: Text,
-    body :: Text,
-    tagList :: [Text],
-    createdAt :: Text,
-    updatedAt :: Text,
-    favorited :: Bool,
-    favoritesCount :: Int,
-    author :: Profile
+  { articleSlug :: Text,
+    articleTitle :: Text,
+    articleDescription :: Text,
+    articleBody :: Text,
+    articleTagList :: [Text],
+    articleCreatedAt :: UTCTime,
+    articleUpdatedAt :: Maybe UTCTime,
+    articleFavorited :: Bool,
+    articleFavoritesCount :: Int,
+    articleAuthor :: Profile
   }
   deriving (Generic, Show, Eq)
 
 data ArticleList = ArticleList
-  { articles :: [Article],
-    articlesCount :: Int
+  { articleListArticles :: [Article],
+    articleListArticlesCount :: Int
   }
   deriving (Generic, Show, Eq)
 
 data Comment = Comment
-  { id :: Int,
-    createdAt :: Text,
-    updatedAt :: Text,
-    body :: Text,
-    author :: Profile
+  { commentId :: Int,
+    commentCreatedAt :: Text,
+    commentUpdatedAt :: Text,
+    commentBody :: Text,
+    commentAuthor :: Profile
   }
   deriving (Generic, Show, Eq)
 
 data CommentList = CommentList
-  { comments :: [Comment]
+  { commentListComments :: [Comment]
   }
   deriving (Generic, Show, Eq)
 
 data TagList = TagList
-  { tags :: [Text]
+  { tagListTags :: [Text]
   }
   deriving (Generic, Show, Eq)
