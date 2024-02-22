@@ -6,5 +6,5 @@ import Relude
 
 class (Monad m) => CommentRepository m where
   save :: Comment -> m ()
-  findAllByArticleId :: ULID -> m [Comment]
+  findById :: ULID -> m (Maybe Comment)
   delete :: Comment -> m ()

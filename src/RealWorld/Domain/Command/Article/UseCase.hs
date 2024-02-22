@@ -5,6 +5,7 @@ module RealWorld.Domain.Command.Article.UseCase where
 
 import Control.Error (throwE)
 import Control.Error.Util ((!?), (??))
+import Data.Text (unpack)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.ULID (getULID)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
@@ -270,7 +271,49 @@ addComments AddCommentsCommand {..} = runExceptT $ do
       }
 
 ----------------------------------------------------------------------------------------------------
--- Delete Comments
+-- Delete Comment
+
+data DeleteCommentCommand = DeleteCommentCommand
+  { deleteCommentCommandToken :: Text,
+    deleteCommentCommandSlug :: Text,
+    deleteCommentCommandCommentId :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data DeleteCommentResult = DeleteCommentResult
+  { deleteCommentResultSlug :: Text,
+    deleteCommentResultCommentId :: Text
+  }
+  deriving (Show, Eq)
+
+data DeleteCommentError
+  = DeleteCommentErrorInvalidToken
+  | DeleteCommentErrorInvalidSlug
+  | DeleteCommentErrorInvalidCommentId
+  | DeleteCommentErrorArticleNotFound
+  | DeleteCommentErrorCommentNotFound
+  | DeleteCommentErrorAuthorMismatch
+  deriving (Show, Eq)
+
+deleteComment ::
+  (MonadIO m, ArticleRepository m, TokenGateway m, CommentRepository m, TxManager m) =>
+  DeleteCommentCommand ->
+  m (Either DeleteCommentError DeleteCommentResult)
+deleteComment DeleteCommentCommand {..} = runExceptT $ do
+  slug <- mkSlug deleteCommentCommandSlug ?? DeleteCommentErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token deleteCommentCommandToken) !? DeleteCommentErrorInvalidToken
+  commentId <- readMaybe (unpack deleteCommentCommandCommentId) ?? DeleteCommentErrorInvalidCommentId
+  withTx $ do
+    _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
+    comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
+    when (Comment.isDeletable comment actorId)
+      $ throwE DeleteCommentErrorAuthorMismatch
+    lift $ CommentRepository.delete comment
+  pure
+    $ DeleteCommentResult
+      { deleteCommentResultSlug = unSlug slug,
+        deleteCommentResultCommentId = show commentId
+      }
 
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article

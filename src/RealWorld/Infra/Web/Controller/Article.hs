@@ -220,7 +220,22 @@ addComments = do
         }
 
 ----------------------------------------------------------------------------------------------------
--- Delete Comments
+-- Delete Comment
+
+deleteComment ::
+  (MonadIO m, ArticleRepository m, CommentRepository m, TxManager m, TokenGateway m) =>
+  ActionT ErrorResponse m ()
+deleteComment = do
+  withToken $ \token -> do
+    slug <- param "slug"
+    commentId <- param "comment-id"
+    result <- lift $ ArticleUseCase.deleteComment $ toCommand token slug commentId
+    case result of
+      Right _ -> json emptyObject
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> Text -> ArticleUseCase.DeleteCommentCommand
+    toCommand = ArticleUseCase.DeleteCommentCommand
 
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article

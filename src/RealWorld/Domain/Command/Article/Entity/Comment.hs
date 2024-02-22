@@ -25,3 +25,6 @@ mkComment commentId body createdAt authorId articleId =
       commentAuthorId = authorId,
       commentArticleId = articleId
     }
+
+isDeletable :: Comment -> ULID -> Bool
+isDeletable comment actorId = actorId /= commentAuthorId comment

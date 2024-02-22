@@ -23,6 +23,7 @@ import RealWorld.Domain.Command.Article.Value (CommentBody (..))
 import qualified RealWorld.Infra.Component.Database as Database
 import RealWorld.Infra.Database.Repo (withConnection)
 import Relude
+import Safe (headMay)
 
 type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
 
@@ -74,8 +75,18 @@ save comment =
         \   updated_at = now()"
         comment
 
-findAllByArticleId :: (Database r m) => ULID -> m [Comment]
-findAllByArticleId = undefined
+findById :: (Database r m) => ULID -> m (Maybe Comment)
+findById commentId =
+  withConnection $ \conn ->
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT id, body, created_at, updated_at, author_id, article_id \
+        \FROM comments WHERE id = ?"
+        (Only commentId)
 
 delete :: (Database r m) => Comment -> m ()
-delete = undefined
+delete comment =
+  withConnection $ \conn ->
+    liftIO $ void $ execute conn "DELETE FROM comments WHERE id = ?" (Only $ commentId comment)

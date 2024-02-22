@@ -61,7 +61,7 @@ instance ArticleRepository App where
 
 instance CommentRepository App where
   save = PGCommentRepository.save
-  findAllByArticleId = PGCommentRepository.findAllByArticleId
+  findById = PGCommentRepository.findById
   delete = PGCommentRepository.delete
 
 instance TokenGateway App where

@@ -71,4 +71,6 @@ routes = do
 
   post "/api/articles/:slug/comments" Article.addComments
 
+  delete "/api/articles/:slug/comments/:comment-id" Article.deleteComment
+
   notFound $ raise $ ErrorResponse.notFound "API not found"
