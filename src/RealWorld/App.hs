@@ -13,10 +13,14 @@ import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
 import RealWorld.Domain.Adapter.Repository.ArticleRepository
   ( ArticleRepository (..),
   )
+import RealWorld.Domain.Adapter.Repository.CommentRepository
+  ( CommentRepository (..),
+  )
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
 import qualified RealWorld.Infra.Database.PGArticleRepository as PGArticleRepository
+import qualified RealWorld.Infra.Database.PGCommentRepository as PGCommentRepository
 import qualified RealWorld.Infra.Database.PGQuery as PGQuery
 import qualified RealWorld.Infra.Database.PGUserRepository as PGUserRepository
 import qualified RealWorld.Infra.Database.Repo as Repo
@@ -54,6 +58,11 @@ instance ArticleRepository App where
   findById = PGArticleRepository.findById
   findBySlug = PGArticleRepository.findBySlug
   delete = PGArticleRepository.delete
+
+instance CommentRepository App where
+  save = PGCommentRepository.save
+  findAllByArticleId = PGCommentRepository.findAllByArticleId
+  delete = PGCommentRepository.delete
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate

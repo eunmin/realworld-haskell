@@ -33,13 +33,22 @@ mkDescription :: Text -> Maybe Description
 mkDescription = Just . Description
 
 ----------------------------------------------------------------------------------------------------
--- Body
+-- Article Body
 
-newtype Body = Body {unBody :: Text}
+newtype ArticleBody = ArticleBody {unArticleBody :: Text}
   deriving (Show, Eq, Generic)
 
-mkBody :: Text -> Maybe Body
-mkBody = Just . Body
+mkArticleBody :: Text -> Maybe ArticleBody
+mkArticleBody = Just . ArticleBody
+
+----------------------------------------------------------------------------------------------------
+-- Comment Body
+
+newtype CommentBody = CommentBody {unCommentBody :: Text}
+  deriving (Show, Eq, Generic)
+
+mkCommentBody :: Text -> Maybe CommentBody
+mkCommentBody = Just . CommentBody
 
 ----------------------------------------------------------------------------------------------------
 -- Tag

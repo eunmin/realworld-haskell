@@ -33,7 +33,7 @@ deriving instance ToField Title
 
 deriving instance ToField Description
 
-deriving instance ToField Body
+deriving instance ToField ArticleBody
 
 deriving instance ToField Tag
 
@@ -64,7 +64,7 @@ deriving instance FromField Title
 
 deriving instance FromField Description
 
-deriving instance FromField Body
+deriving instance FromField ArticleBody
 
 deriving instance FromField Tag
 

@@ -12,6 +12,8 @@ import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (withTx))
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository (..))
 import qualified RealWorld.Domain.Adapter.Repository.ArticleRepository as ArticleRepository
+import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
+import qualified RealWorld.Domain.Adapter.Repository.CommentRepository as CommentRepository
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import qualified RealWorld.Domain.Adapter.Repository.UserRepository as UserRepository
 import RealWorld.Domain.Command.Article.Entity.Article
@@ -21,6 +23,7 @@ import RealWorld.Domain.Command.Article.Entity.Article
         articleCreatedAt,
         articleDescription,
         articleFavoritesCount,
+        articleId,
         articleSlug,
         articleTags,
         articleTitle,
@@ -28,13 +31,15 @@ import RealWorld.Domain.Command.Article.Entity.Article
       ),
   )
 import qualified RealWorld.Domain.Command.Article.Entity.Article as Article
+import qualified RealWorld.Domain.Command.Article.Entity.Comment as Comment
 import RealWorld.Domain.Command.Article.Value
-  ( Body (unBody),
+  ( ArticleBody (unArticleBody),
     Description (unDescription),
     Slug (unSlug),
     Tag (unTag),
     Title (unTitle),
-    mkBody,
+    mkArticleBody,
+    mkCommentBody,
     mkDescription,
     mkSlug,
     mkTag,
@@ -82,7 +87,7 @@ createArticle CreateArticleCommand {..} = runExceptT $ do
   createdAt <- liftIO getCurrentTime
   authorId <- TokenGateway.verify (Token createArticleCommandToken) !? CreateArticleErrorInvalidToken
   title <- mkTitle createArticleCommandTitle ?? CreateArticleErrorInvalidTitle
-  body <- mkBody createArticleCommandBody ?? CreateArticleErrorInvalidBody
+  body <- mkArticleBody createArticleCommandBody ?? CreateArticleErrorInvalidBody
   description <- mkDescription createArticleCommandDescription ?? CreateArticleErrorInvalidDescription
   tags <- traverse mkTag createArticleCommandTagList ?? CreateArticleErrorInvalidTag
   author <- UserRepository.findById authorId !? CreateArticleErrorAuthorNotFound
@@ -148,7 +153,7 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
   slug <- mkSlug updateArticleCommandSlug ?? UpdateArticleErrorInvalidSlug
   title <- traverse mkTitle updateArticleCommandTitle ?? UpdateArticleErrorInvalidTitle
   description <- traverse mkDescription updateArticleCommandDescription ?? UpdateArticleErrorInvalidDescription
-  body <- traverse mkBody updateArticleCommandBody ?? UpdateArticleErrorInvalidBody
+  body <- traverse mkArticleBody updateArticleCommandBody ?? UpdateArticleErrorInvalidBody
   actorId <- TokenGateway.verify (Token updateArticleCommandToken) !? UpdateArticleErrorInvalidToken
   (article, author) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
@@ -161,7 +166,7 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
       { updateArticleResultSlug = unSlug $ articleSlug article,
         updateArticleResultTitle = unTitle . articleTitle $ article,
         updateArticleResultDescription = unDescription . articleDescription $ article,
-        updateArticleResultBody = unBody . articleBody $ article,
+        updateArticleResultBody = unArticleBody . articleBody $ article,
         updateArticleResultCreatedAt = articleCreatedAt article,
         updateArticleResultUpdatedAt = articleUpdatedAt article,
         updateArticleResultTags = unTag <$> articleTags article,
@@ -206,6 +211,63 @@ deleteArticle DeleteArticleCommand {..} = runExceptT $ do
 
 ----------------------------------------------------------------------------------------------------
 -- Add Comments to an Article
+
+data AddCommentsCommand = AddCommentsCommand
+  { addCommentsCommandToken :: Text,
+    addCommentsCommandSlug :: Text,
+    addCommentsCommandBody :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data AddCommentsResult = AddCommentsResult
+  { addCommentsResultCommentId :: Text,
+    addCommentsResultCreatedAt :: UTCTime,
+    addCommentsResultAuthorUsername :: Text
+  }
+  deriving (Show, Eq)
+
+data AddCommentsError
+  = AddCommentsErrorInvalidToken
+  | AddCommentsErrorInvalidBody
+  | AddCommentsErrorArticleNotFound
+  | AddCommentsErrorAuthorNotFound
+  | AddCommentsErrorInvalidSlug
+  deriving (Show, Eq)
+
+addComments ::
+  ( MonadIO m,
+    ArticleRepository m,
+    UserRepository m,
+    TokenGateway m,
+    CommentRepository m,
+    TxManager m
+  ) =>
+  AddCommentsCommand ->
+  m (Either AddCommentsError AddCommentsResult)
+addComments AddCommentsCommand {..} = runExceptT $ do
+  slug <- mkSlug addCommentsCommandSlug ?? AddCommentsErrorInvalidSlug
+  authorId <- TokenGateway.verify (Token addCommentsCommandToken) !? AddCommentsErrorInvalidToken
+  body <- mkCommentBody addCommentsCommandBody ?? AddCommentsErrorInvalidBody
+  commentId <- liftIO getULID
+  createdAt <- liftIO getCurrentTime
+  author <- withTx $ do
+    author <- UserRepository.findById authorId !? AddCommentsErrorAuthorNotFound
+    article <- ArticleRepository.findBySlug slug !? AddCommentsErrorArticleNotFound
+    let comment =
+          Comment.mkComment
+            commentId
+            body
+            createdAt
+            authorId
+            (articleId article)
+    _ <- lift $ CommentRepository.save comment
+    pure author
+  pure
+    $ AddCommentsResult
+      { addCommentsResultCommentId = show commentId,
+        addCommentsResultCreatedAt = createdAt,
+        addCommentsResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
+      }
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Comments

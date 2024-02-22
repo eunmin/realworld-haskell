@@ -5,7 +5,7 @@ module RealWorld.Domain.Command.Article.Entity.Article where
 import Data.Time (UTCTime)
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.Article.Value
-  ( Body,
+  ( ArticleBody,
     Description,
     Slug,
     Tag,
@@ -22,7 +22,7 @@ data Article = Article
     articleSlug :: Slug,
     articleTitle :: Title,
     articleDescription :: Description,
-    articleBody :: Body,
+    articleBody :: ArticleBody,
     articleTags :: [Tag],
     articleCreatedAt :: UTCTime,
     articleUpdatedAt :: Maybe UTCTime,
@@ -32,7 +32,7 @@ data Article = Article
   }
   deriving (Show, Eq, Generic)
 
-mkArticle :: ULID -> Title -> Description -> Body -> [Tag] -> UTCTime -> ULID -> Article
+mkArticle :: ULID -> Title -> Description -> ArticleBody -> [Tag] -> UTCTime -> ULID -> Article
 mkArticle articleId title description body tags createdAt authorId =
   Article
     { articleId = articleId,
@@ -53,7 +53,7 @@ update ::
   ULID ->
   Maybe Title ->
   Maybe Description ->
-  Maybe Body ->
+  Maybe ArticleBody ->
   Maybe Article
 update article actorId title description body =
   if actorId /= articleAuthorId article

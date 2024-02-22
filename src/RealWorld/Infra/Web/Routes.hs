@@ -7,6 +7,7 @@ import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
+import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Query.Service (QueryService)
 import qualified RealWorld.Infra.Web.Controller.Article as Article
@@ -35,6 +36,7 @@ routes ::
     TxManager m,
     ArticleRepository m,
     UserRepository m,
+    CommentRepository m,
     TokenGateway m,
     PasswordGateway m,
     QueryService m
@@ -66,5 +68,7 @@ routes = do
   put "/api/articles/:slug" Article.updateArticle
 
   delete "/api/articles/:slug" Article.deleteArticle
+
+  post "/api/articles/:slug/comments" Article.addComments
 
   notFound $ raise $ ErrorResponse.notFound "API not found"

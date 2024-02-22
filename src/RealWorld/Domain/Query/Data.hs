@@ -93,9 +93,9 @@ data ArticleList = ArticleList
   deriving (Generic, Show, Eq)
 
 data Comment = Comment
-  { commentId :: Int,
-    commentCreatedAt :: Text,
-    commentUpdatedAt :: Text,
+  { commentId :: Text,
+    commentCreatedAt :: UTCTime,
+    commentUpdatedAt :: Maybe UTCTime,
     commentBody :: Text,
     commentAuthor :: Profile
   }

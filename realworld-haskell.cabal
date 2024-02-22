@@ -30,8 +30,10 @@ library
       RealWorld.Domain.Adapter.Gateway.TokenGateway
       RealWorld.Domain.Adapter.Manager.TxManager
       RealWorld.Domain.Adapter.Repository.ArticleRepository
+      RealWorld.Domain.Adapter.Repository.CommentRepository
       RealWorld.Domain.Adapter.Repository.UserRepository
       RealWorld.Domain.Command.Article.Entity.Article
+      RealWorld.Domain.Command.Article.Entity.Comment
       RealWorld.Domain.Command.Article.UseCase
       RealWorld.Domain.Command.Article.Value
       RealWorld.Domain.Command.User.Entity.User
@@ -42,6 +44,7 @@ library
       RealWorld.Infra.Component.Database
       RealWorld.Infra.Component.HttpServer
       RealWorld.Infra.Database.PGArticleRepository
+      RealWorld.Infra.Database.PGCommentRepository
       RealWorld.Infra.Database.PGQuery
       RealWorld.Infra.Database.PGUserRepository
       RealWorld.Infra.Database.Repo

@@ -12,15 +12,17 @@ import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository
   ( ArticleRepository,
   )
+import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.Article.UseCase
-  ( CreateArticleCommand (..),
+  ( AddCommentsResult (..),
+    CreateArticleCommand (..),
     CreateArticleResult (..),
     UpdateArticleCommand (..),
     UpdateArticleResult (..),
   )
 import qualified RealWorld.Domain.Command.Article.UseCase as ArticleUseCase
-import RealWorld.Domain.Query.Data (Article (..), Profile)
+import RealWorld.Domain.Query.Data (Article (..), Comment (..), Profile)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.Service (QueryService)
 import qualified RealWorld.Domain.Query.Service as QueryService
@@ -38,6 +40,11 @@ import Web.Scotty.Trans
 
 data ArticleWrapper a = ArticleWrapper
   { article :: a
+  }
+  deriving (Show, Generic, FromJSON, ToJSON)
+
+data CommentWrapper a = CommentWrapper
+  { comment :: a
   }
   deriving (Show, Generic, FromJSON, ToJSON)
 
@@ -161,3 +168,62 @@ deleteArticle = do
   where
     toCommand :: Text -> Text -> ArticleUseCase.DeleteArticleCommand
     toCommand = ArticleUseCase.DeleteArticleCommand
+
+----------------------------------------------------------------------------------------------------
+-- Add Comments to an Article
+
+data AddCommentsInput = AddCommentsInput
+  { addCommentsInputBody :: Text
+  }
+  deriving (Show, Generic)
+
+instance FromJSON AddCommentsInput where
+  parseJSON = genericParseJSON $ aesonDrop 16 camelCase
+
+addComments ::
+  ( MonadIO m,
+    ArticleRepository m,
+    TxManager m,
+    TokenGateway m,
+    UserRepository m,
+    CommentRepository m,
+    QueryService m
+  ) =>
+  ActionT ErrorResponse m ()
+addComments = do
+  withToken $ \token -> do
+    slug <- param "slug"
+    CommentWrapper input <- jsonData
+    result <- lift $ ArticleUseCase.addComments $ toCommand token slug input
+    case result of
+      Right result'@AddCommentsResult {..} -> do
+        let params = Query.GetProfileParams Nothing addCommentsResultAuthorUsername
+        profile <- QueryService.getProfile params !? notFound "Author not found"
+        json $ CommentWrapper $ toComment result' (addCommentsInputBody input) profile
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
+    toCommand token slug AddCommentsInput {..} =
+      ArticleUseCase.AddCommentsCommand
+        { addCommentsCommandToken = token,
+          addCommentsCommandSlug = slug,
+          addCommentsCommandBody = addCommentsInputBody
+        }
+    toComment :: ArticleUseCase.AddCommentsResult -> Text -> Profile -> Query.Comment
+    toComment AddCommentsResult {..} body profile =
+      Comment
+        { commentId = addCommentsResultCommentId,
+          commentCreatedAt = addCommentsResultCreatedAt,
+          commentUpdatedAt = Nothing,
+          commentBody = body,
+          commentAuthor = profile
+        }
+
+----------------------------------------------------------------------------------------------------
+-- Delete Comments
+
+----------------------------------------------------------------------------------------------------
+-- Favorite Article
+
+----------------------------------------------------------------------------------------------------
+-- Unfavorite Article
