@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Database.PGQuery where
+module RealWorld.Infra.Repository.PgQuery where
 
 import Control.Error (headMay)
 import Data.Has (Has (..))
@@ -23,23 +23,23 @@ getCurrentUser :: (QueryDatabase r m) => GetCurrentUserParams -> m (Maybe User)
 getCurrentUser GetCurrentUserParams {..} = do
   (Database.State pool _) <- gets getter
   liftIO $ withResource pool $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT email, '', username, bio, image FROM users WHERE id = ?"
-        (Only sessionUserId)
+    liftIO $
+      headMay
+        <$> query
+          conn
+          "SELECT email, '', username, bio, image FROM users WHERE id = ?"
+          (Only sessionUserId)
 
 getProfile :: (QueryDatabase r m) => GetProfileParams -> m (Maybe Profile)
 getProfile GetProfileParams {..} = do
   (Database.State pool _) <- gets getter
   liftIO $ withResource pool $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT username, bio, image, false FROM users WHERE username = ?"
-        (Only username)
+    liftIO $
+      headMay
+        <$> query
+          conn
+          "SELECT username, bio, image, false FROM users WHERE username = ?"
+          (Only username)
 
 listArticles :: ListArticlesParams -> m ArticleList
 listArticles = undefined

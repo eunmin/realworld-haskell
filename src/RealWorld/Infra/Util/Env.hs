@@ -1,4 +1,4 @@
-module RealWorld.Util.Env where
+module RealWorld.Infra.Util.Env where
 
 import Control.Exception.Safe (throwString)
 import Relude

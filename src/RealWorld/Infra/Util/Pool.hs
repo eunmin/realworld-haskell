@@ -1,4 +1,4 @@
-module RealWorld.Util.Pool where
+module RealWorld.Infra.Util.Pool where
 
 import Control.Monad.Catch (MonadMask (mask), onException)
 import Data.Pool (Pool, destroyResource, putResource, takeResource)

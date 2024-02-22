@@ -31,8 +31,8 @@ import RealWorld.Domain.Command.User.Value
     mkUsername,
     tokeExpiresInSec,
   )
-import RealWorld.Util.BoundedText (unBoundedText)
-import RealWorld.Util.Maybe (justToNothing)
+import RealWorld.Domain.Util.BoundedText (unBoundedText)
+import RealWorld.Domain.Util.Maybe (justToNothing)
 import Relude hiding ((??))
 
 ----------------------------------------------------------------------------------------------------

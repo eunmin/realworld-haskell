@@ -4,6 +4,8 @@ module RealWorld.Infra.Component.Database where
 
 import Control.Exception (bracket)
 import Control.Exception.Safe (throwString)
+import Control.Monad.Catch (MonadMask)
+import Data.Has (Has (..))
 import Data.Pool
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple
@@ -25,7 +27,8 @@ import Database.PostgreSQL.Simple.Migration
     defaultOptions,
     runMigrations,
   )
-import RealWorld.Util.Env (envRead)
+import RealWorld.Infra.Util.Env (envRead)
+import qualified RealWorld.Infra.Util.Pool as Pool
 import Relude hiding (State, state, withState)
 import System.Environment (getEnv)
 
@@ -61,8 +64,8 @@ withPool
       initPool = newPool $ defaultPoolConfig openConn closeConn idleTimeoutSec poolSize
       cleanPool = destroyAllResources
       openConn =
-        connect $
-          ConnectInfo
+        connect
+          $ ConnectInfo
             { connectHost = T.unpack host,
               connectPort = fromIntegral port,
               connectUser = T.unpack user,
@@ -101,3 +104,13 @@ migrate (State pool _) = do
       [ MigrationInitialization,
         MigrationDirectory "sql/migrations"
       ]
+
+withConnection ::
+  (Has State r, MonadIO m, MonadState r m, MonadMask m) =>
+  (Connection -> m a) ->
+  m a
+withConnection action = do
+  (State pool conn) <- gets getter
+  case conn of
+    Nothing -> Pool.withResource pool $ \conn' -> action conn'
+    Just conn' -> action conn'

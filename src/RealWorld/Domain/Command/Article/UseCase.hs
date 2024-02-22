@@ -48,7 +48,7 @@ import RealWorld.Domain.Command.Article.Value
   )
 import RealWorld.Domain.Command.User.Entity.User (userUsername)
 import RealWorld.Domain.Command.User.Value (Token (..), Username (unUsername))
-import RealWorld.Util.BoundedText (BoundedText (unBoundedText))
+import RealWorld.Domain.Util.BoundedText (BoundedText (unBoundedText))
 import Relude hiding ((??))
 
 ----------------------------------------------------------------------------------------------------

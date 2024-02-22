@@ -26,7 +26,7 @@ import RealWorld.Domain.Query.Data (Article (..), Comment (..), Profile)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.Service (QueryService)
 import qualified RealWorld.Domain.Query.Service as QueryService
-import RealWorld.Infra.Json ()
+import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound)
 import RealWorld.Infra.Web.Util (withToken, (!?))
 import Relude

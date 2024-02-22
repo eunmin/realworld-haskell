@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Database.PGArticleRepository where
+module RealWorld.Infra.Repository.PgArticleRepository where
 
 import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)
@@ -21,8 +21,15 @@ import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (PGArray (..))
 import RealWorld.Domain.Command.Article.Entity.Article (Article (..))
 import RealWorld.Domain.Command.Article.Value
+  ( ArticleBody (ArticleBody),
+    Description (Description),
+    Slug (..),
+    Tag (Tag),
+    Title (Title),
+  )
+import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
-import RealWorld.Infra.Database.Repo (withConnection)
+import RealWorld.Infra.Converter.PostgreSQL ()
 import Relude
 
 type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
@@ -86,48 +93,48 @@ instance FromRow Article where
 save :: (Database r m) => Article -> m ()
 save user =
   withConnection $ \conn ->
-    liftIO
-      $ void
-      $ execute
-        conn
-        "INSERT INTO articles \
-        \ (id, slug, title, description, body, tags, author_id, favorites_count, created_at)\
-        \ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\
-        \ ON CONFLICT (id) DO\
-        \ UPDATE SET\
-        \   slug = ?,\
-        \   title = ?,\
-        \   description = ?,\
-        \   body = ?,\
-        \   tags = ?,\
-        \   author_id = ?,\
-        \   favorites_count = ?,\
-        \   updated_at = now()"
-        user
+    liftIO $
+      void $
+        execute
+          conn
+          "INSERT INTO articles \
+          \ (id, slug, title, description, body, tags, author_id, favorites_count, created_at)\
+          \ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\
+          \ ON CONFLICT (id) DO\
+          \ UPDATE SET\
+          \   slug = ?,\
+          \   title = ?,\
+          \   description = ?,\
+          \   body = ?,\
+          \   tags = ?,\
+          \   author_id = ?,\
+          \   favorites_count = ?,\
+          \   updated_at = now()"
+          user
 
 findById :: (Database r m) => ULID -> m (Maybe Article)
 findById articleId =
   withConnection $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
-        \       favorites_count, author_id \
-        \FROM articles WHERE id = ?"
-        (Only articleId)
+    liftIO $
+      headMay
+        <$> query
+          conn
+          "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+          \       favorites_count, author_id \
+          \FROM articles WHERE id = ?"
+          (Only articleId)
 
 findBySlug :: (Database r m) => Slug -> m (Maybe Article)
 findBySlug slug =
   withConnection $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
-        \       favorites_count, author_id \
-        \FROM articles WHERE slug = ?"
-        (Only $ unSlug slug)
+    liftIO $
+      headMay
+        <$> query
+          conn
+          "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+          \       favorites_count, author_id \
+          \FROM articles WHERE slug = ?"
+          (Only $ unSlug slug)
 
 delete :: (Database r m) => Article -> m ()
 delete article =

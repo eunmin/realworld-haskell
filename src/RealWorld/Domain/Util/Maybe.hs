@@ -1,4 +1,4 @@
-module RealWorld.Util.Maybe (justToNothing) where
+module RealWorld.Domain.Util.Maybe (justToNothing) where
 
 import Data.Maybe (Maybe (..))
 

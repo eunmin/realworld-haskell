@@ -3,7 +3,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module RealWorld.Util.BoundedText where
+module RealWorld.Domain.Util.BoundedText where
 
 import qualified Data.Text as T
 import GHC.TypeLits (natVal)

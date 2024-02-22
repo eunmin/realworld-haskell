@@ -19,13 +19,13 @@ import RealWorld.Domain.Adapter.Repository.CommentRepository
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
-import qualified RealWorld.Infra.Database.PGArticleRepository as PGArticleRepository
-import qualified RealWorld.Infra.Database.PGCommentRepository as PGCommentRepository
-import qualified RealWorld.Infra.Database.PGQuery as PGQuery
-import qualified RealWorld.Infra.Database.PGUserRepository as PGUserRepository
-import qualified RealWorld.Infra.Database.Repo as Repo
 import qualified RealWorld.Infra.Gateway.BcryptPasswordGateway as BcryptPasswordGateway
 import qualified RealWorld.Infra.Gateway.JwtToken as JwtTokenGateway
+import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
+import qualified RealWorld.Infra.Repository.PgArticleRepository as PgArticleRepository
+import qualified RealWorld.Infra.Repository.PgCommentRepository as PgCommentRepository
+import qualified RealWorld.Infra.Repository.PgQuery as PgQuery
+import qualified RealWorld.Infra.Repository.PgUserRepository as PgUserRepository
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
 import Relude
@@ -45,24 +45,24 @@ newtype App a = App {unApp :: StateT System.State IO a}
     )
 
 instance UserRepository App where
-  save = PGUserRepository.save
-  findById = PGUserRepository.findById
-  findByUsername = PGUserRepository.findByUsername
-  findByEmail = PGUserRepository.findByEmail
-  follow = PGUserRepository.follow
-  unfollow = PGUserRepository.unfollow
-  hasFollowing = PGUserRepository.hasFollowing
+  save = PgUserRepository.save
+  findById = PgUserRepository.findById
+  findByUsername = PgUserRepository.findByUsername
+  findByEmail = PgUserRepository.findByEmail
+  follow = PgUserRepository.follow
+  unfollow = PgUserRepository.unfollow
+  hasFollowing = PgUserRepository.hasFollowing
 
 instance ArticleRepository App where
-  save = PGArticleRepository.save
-  findById = PGArticleRepository.findById
-  findBySlug = PGArticleRepository.findBySlug
-  delete = PGArticleRepository.delete
+  save = PgArticleRepository.save
+  findById = PgArticleRepository.findById
+  findBySlug = PgArticleRepository.findBySlug
+  delete = PgArticleRepository.delete
 
 instance CommentRepository App where
-  save = PGCommentRepository.save
-  findById = PGCommentRepository.findById
-  delete = PGCommentRepository.delete
+  save = PgCommentRepository.save
+  findById = PgCommentRepository.findById
+  delete = PgCommentRepository.delete
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate
@@ -73,16 +73,16 @@ instance PasswordGateway App where
   isValidPassword = BcryptPasswordGateway.isValidPassword
 
 instance TxManager App where
-  withTx = Repo.withTx
+  withTx = PgTxManager.withTx
 
 instance QueryService App where
-  getCurrentUser = PGQuery.getCurrentUser
-  getProfile = PGQuery.getProfile
-  listArticles = PGQuery.listArticles
-  feedArticles = PGQuery.feedArticles
-  getArticle = PGQuery.getArticle
-  getCommentsFromArticle = PGQuery.getCommentsFromArticle
-  getTags = PGQuery.getTags
+  getCurrentUser = PgQuery.getCurrentUser
+  getProfile = PgQuery.getProfile
+  listArticles = PgQuery.listArticles
+  feedArticles = PgQuery.feedArticles
+  getArticle = PgQuery.getArticle
+  getCommentsFromArticle = PgQuery.getCommentsFromArticle
+  getTags = PgQuery.getTags
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do

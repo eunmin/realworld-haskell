@@ -41,27 +41,27 @@ library
       RealWorld.Domain.Command.User.Value
       RealWorld.Domain.Query.Data
       RealWorld.Domain.Query.Service
+      RealWorld.Domain.Util.BoundedText
+      RealWorld.Domain.Util.Maybe
       RealWorld.Infra.Component.Database
       RealWorld.Infra.Component.HttpServer
-      RealWorld.Infra.Database.PGArticleRepository
-      RealWorld.Infra.Database.PGCommentRepository
-      RealWorld.Infra.Database.PGQuery
-      RealWorld.Infra.Database.PGUserRepository
-      RealWorld.Infra.Database.Repo
+      RealWorld.Infra.Converter.Aeson
+      RealWorld.Infra.Converter.PostgreSQL
       RealWorld.Infra.Gateway.BcryptPasswordGateway
       RealWorld.Infra.Gateway.JwtToken
-      RealWorld.Infra.Json
+      RealWorld.Infra.Manager.PgTxManager
+      RealWorld.Infra.Repository.PgArticleRepository
+      RealWorld.Infra.Repository.PgCommentRepository
+      RealWorld.Infra.Repository.PgQuery
+      RealWorld.Infra.Repository.PgUserRepository
       RealWorld.Infra.System
+      RealWorld.Infra.Util.Env
+      RealWorld.Infra.Util.Pool
       RealWorld.Infra.Web.Controller.Article
       RealWorld.Infra.Web.Controller.User
       RealWorld.Infra.Web.ErrorResponse
       RealWorld.Infra.Web.Routes
       RealWorld.Infra.Web.Util
-      RealWorld.Util.BoundedText
-      RealWorld.Util.Database
-      RealWorld.Util.Env
-      RealWorld.Util.Maybe
-      RealWorld.Util.Pool
   other-modules:
       Paths_realworld_haskell
   autogen-modules:

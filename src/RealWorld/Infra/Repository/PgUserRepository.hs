@@ -2,7 +2,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Database.PGUserRepository where
+module RealWorld.Infra.Repository.PgUserRepository where
 
 import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)
@@ -26,9 +26,10 @@ import RealWorld.Domain.Command.User.Value
     Image (..),
     Username (..),
   )
+import RealWorld.Domain.Util.BoundedText (BoundedText (..))
+import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
-import RealWorld.Infra.Database.Repo (withConnection)
-import RealWorld.Util.BoundedText (BoundedText (..))
+import RealWorld.Infra.Converter.PostgreSQL ()
 import Relude
 
 instance ToRow User where
@@ -80,21 +81,21 @@ type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask 
 save :: (Database r m) => User -> m ()
 save user = do
   withConnection $ \conn ->
-    liftIO
-      $ void
-      $ execute
-        conn
-        "INSERT INTO users (id, username, email, hashed_password, bio, image, created_at)\
-        \ VALUES (?, ?, ?, ?, ?, ?, ?)\
-        \ ON CONFLICT (id) DO\
-        \ UPDATE SET\
-        \   username = ?,\
-        \   email = ?,\
-        \   hashed_password = ?,\
-        \   bio = ?,\
-        \   image = ?,\
-        \   updated_at = now()"
-        user
+    liftIO $
+      void $
+        execute
+          conn
+          "INSERT INTO users (id, username, email, hashed_password, bio, image, created_at)\
+          \ VALUES (?, ?, ?, ?, ?, ?, ?)\
+          \ ON CONFLICT (id) DO\
+          \ UPDATE SET\
+          \   username = ?,\
+          \   email = ?,\
+          \   hashed_password = ?,\
+          \   bio = ?,\
+          \   image = ?,\
+          \   updated_at = now()"
+          user
 
 findById :: (Database r m) => ULID -> m (Maybe User)
 findById userId = do
@@ -114,29 +115,29 @@ findByEmail (Email email) = do
 follow :: (Database r m) => ULID -> ULID -> m Bool
 follow followerId followeeId = do
   withConnection $ \conn ->
-    liftIO
-      $ (> 0)
-      <$> execute
-        conn
-        "INSERT INTO followings (user_id, following_id) VALUES (?, ?)"
-        (followerId, followeeId)
+    liftIO $
+      (> 0)
+        <$> execute
+          conn
+          "INSERT INTO followings (user_id, following_id) VALUES (?, ?)"
+          (followerId, followeeId)
 
 unfollow :: (Database r m) => ULID -> ULID -> m Bool
 unfollow followerId followeeId = do
   withConnection $ \conn ->
-    liftIO
-      $ (> 0)
-      <$> execute
-        conn
-        "DELETE FROM followings WHERE user_id = ? AND following_id = ?"
-        (followerId, followeeId)
+    liftIO $
+      (> 0)
+        <$> execute
+          conn
+          "DELETE FROM followings WHERE user_id = ? AND following_id = ?"
+          (followerId, followeeId)
 
 hasFollowing :: (Database r m) => ULID -> ULID -> m Bool
 hasFollowing followerId followeeId = do
   withConnection $ \conn -> do
     [Only (count :: Int)] <-
-      liftIO
-        $ query
+      liftIO $
+        query
           conn
           "SELECT count(*) FROM followings WHERE user_id = ? AND following_id = ?"
           (followerId, followeeId)

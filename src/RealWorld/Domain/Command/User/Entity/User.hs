@@ -5,6 +5,13 @@ module RealWorld.Domain.Command.User.Entity.User where
 import Data.Time (UTCTime)
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.User.Value
+  ( Bio,
+    Email,
+    HashedPassword,
+    Image,
+    Username,
+    emptyBio,
+  )
 import Relude
 
 ----------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module RealWorld.Infra.Json where
+module RealWorld.Infra.Converter.Aeson where
 
 import Data.Aeson
   ( ToJSON (toJSON),
@@ -21,7 +21,7 @@ import RealWorld.Domain.Command.User.Value
     Username (..),
   )
 import RealWorld.Domain.Query.Data (Article, Comment, Profile, User)
-import RealWorld.Util.BoundedText (BoundedText (..))
+import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 import Relude
 
 instance ToJSON ULID where

@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Database.PGCommentRepository where
+module RealWorld.Infra.Repository.PgCommentRepository where
 
 import Control.Exception.Safe (MonadMask)
 import Data.Has (Has)
@@ -17,11 +17,11 @@ import Database.PostgreSQL.Simple.FromField (FromField)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
-import Database.PostgreSQL.Simple.Types (PGArray (..))
 import RealWorld.Domain.Command.Article.Entity.Comment
 import RealWorld.Domain.Command.Article.Value (CommentBody (..))
+import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
-import RealWorld.Infra.Database.Repo (withConnection)
+import RealWorld.Infra.Converter.PostgreSQL ()
 import Relude
 import Safe (headMay)
 
@@ -59,32 +59,32 @@ instance FromRow Comment where
 save :: (Database r m) => Comment -> m ()
 save comment =
   withConnection $ \conn ->
-    liftIO
-      $ void
-      $ execute
-        conn
-        "INSERT INTO comments \
-        \ (id, body, created_at, updated_at, author_id, article_id)\
-        \ VALUES (?, ?, ?, ?, ?, ?)\
-        \ ON CONFLICT (id) DO\
-        \ UPDATE SET\
-        \   body = ?,\
-        \   created_at = ?,\
-        \   author_id = ?,\
-        \   article_id = ?,\
-        \   updated_at = now()"
-        comment
+    liftIO $
+      void $
+        execute
+          conn
+          "INSERT INTO comments \
+          \ (id, body, created_at, updated_at, author_id, article_id)\
+          \ VALUES (?, ?, ?, ?, ?, ?)\
+          \ ON CONFLICT (id) DO\
+          \ UPDATE SET\
+          \   body = ?,\
+          \   created_at = ?,\
+          \   author_id = ?,\
+          \   article_id = ?,\
+          \   updated_at = now()"
+          comment
 
 findById :: (Database r m) => ULID -> m (Maybe Comment)
 findById commentId =
   withConnection $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT id, body, created_at, updated_at, author_id, article_id \
-        \FROM comments WHERE id = ?"
-        (Only commentId)
+    liftIO $
+      headMay
+        <$> query
+          conn
+          "SELECT id, body, created_at, updated_at, author_id, article_id \
+          \FROM comments WHERE id = ?"
+          (Only commentId)
 
 delete :: (Database r m) => Comment -> m ()
 delete comment =

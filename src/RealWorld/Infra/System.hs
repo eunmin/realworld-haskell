@@ -2,7 +2,7 @@ module RealWorld.Infra.System where
 
 import qualified RealWorld.Infra.Component.Database as Database
 import qualified RealWorld.Infra.Component.HttpServer as HttpServer
-import RealWorld.Util.Env (envRead)
+import RealWorld.Infra.Util.Env (envRead)
 import Relude hiding (State, state, withState)
 
 data Config = Config

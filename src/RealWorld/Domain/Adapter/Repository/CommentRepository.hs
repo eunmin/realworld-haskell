@@ -1,7 +1,7 @@
 module RealWorld.Domain.Adapter.Repository.CommentRepository where
 
 import Data.ULID (ULID)
-import RealWorld.Domain.Command.Article.Entity.Comment
+import RealWorld.Domain.Command.Article.Entity.Comment (Comment)
 import Relude
 
 class (Monad m) => CommentRepository m where
