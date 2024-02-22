@@ -15,6 +15,8 @@ import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.Article.UseCase
   ( CreateArticleCommand (..),
     CreateArticleResult (..),
+    UpdateArticleCommand (..),
+    UpdateArticleResult (..),
   )
 import qualified RealWorld.Domain.Command.Article.UseCase as ArticleUseCase
 import RealWorld.Domain.Query.Data (Article (..), Profile)
@@ -29,6 +31,7 @@ import Web.Scotty.Trans
   ( ActionT,
     json,
     jsonData,
+    param,
     raise,
   )
 
@@ -86,5 +89,56 @@ createArticle = do
           articleUpdatedAt = Nothing,
           articleFavorited = False,
           articleFavoritesCount = 0,
+          articleAuthor = author
+        }
+
+----------------------------------------------------------------------------------------------------
+-- Update Article
+data UpdateArticleInput = UpdateArticleInput
+  { updateArticleInputTitle :: Maybe Text,
+    updateArticleInputDescription :: Maybe Text,
+    updateArticleInputBody :: Maybe Text
+  }
+  deriving (Show, Generic)
+
+instance FromJSON UpdateArticleInput where
+  parseJSON = genericParseJSON $ aesonDrop 18 camelCase
+
+updateArticle ::
+  (MonadIO m, ArticleRepository m, UserRepository m, TxManager m, TokenGateway m, QueryService m) =>
+  ActionT ErrorResponse m ()
+updateArticle = do
+  withToken $ \token -> do
+    ArticleWrapper input <- jsonData
+    slug <- param "slug"
+    result <- lift $ ArticleUseCase.updateArticle $ toCommand token slug input
+    case result of
+      Right result'@UpdateArticleResult {..} -> do
+        let params = Query.GetProfileParams Nothing updateArticleResultAuthorUsername
+        profile <- QueryService.getProfile params !? notFound "Author not found"
+        json $ ArticleWrapper $ toArticle result' profile
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
+    toCommand token slug UpdateArticleInput {..} =
+      UpdateArticleCommand
+        { updateArticleCommandToken = token,
+          updateArticleCommandSlug = slug,
+          updateArticleCommandTitle = updateArticleInputTitle,
+          updateArticleCommandDescription = updateArticleInputDescription,
+          updateArticleCommandBody = updateArticleInputBody
+        }
+    toArticle :: ArticleUseCase.UpdateArticleResult -> Profile -> Article
+    toArticle UpdateArticleResult {..} author =
+      Article
+        { articleSlug = updateArticleResultSlug,
+          articleTitle = updateArticleResultTitle,
+          articleDescription = updateArticleResultDescription,
+          articleBody = updateArticleResultBody,
+          articleTagList = updateArticleResultTags,
+          articleCreatedAt = updateArticleResultCreatedAt,
+          articleUpdatedAt = updateArticleResultUpdatedAt,
+          articleFavorited = False,
+          articleFavoritesCount = updateArticleResultFavoritesCount,
           articleAuthor = author
         }

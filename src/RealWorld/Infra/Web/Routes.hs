@@ -63,4 +63,6 @@ routes = do
 
   post "/api/articles" Article.createArticle
 
+  put "/api/articles/:slug" Article.updateArticle
+
   notFound $ raise $ ErrorResponse.notFound "API not found"

@@ -10,10 +10,26 @@ import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository 
 import qualified RealWorld.Domain.Adapter.Repository.ArticleRepository as ArticleRepository
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import qualified RealWorld.Domain.Adapter.Repository.UserRepository as UserRepository
-import RealWorld.Domain.Command.Article.Entity.Article (Article (articleAuthorId, articleSlug))
+import RealWorld.Domain.Command.Article.Entity.Article
+  ( Article
+      ( articleAuthorId,
+        articleBody,
+        articleCreatedAt,
+        articleDescription,
+        articleFavoritesCount,
+        articleSlug,
+        articleTags,
+        articleTitle,
+        articleUpdatedAt
+      ),
+  )
 import qualified RealWorld.Domain.Command.Article.Entity.Article as Article
 import RealWorld.Domain.Command.Article.Value
-  ( Slug (unSlug),
+  ( Body (unBody),
+    Description (unDescription),
+    Slug (unSlug),
+    Tag (unTag),
+    Title (unTitle),
     mkBody,
     mkDescription,
     mkSlug,
@@ -98,6 +114,13 @@ data UpdateArticleCommand = UpdateArticleCommand
 
 data UpdateArticleResult = UpdateArticleResult
   { updateArticleResultSlug :: Text,
+    updateArticleResultTitle :: Text,
+    updateArticleResultDescription :: Text,
+    updateArticleResultBody :: Text,
+    updateArticleResultCreatedAt :: UTCTime,
+    updateArticleResultUpdatedAt :: Maybe UTCTime,
+    updateArticleResultTags :: [Text],
+    updateArticleResultFavoritesCount :: Int,
     updateArticleResultAuthorUsername :: Text
   }
   deriving (Show, Eq)
@@ -132,6 +155,13 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
   pure
     $ UpdateArticleResult
       { updateArticleResultSlug = unSlug $ articleSlug article,
+        updateArticleResultTitle = unTitle . articleTitle $ article,
+        updateArticleResultDescription = unDescription . articleDescription $ article,
+        updateArticleResultBody = unBody . articleBody $ article,
+        updateArticleResultCreatedAt = articleCreatedAt article,
+        updateArticleResultUpdatedAt = articleUpdatedAt article,
+        updateArticleResultTags = unTag <$> articleTags article,
+        updateArticleResultFavoritesCount = articleFavoritesCount article,
         updateArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
       }
 
