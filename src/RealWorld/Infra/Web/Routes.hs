@@ -65,4 +65,6 @@ routes = do
 
   put "/api/articles/:slug" Article.updateArticle
 
+  delete "/api/articles/:slug" Article.deleteArticle
+
   notFound $ raise $ ErrorResponse.notFound "API not found"

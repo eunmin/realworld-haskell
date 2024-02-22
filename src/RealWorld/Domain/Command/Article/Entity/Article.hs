@@ -66,3 +66,6 @@ update article actorId title description body =
             articleBody = fromMaybe (articleBody article) body,
             articleSlug = maybe (toSlug $ articleTitle article) toSlug title
           }
+
+isDeletable :: Article -> ULID -> Bool
+isDeletable article actorId = actorId /= articleAuthorId article

@@ -53,6 +53,7 @@ instance ArticleRepository App where
   save = PGArticleRepository.save
   findById = PGArticleRepository.findById
   findBySlug = PGArticleRepository.findBySlug
+  delete = PGArticleRepository.delete
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate

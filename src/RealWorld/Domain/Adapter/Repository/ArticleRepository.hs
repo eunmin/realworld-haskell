@@ -9,3 +9,4 @@ class ArticleRepository m where
   save :: Article -> m ()
   findById :: ULID -> m (Maybe Article)
   findBySlug :: Slug -> m (Maybe Article)
+  delete :: Article -> m ()

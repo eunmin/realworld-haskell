@@ -1,5 +1,9 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use newtype instead of data" #-}
 module RealWorld.Domain.Command.Article.UseCase where
 
+import Control.Error (throwE)
 import Control.Error.Util ((!?), (??))
 import Data.Time (UTCTime, getCurrentTime)
 import Data.ULID (getULID)
@@ -167,6 +171,38 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Article
+
+data DeleteArticleCommand = DeleteArticleCommand
+  { deleteArticleCommandToken :: Text,
+    deleteArticleCommandSlug :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data DeleteArticleResult = DeleteArticleResult
+  { deleteArticleResultSlug :: Text
+  }
+  deriving (Show, Eq)
+
+data DeleteArticleError
+  = DeleteArticleErrorInvalidToken
+  | DeleteArticleErrorInvalidSlug
+  | DeleteArticleErrorArticleNotFound
+  | DeleteArticleErrorAuthorMismatch
+  deriving (Show, Eq)
+
+deleteArticle ::
+  (MonadIO m, ArticleRepository m, TokenGateway m, TxManager m) =>
+  DeleteArticleCommand ->
+  m (Either DeleteArticleError DeleteArticleResult)
+deleteArticle DeleteArticleCommand {..} = runExceptT $ do
+  slug <- mkSlug deleteArticleCommandSlug ?? DeleteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token deleteArticleCommandToken) !? DeleteArticleErrorInvalidToken
+  withTx $ do
+    article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
+    when (Article.isDeletable article actorId)
+      $ throwE DeleteArticleErrorAuthorMismatch
+    lift $ ArticleRepository.delete article
+  pure $ DeleteArticleResult {deleteArticleResultSlug = unSlug slug}
 
 ----------------------------------------------------------------------------------------------------
 -- Add Comments to an Article

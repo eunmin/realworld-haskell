@@ -6,6 +6,7 @@ module RealWorld.Infra.Web.Controller.Article where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON, genericParseJSON)
 import Data.Aeson.Casing (aesonDrop, camelCase)
+import Data.Aeson.Types (emptyObject)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository
@@ -94,6 +95,7 @@ createArticle = do
 
 ----------------------------------------------------------------------------------------------------
 -- Update Article
+
 data UpdateArticleInput = UpdateArticleInput
   { updateArticleInputTitle :: Maybe Text,
     updateArticleInputDescription :: Maybe Text,
@@ -142,3 +144,20 @@ updateArticle = do
           articleFavoritesCount = updateArticleResultFavoritesCount,
           articleAuthor = author
         }
+
+----------------------------------------------------------------------------------------------------
+-- Delete Article
+
+deleteArticle ::
+  (MonadIO m, ArticleRepository m, TxManager m, TokenGateway m) =>
+  ActionT ErrorResponse m ()
+deleteArticle = do
+  withToken $ \token -> do
+    slug <- param "slug"
+    result <- lift $ ArticleUseCase.deleteArticle $ toCommand token slug
+    case result of
+      Right _ -> json emptyObject
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.DeleteArticleCommand
+    toCommand = ArticleUseCase.DeleteArticleCommand

@@ -84,7 +84,7 @@ instance FromRow Article where
       <*> field
 
 save :: (Database r m) => Article -> m ()
-save user = do
+save user =
   withConnection $ \conn ->
     liftIO
       $ void
@@ -106,7 +106,7 @@ save user = do
         user
 
 findById :: (Database r m) => ULID -> m (Maybe Article)
-findById articleId = do
+findById articleId =
   withConnection $ \conn ->
     liftIO
       $ headMay
@@ -118,7 +118,7 @@ findById articleId = do
         (Only articleId)
 
 findBySlug :: (Database r m) => Slug -> m (Maybe Article)
-findBySlug slug = do
+findBySlug slug =
   withConnection $ \conn ->
     liftIO
       $ headMay
@@ -128,3 +128,8 @@ findBySlug slug = do
         \       favorites_count, author_id \
         \FROM articles WHERE slug = ?"
         (Only $ unSlug slug)
+
+delete :: (Database r m) => Article -> m ()
+delete article =
+  withConnection $ \conn ->
+    liftIO $ void $ execute conn "DELETE FROM articles WHERE id = ?" (Only $ articleId article)
