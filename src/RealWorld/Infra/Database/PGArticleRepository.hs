@@ -103,3 +103,8 @@ findById :: (Database r m) => ULID -> m (Maybe Article)
 findById articleId = do
   withConnection $ \conn ->
     liftIO $ headMay <$> query conn "SELECT * FROM articles WHERE id = ?" (Only articleId)
+
+findBySlug :: (Database r m) => Slug -> m (Maybe Article)
+findBySlug slug = do
+  withConnection $ \conn ->
+    liftIO $ headMay <$> query conn "SELECT * FROM articles WHERE slug = ?" (Only $ unSlug slug)

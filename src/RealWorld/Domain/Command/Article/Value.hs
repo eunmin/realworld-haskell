@@ -8,6 +8,9 @@ import Relude
 newtype Slug = Slug {unSlug :: Text}
   deriving (Show, Eq, Generic)
 
+mkSlug :: Text -> Maybe Slug
+mkSlug = Just . Slug
+
 toSlug :: Title -> Slug
 toSlug = Slug . unTitle
 

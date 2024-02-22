@@ -47,3 +47,22 @@ mkArticle articleId title description body tags createdAt authorId =
       articleFavoritesCount = 0,
       articleAuthorId = authorId
     }
+
+update ::
+  Article ->
+  ULID ->
+  Maybe Title ->
+  Maybe Description ->
+  Maybe Body ->
+  Maybe Article
+update article actorId title description body =
+  if actorId /= articleAuthorId article
+    then Nothing
+    else
+      Just
+        $ article
+          { articleTitle = fromMaybe (articleTitle article) title,
+            articleDescription = fromMaybe (articleDescription article) description,
+            articleBody = fromMaybe (articleBody article) body,
+            articleSlug = maybe (toSlug $ articleTitle article) toSlug title
+          }

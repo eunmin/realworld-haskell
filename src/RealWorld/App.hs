@@ -52,6 +52,7 @@ instance UserRepository App where
 instance ArticleRepository App where
   save = PGArticleRepository.save
   findById = PGArticleRepository.findById
+  findBySlug = PGArticleRepository.findBySlug
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate
