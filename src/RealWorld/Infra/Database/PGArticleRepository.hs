@@ -7,11 +7,17 @@ import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)
 import Data.Has (Has)
 import Data.ULID (ULID)
-import Database.PostgreSQL.Simple (Only (Only), execute, query)
-import Database.PostgreSQL.Simple.FromField
-import Database.PostgreSQL.Simple.FromRow
-import Database.PostgreSQL.Simple.ToField
-import Database.PostgreSQL.Simple.ToRow
+import Database.PostgreSQL.Simple
+  ( FromRow,
+    Only (Only),
+    ToRow,
+    execute,
+    query,
+  )
+import Database.PostgreSQL.Simple.FromField (FromField)
+import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import Database.PostgreSQL.Simple.ToField (ToField (..))
+import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (PGArray (..))
 import RealWorld.Domain.Command.Article.Entity.Article (Article (..))
 import RealWorld.Domain.Command.Article.Value
@@ -102,9 +108,23 @@ save user = do
 findById :: (Database r m) => ULID -> m (Maybe Article)
 findById articleId = do
   withConnection $ \conn ->
-    liftIO $ headMay <$> query conn "SELECT * FROM articles WHERE id = ?" (Only articleId)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+        \       favorites_count, author_id \
+        \FROM articles WHERE id = ?"
+        (Only articleId)
 
 findBySlug :: (Database r m) => Slug -> m (Maybe Article)
 findBySlug slug = do
   withConnection $ \conn ->
-    liftIO $ headMay <$> query conn "SELECT * FROM articles WHERE slug = ?" (Only $ unSlug slug)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+        \       favorites_count, author_id \
+        \FROM articles WHERE slug = ?"
+        (Only $ unSlug slug)
