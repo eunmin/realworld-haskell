@@ -61,9 +61,9 @@ update article actorId title description body =
     else
       Just
         $ article
-          { articleTitle = fromMaybe (articleTitle article) title,
-            articleDescription = fromMaybe (articleDescription article) description,
-            articleBody = fromMaybe (articleBody article) body,
+          { articleTitle = title ?: articleTitle article,
+            articleDescription = description ?: articleDescription article,
+            articleBody = body ?: articleBody article,
             articleSlug = maybe (toSlug $ articleTitle article) toSlug title
           }
 

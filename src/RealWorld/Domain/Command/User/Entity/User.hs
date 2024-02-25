@@ -52,9 +52,9 @@ update ::
   User
 update user username email hashedPassword bio image =
   user
-    { userUsername = fromMaybe (userUsername user) username,
-      userEmail = fromMaybe (userEmail user) email,
-      userHashedPassword = fromMaybe (userHashedPassword user) hashedPassword,
-      userBio = fromMaybe (userBio user) bio,
-      userImage = fromMaybe (userImage user) image
+    { userUsername = username ?: userUsername user,
+      userEmail = email ?: userEmail user,
+      userHashedPassword = hashedPassword ?: userHashedPassword user,
+      userBio = bio ?: userBio user,
+      userImage = image ?: userImage user
     }
