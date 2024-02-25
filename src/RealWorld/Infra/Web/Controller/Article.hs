@@ -117,7 +117,14 @@ instance FromJSON UpdateArticleInput where
   parseJSON = genericParseJSON $ aesonDrop 18 camelCase
 
 updateArticle ::
-  (MonadIO m, ArticleRepository m, UserRepository m, TxManager m, TokenGateway m, QueryService m) =>
+  ( MonadIO m,
+    ArticleRepository m,
+    UserRepository m,
+    FavoriteRepository m,
+    TxManager m,
+    TokenGateway m,
+    QueryService m
+  ) =>
   ActionT ErrorResponse m ()
 updateArticle = do
   withToken $ \token -> do
@@ -150,7 +157,7 @@ updateArticle = do
           articleTagList = updateArticleResultTags,
           articleCreatedAt = updateArticleResultCreatedAt,
           articleUpdatedAt = updateArticleResultUpdatedAt,
-          articleFavorited = False,
+          articleFavorited = updateArticleResultFavorited,
           articleFavoritesCount = updateArticleResultFavoritesCount,
           articleAuthor = author
         }

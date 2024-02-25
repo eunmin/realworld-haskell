@@ -41,6 +41,7 @@ import RealWorld.Domain.Command.Article.Entity.Favorite (mkFavorite)
 import RealWorld.Domain.Command.Article.Value
   ( ArticleBody (unArticleBody),
     Description (unDescription),
+    FavoriteId (..),
     Slug (unSlug),
     Tag (unTag),
     Title (unTitle),
@@ -136,7 +137,8 @@ data UpdateArticleResult = UpdateArticleResult
     updateArticleResultUpdatedAt :: Maybe UTCTime,
     updateArticleResultTags :: [Text],
     updateArticleResultFavoritesCount :: Int,
-    updateArticleResultAuthorUsername :: Text
+    updateArticleResultAuthorUsername :: Text,
+    updateArticleResultFavorited :: Bool
   }
   deriving (Show, Eq)
 
@@ -152,7 +154,7 @@ data UpdateArticleError
   deriving (Show, Eq)
 
 updateArticle ::
-  (MonadIO m, ArticleRepository m, UserRepository m, TokenGateway m, TxManager m) =>
+  (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TokenGateway m, TxManager m) =>
   UpdateArticleCommand ->
   m (Either UpdateArticleError UpdateArticleResult)
 updateArticle UpdateArticleCommand {..} = runExceptT $ do
@@ -161,12 +163,13 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
   description <- traverse mkDescription updateArticleCommandDescription ?? UpdateArticleErrorInvalidDescription
   body <- traverse mkArticleBody updateArticleCommandBody ?? UpdateArticleErrorInvalidBody
   actorId <- TokenGateway.verify (Token updateArticleCommandToken) !? UpdateArticleErrorInvalidToken
-  (article, author) <- withTx $ do
+  (article, author, favorited) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
     author <- UserRepository.findById (articleAuthorId article) !? UpdateArticleErrorAuthorNotFound
     article' <- Article.update article actorId title description body ?? UpdateArticleErrorAuthorMismatch
     _ <- lift $ ArticleRepository.save article'
-    pure (article', author)
+    favorited <- lift $ FavoriteRepository.findById $ FavoriteId (articleId article) actorId
+    pure (article', author, isJust favorited)
   pure
     $ UpdateArticleResult
       { updateArticleResultSlug = unSlug $ articleSlug article,
@@ -177,7 +180,8 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
         updateArticleResultUpdatedAt = articleUpdatedAt article,
         updateArticleResultTags = unTag <$> articleTags article,
         updateArticleResultFavoritesCount = articleFavoritesCount article,
-        updateArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
+        updateArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ author,
+        updateArticleResultFavorited = favorited
       }
 
 ----------------------------------------------------------------------------------------------------

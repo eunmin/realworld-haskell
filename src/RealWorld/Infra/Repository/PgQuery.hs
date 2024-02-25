@@ -28,7 +28,7 @@ getCurrentUser GetCurrentUserParams {..} = do
         <$> query
           conn
           "SELECT email, '', username, bio, image FROM users WHERE id = ?"
-          (Only sessionUserId)
+          (Only getCurrentUserParamsActorId)
 
 getProfile :: (QueryDatabase r m) => GetProfileParams -> m (Maybe Profile)
 getProfile GetProfileParams {..} = do
@@ -38,8 +38,12 @@ getProfile GetProfileParams {..} = do
       headMay
         <$> query
           conn
-          "SELECT username, bio, image, false FROM users WHERE username = ?"
-          (Only username)
+          "SELECT username, bio, image, \
+          \CASE WHEN f.created_at IS null THEN false ELSE true END following \
+          \FROM users u \
+          \LEFT JOIN followings f ON u.id = f.following_id AND f.user_id = ? \
+          \WHERE username = ?"
+          (getProfileParamsActorId, getProfileParamsUsername)
 
 listArticles :: ListArticlesParams -> m ArticleList
 listArticles = undefined

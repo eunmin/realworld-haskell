@@ -7,42 +7,42 @@ import Data.Time (UTCTime)
 import Relude
 
 data GetCurrentUserParams = GetCurrentUserParams
-  { sessionUserId :: Text
+  { getCurrentUserParamsActorId :: Text
   }
   deriving (Show, Eq)
 
 data GetProfileParams = GetProfileParams
-  { sessionUserId :: Maybe Text,
-    username :: Text
+  { getProfileParamsActorId :: Maybe Text,
+    getProfileParamsUsername :: Text
   }
   deriving (Show, Eq)
 
 data ListArticlesParams = ListArticlesParams
-  { sessionUserId :: Maybe Text,
-    tag :: Maybe Text,
-    author :: Maybe Text,
-    favorited :: Maybe Text,
-    limit :: Maybe Int,
-    offset :: Maybe Int
+  { listArticlesParamsActorId :: Maybe Text,
+    listArticlesParamsTag :: Maybe Text,
+    listArticlesParamsAuthor :: Maybe Text,
+    listArticlesParamsFavorited :: Maybe Text,
+    listArticlesParamsLimit :: Maybe Int,
+    listArticlesParamsOffset :: Maybe Int
   }
   deriving (Show, Eq)
 
 data FeedArticlesParams = FeedArticlesParams
-  { sessionUserId :: Text,
-    limit :: Maybe Int,
-    offset :: Maybe Int
+  { feedArticlesParamsActorId :: Text,
+    feedArticlesParamsLimit :: Maybe Int,
+    feedArticlesParamsOffset :: Maybe Int
   }
   deriving (Show, Eq)
 
 data GetArticleParams = GetArticleParams
-  { sessionUserId :: Maybe Text,
-    slug :: Text
+  { getArticleParamsActorId :: Maybe Text,
+    getArticleParamsSlug :: Text
   }
   deriving (Show, Eq)
 
 data GetCommentsFromArticleParams = GetCommentsFromArticleParams
-  { sessionUserId :: Maybe Text,
-    slug :: Text
+  { getCommentsFromArticleParamsActorId :: Maybe Text,
+    getCommentsFromArticleParamsSlug :: Text
   }
   deriving (Show, Eq)
 
