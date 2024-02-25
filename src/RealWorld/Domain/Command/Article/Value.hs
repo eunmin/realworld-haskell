@@ -61,7 +61,7 @@ mkTag :: Text -> Maybe Tag
 mkTag = Just . Tag
 
 ----------------------------------------------------------------------------------------------------
--- Tag
+-- FavoriteId
 
 data FavoriteId = FavoriteId
   { favoriteIdArticleId :: ULID,
