@@ -22,7 +22,7 @@ import RealWorld.Domain.Query.Data
     GetProfileParams (..),
     ListArticlesParams,
     Profile (..),
-    TagList,
+    TagList (..),
     User,
   )
 import qualified RealWorld.Infra.Component.Database as Database
@@ -56,6 +56,9 @@ instance FromRow Comment where
       <*> field
       <*> field
       <*> (Profile <$> field <*> field <*> field <*> field)
+
+instance FromRow TagList where
+  fromRow = TagList <$> (fromPGArray <$> field)
 
 getCurrentUser :: (QueryDatabase r m) => GetCurrentUserParams -> m (Maybe User)
 getCurrentUser GetCurrentUserParams {..} = do
@@ -121,4 +124,14 @@ getComments GetCommentsParams {..} = do
     pure $ CommentList comments
 
 getTags :: (QueryDatabase r m) => m TagList
-getTags = undefined
+getTags = do
+  (Database.State pool _) <- gets getter
+  liftIO $ withResource pool $ \conn -> do
+    fromMaybe (TagList [])
+      <$> liftIO
+        ( headMay
+            <$> query
+              conn
+              "SELECT array_agg(DISTINCT c) FROM (SELECT unnest(tags) FROM articles) AS dt(c)"
+              ()
+        )
