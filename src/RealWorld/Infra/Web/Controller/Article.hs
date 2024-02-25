@@ -53,11 +53,6 @@ data CommentWrapper a = CommentWrapper
   }
   deriving (Show, Generic, FromJSON, ToJSON)
 
-data CommentListWrapper a = CommentListWrapper
-  { comments :: a
-  }
-  deriving (Show, Generic, FromJSON, ToJSON)
-
 ----------------------------------------------------------------------------------------------------
 -- List Articles
 
@@ -303,8 +298,7 @@ getComments = do
             { getCommentsParamsActorId = show <$> userId,
               getCommentsParamsSlug = slug
             }
-    comments <- lift (QueryService.getComments params)
-    json $ CommentListWrapper comments
+    json =<< lift (QueryService.getComments params)
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Comment
