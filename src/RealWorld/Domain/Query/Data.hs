@@ -22,27 +22,29 @@ data ListArticlesParams = ListArticlesParams
     listArticlesParamsTag :: Maybe Text,
     listArticlesParamsAuthor :: Maybe Text,
     listArticlesParamsFavorited :: Maybe Text,
-    listArticlesParamsLimit :: Maybe Int,
-    listArticlesParamsOffset :: Maybe Int
+    listArticlesParamsLimit :: Int,
+    listArticlesParamsOffset :: Int
   }
   deriving (Show, Eq)
 
 data FeedArticlesParams = FeedArticlesParams
   { feedArticlesParamsActorId :: Text,
-    feedArticlesParamsLimit :: Maybe Int,
-    feedArticlesParamsOffset :: Maybe Int
+    feedArticlesParamsTag :: Maybe Text,
+    feedArticlesParamsAuthor :: Maybe Text,
+    feedArticlesParamsFavorited :: Maybe Text,
+    feedArticlesParamsLimit :: Int,
+    feedArticlesParamsOffset :: Int
   }
   deriving (Show, Eq)
 
 data GetArticleParams = GetArticleParams
-  { getArticleParamsActorId :: Maybe Text,
-    getArticleParamsSlug :: Text
+  { getArticleParamsSlug :: Text
   }
   deriving (Show, Eq)
 
-data GetCommentsFromArticleParams = GetCommentsFromArticleParams
-  { getCommentsFromArticleParamsActorId :: Maybe Text,
-    getCommentsFromArticleParamsSlug :: Text
+data GetCommentsParams = GetCommentsParams
+  { getCommentsParamsActorId :: Maybe Text,
+    getCommentsParamsSlug :: Text
   }
   deriving (Show, Eq)
 

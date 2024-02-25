@@ -88,7 +88,7 @@ instance QueryService App where
   listArticles = PgQuery.listArticles
   feedArticles = PgQuery.feedArticles
   getArticle = PgQuery.getArticle
-  getCommentsFromArticle = PgQuery.getCommentsFromArticle
+  getComments = PgQuery.getComments
   getTags = PgQuery.getTags
 
 mainWithConfig :: System.Config -> IO ()

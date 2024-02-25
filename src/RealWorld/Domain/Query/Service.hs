@@ -6,7 +6,7 @@ import RealWorld.Domain.Query.Data
     CommentList,
     FeedArticlesParams,
     GetArticleParams,
-    GetCommentsFromArticleParams,
+    GetCommentsParams,
     GetCurrentUserParams,
     GetProfileParams,
     ListArticlesParams,
@@ -22,5 +22,5 @@ class QueryService m where
   listArticles :: ListArticlesParams -> m ArticleList
   feedArticles :: FeedArticlesParams -> m ArticleList
   getArticle :: GetArticleParams -> m (Maybe Article)
-  getCommentsFromArticle :: GetCommentsFromArticleParams -> m CommentList
+  getComments :: GetCommentsParams -> m CommentList
   getTags :: m TagList

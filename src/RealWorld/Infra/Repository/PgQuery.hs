@@ -54,8 +54,8 @@ feedArticles = undefined
 getArticle :: GetArticleParams -> m (Maybe Article)
 getArticle = undefined
 
-getCommentsFromArticle :: GetCommentsFromArticleParams -> m CommentList
-getCommentsFromArticle = undefined
+getComments :: GetCommentsParams -> m CommentList
+getComments = undefined
 
 getTags :: m TagList
 getTags = undefined

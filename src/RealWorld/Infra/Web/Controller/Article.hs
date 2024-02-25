@@ -8,6 +8,7 @@ import Data.Aeson (FromJSON (parseJSON), ToJSON, genericParseJSON)
 import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Aeson.Types (emptyObject)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
+import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository
   ( ArticleRepository,
@@ -25,14 +26,15 @@ import RealWorld.Domain.Command.Article.UseCase
     UpdateArticleResult (..),
   )
 import qualified RealWorld.Domain.Command.Article.UseCase as ArticleUseCase
+import RealWorld.Domain.Command.User.Value (Token (..))
 import RealWorld.Domain.Query.Data (Article (..), Comment (..), Profile)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.Service (QueryService)
 import qualified RealWorld.Domain.Query.Service as QueryService
 import RealWorld.Infra.Converter.Aeson ()
-import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound)
+import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound, unauthorized)
 import RealWorld.Infra.Web.Util (withToken, (!?))
-import Relude
+import Relude hiding ((??))
 import Web.Scotty.Trans
   ( ActionT,
     json,
@@ -50,6 +52,65 @@ data CommentWrapper a = CommentWrapper
   { comment :: a
   }
   deriving (Show, Generic, FromJSON, ToJSON)
+
+data CommentListWrapper a = CommentListWrapper
+  { comments :: a
+  }
+  deriving (Show, Generic, FromJSON, ToJSON)
+
+----------------------------------------------------------------------------------------------------
+-- List Articles
+
+listArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+listArticles = do
+  withToken $ \token -> do
+    userId <- lift $ TokenGateway.verify (Token token)
+    tag <- optional $ param "tag"
+    author <- optional $ param "author"
+    favorited <- optional $ param "favorited"
+    limit <- fromMaybe 20 <$> optional (param "limit")
+    offset <- fromMaybe 0 <$> optional (param "offset")
+    let params =
+          Query.ListArticlesParams
+            { listArticlesParamsActorId = show <$> userId,
+              listArticlesParamsTag = tag,
+              listArticlesParamsAuthor = author,
+              listArticlesParamsFavorited = favorited,
+              listArticlesParamsLimit = limit,
+              listArticlesParamsOffset = offset
+            }
+    json =<< lift (QueryService.listArticles params)
+
+----------------------------------------------------------------------------------------------------
+-- Feed Articles
+
+feedArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+feedArticles = do
+  withToken $ \token -> do
+    userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
+    tag <- optional $ param "tag"
+    author <- optional $ param "author"
+    favorited <- optional $ param "favorited"
+    limit <- fromMaybe 20 <$> optional (param "limit")
+    offset <- fromMaybe 0 <$> optional (param "offset")
+    let params =
+          Query.FeedArticlesParams
+            { feedArticlesParamsActorId = show userId,
+              feedArticlesParamsTag = tag,
+              feedArticlesParamsAuthor = author,
+              feedArticlesParamsFavorited = favorited,
+              feedArticlesParamsLimit = limit,
+              feedArticlesParamsOffset = offset
+            }
+    json =<< lift (QueryService.feedArticles params)
+
+----------------------------------------------------------------------------------------------------
+-- Get Article
+
+getArticle :: (MonadIO m, QueryService m) => ActionT ErrorResponse m ()
+getArticle = do
+  slug <- param "slug"
+  json =<< lift (QueryService.getArticle (Query.GetArticleParams slug))
 
 ----------------------------------------------------------------------------------------------------
 -- Create Article
@@ -230,6 +291,22 @@ addComments = do
         }
 
 ----------------------------------------------------------------------------------------------------
+-- Get Comments from an Article
+
+getComments :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+getComments = do
+  withToken $ \token -> do
+    userId <- lift $ TokenGateway.verify (Token token)
+    slug <- param "slug"
+    let params =
+          Query.GetCommentsParams
+            { getCommentsParamsActorId = show <$> userId,
+              getCommentsParamsSlug = slug
+            }
+    comments <- lift (QueryService.getComments params)
+    json $ CommentListWrapper comments
+
+----------------------------------------------------------------------------------------------------
 -- Delete Comment
 
 deleteComment ::
@@ -328,3 +405,9 @@ unfavorite = do
           articleFavoritesCount = unfavoriteArticleResultFavoritesCount,
           articleAuthor = author
         }
+
+----------------------------------------------------------------------------------------------------
+-- Get Tags
+
+getTags :: (MonadIO m, QueryService m) => ActionT ErrorResponse m ()
+getTags = json =<< lift QueryService.getTags

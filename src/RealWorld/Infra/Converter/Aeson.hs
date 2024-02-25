@@ -10,7 +10,7 @@ import Data.Aeson
     genericToJSON,
     withText,
   )
-import Data.Aeson.Casing (aesonPrefix, camelCase)
+import Data.Aeson.Casing (aesonDrop, aesonPrefix, camelCase)
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.User.Value
@@ -20,7 +20,7 @@ import RealWorld.Domain.Command.User.Value
     Token (..),
     Username (..),
   )
-import RealWorld.Domain.Query.Data (Article, Comment, Profile, User)
+import RealWorld.Domain.Query.Data (Article, ArticleList, Comment, CommentList, Profile, TagList, User)
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 import Relude
 
@@ -57,3 +57,12 @@ instance ToJSON Article where
 
 instance ToJSON Comment where
   toJSON = genericToJSON $ aesonPrefix camelCase
+
+instance ToJSON ArticleList where
+  toJSON = genericToJSON $ aesonDrop 11 camelCase
+
+instance ToJSON CommentList where
+  toJSON = genericToJSON $ aesonDrop 11 camelCase
+
+instance ToJSON TagList where
+  toJSON = genericToJSON $ aesonDrop 7 camelCase

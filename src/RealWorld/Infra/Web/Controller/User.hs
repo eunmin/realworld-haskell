@@ -130,9 +130,7 @@ authentication = do
 getCurrentUser :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getCurrentUser = do
   withToken $ \token -> do
-    userId <-
-      TokenGateway.verify (RealWorld.Domain.Command.User.Value.Token token)
-        !? unauthorized "Unauthorized"
+    userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
     let params = Query.GetCurrentUserParams $ show userId
     user <- QueryService.getCurrentUser params !? notFound "User not found"
     json $ UserWrapper $ user {userToken = token}

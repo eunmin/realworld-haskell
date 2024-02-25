@@ -65,6 +65,12 @@ routes = do
 
   delete "/api/profiles/:username/follow" User.unfollow
 
+  get "/api/articles" Article.listArticles
+
+  get "/api/articles/feed" Article.feedArticles
+
+  get "/api/articles/:slug" Article.getArticle
+
   post "/api/articles" Article.createArticle
 
   put "/api/articles/:slug" Article.updateArticle
@@ -73,10 +79,14 @@ routes = do
 
   post "/api/articles/:slug/comments" Article.addComments
 
+  get "/api/articles/:slug/comments" Article.getComments
+
   delete "/api/articles/:slug/comments/:comment-id" Article.deleteComment
 
   post "/api/articles/:slug/favorite" Article.favorite
 
   delete "/api/articles/:slug/favorite" Article.unfavorite
+
+  get "/api/tags" Article.getTags
 
   notFound $ raise $ ErrorResponse.notFound "API not found"
