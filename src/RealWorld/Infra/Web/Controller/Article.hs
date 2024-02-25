@@ -13,11 +13,14 @@ import RealWorld.Domain.Adapter.Repository.ArticleRepository
   ( ArticleRepository,
   )
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
+import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.Article.UseCase
   ( AddCommentsResult (..),
     CreateArticleCommand (..),
     CreateArticleResult (..),
+    FavoriteArticleResult (..),
+    UnfavoriteArticleResult (..),
     UpdateArticleCommand (..),
     UpdateArticleResult (..),
   )
@@ -240,5 +243,81 @@ deleteComment = do
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article
 
+favorite ::
+  ( MonadIO m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TxManager m,
+    QueryService m,
+    TokenGateway m
+  ) =>
+  ActionT ErrorResponse m ()
+favorite = do
+  withToken $ \token -> do
+    slug <- param "slug"
+    result <- lift $ ArticleUseCase.favoriteArticle $ toCommand token slug
+    case result of
+      Right result'@FavoriteArticleResult {..} -> do
+        let params = Query.GetProfileParams Nothing favoriteArticleResultAuthorUsername
+        profile <- QueryService.getProfile params !? notFound "Author not found"
+        json $ ArticleWrapper $ toArticle result' profile
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.FavoriteArticleCommand
+    toCommand = ArticleUseCase.FavoriteArticleCommand
+    toArticle :: ArticleUseCase.FavoriteArticleResult -> Profile -> Article
+    toArticle FavoriteArticleResult {..} author =
+      Article
+        { articleSlug = favoriteArticleResultSlug,
+          articleTitle = favoriteArticleResultTitle,
+          articleDescription = favoriteArticleResultDescription,
+          articleBody = favoriteArticleResultBody,
+          articleTagList = favoriteArticleResultTags,
+          articleCreatedAt = favoriteArticleResultCreatedAt,
+          articleUpdatedAt = favoriteArticleResultUpdatedAt,
+          articleFavorited = True,
+          articleFavoritesCount = favoriteArticleResultFavoritesCount,
+          articleAuthor = author
+        }
+
 ----------------------------------------------------------------------------------------------------
 -- Unfavorite Article
+
+unfavorite ::
+  ( MonadIO m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TxManager m,
+    QueryService m,
+    TokenGateway m
+  ) =>
+  ActionT ErrorResponse m ()
+unfavorite = do
+  withToken $ \token -> do
+    slug <- param "slug"
+    result <- lift $ ArticleUseCase.unfavoriteArticle $ toCommand token slug
+    case result of
+      Right result'@UnfavoriteArticleResult {..} -> do
+        let params = Query.GetProfileParams Nothing unfavoriteArticleResultAuthorUsername
+        profile <- QueryService.getProfile params !? notFound "Author not found"
+        json $ ArticleWrapper $ toArticle result' profile
+      Left err -> raise $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.UnfavoriteArticleCommand
+    toCommand = ArticleUseCase.UnfavoriteArticleCommand
+    toArticle :: ArticleUseCase.UnfavoriteArticleResult -> Profile -> Article
+    toArticle UnfavoriteArticleResult {..} author =
+      Article
+        { articleSlug = unfavoriteArticleResultSlug,
+          articleTitle = unfavoriteArticleResultTitle,
+          articleDescription = unfavoriteArticleResultDescription,
+          articleBody = unfavoriteArticleResultBody,
+          articleTagList = unfavoriteArticleResultTags,
+          articleCreatedAt = unfavoriteArticleResultCreatedAt,
+          articleUpdatedAt = unfavoriteArticleResultUpdatedAt,
+          articleFavorited = False,
+          articleFavoritesCount = unfavoriteArticleResultFavoritesCount,
+          articleAuthor = author
+        }

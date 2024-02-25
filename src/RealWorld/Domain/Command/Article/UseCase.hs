@@ -15,6 +15,8 @@ import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository 
 import qualified RealWorld.Domain.Adapter.Repository.ArticleRepository as ArticleRepository
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import qualified RealWorld.Domain.Adapter.Repository.CommentRepository as CommentRepository
+import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
+import qualified RealWorld.Domain.Adapter.Repository.FavoriteRepository as FavoriteRepository
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import qualified RealWorld.Domain.Adapter.Repository.UserRepository as UserRepository
 import RealWorld.Domain.Command.Article.Entity.Article
@@ -30,9 +32,12 @@ import RealWorld.Domain.Command.Article.Entity.Article
         articleTitle,
         articleUpdatedAt
       ),
+    mkArticle,
   )
 import qualified RealWorld.Domain.Command.Article.Entity.Article as Article
+import RealWorld.Domain.Command.Article.Entity.Comment (mkComment)
 import qualified RealWorld.Domain.Command.Article.Entity.Comment as Comment
+import RealWorld.Domain.Command.Article.Entity.Favorite (mkFavorite)
 import RealWorld.Domain.Command.Article.Value
   ( ArticleBody (unArticleBody),
     Description (unDescription),
@@ -42,6 +47,7 @@ import RealWorld.Domain.Command.Article.Value
     mkArticleBody,
     mkCommentBody,
     mkDescription,
+    mkFavoriteId,
     mkSlug,
     mkTag,
     mkTitle,
@@ -93,7 +99,7 @@ createArticle CreateArticleCommand {..} = runExceptT $ do
   tags <- traverse mkTag createArticleCommandTagList ?? CreateArticleErrorInvalidTag
   author <- UserRepository.findById authorId !? CreateArticleErrorAuthorNotFound
   let article =
-        Article.mkArticle
+        mkArticle
           articleId
           title
           description
@@ -255,7 +261,7 @@ addComments AddCommentsCommand {..} = runExceptT $ do
     author <- UserRepository.findById authorId !? AddCommentsErrorAuthorNotFound
     article <- ArticleRepository.findBySlug slug !? AddCommentsErrorArticleNotFound
     let comment =
-          Comment.mkComment
+          mkComment
             commentId
             body
             createdAt
@@ -318,5 +324,125 @@ deleteComment DeleteCommentCommand {..} = runExceptT $ do
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article
 
+data FavoriteArticleCommand = FavoriteArticleCommand
+  { favoriteArticleToken :: Text,
+    favoriteArticleSlug :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data FavoriteArticleResult = FavoriteArticleResult
+  { favoriteArticleResultSlug :: Text,
+    favoriteArticleResultTitle :: Text,
+    favoriteArticleResultDescription :: Text,
+    favoriteArticleResultBody :: Text,
+    favoriteArticleResultCreatedAt :: UTCTime,
+    favoriteArticleResultUpdatedAt :: Maybe UTCTime,
+    favoriteArticleResultTags :: [Text],
+    favoriteArticleResultFavoritesCount :: Int,
+    favoriteArticleResultAuthorUsername :: Text
+  }
+  deriving (Show, Eq)
+
+data FavoriteArticleError
+  = FavoriteArticleErrorInvalidToken
+  | FavoriteArticleErrorInvalidSlug
+  | FavoriteArticleErrorArticleNotFound
+  | FavroiteArticleErrorUserNotFound
+  deriving (Show, Eq)
+
+favoriteArticle ::
+  ( MonadIO m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TokenGateway m,
+    TxManager m
+  ) =>
+  FavoriteArticleCommand ->
+  m (Either FavoriteArticleError FavoriteArticleResult)
+favoriteArticle FavoriteArticleCommand {..} = runExceptT $ do
+  slug <- mkSlug favoriteArticleSlug ?? FavoriteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token favoriteArticleToken) !? FavoriteArticleErrorInvalidToken
+  createdAt <- liftIO getCurrentTime
+  (article, actor) <- withTx $ do
+    article <- ArticleRepository.findBySlug slug !? FavoriteArticleErrorArticleNotFound
+    actor <- UserRepository.findById actorId !? FavroiteArticleErrorUserNotFound
+    let favoriteId = mkFavoriteId (articleId article) actorId
+    let favorite = mkFavorite favoriteId createdAt
+    lift $ FavoriteRepository.save favorite
+    pure (article, actor)
+  pure
+    $ FavoriteArticleResult
+      { favoriteArticleResultSlug = unSlug $ articleSlug article,
+        favoriteArticleResultTitle = unTitle . articleTitle $ article,
+        favoriteArticleResultDescription = unDescription . articleDescription $ article,
+        favoriteArticleResultBody = unArticleBody . articleBody $ article,
+        favoriteArticleResultCreatedAt = articleCreatedAt article,
+        favoriteArticleResultUpdatedAt = articleUpdatedAt article,
+        favoriteArticleResultTags = unTag <$> articleTags article,
+        favoriteArticleResultFavoritesCount = articleFavoritesCount article,
+        favoriteArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ actor
+      }
+
 ----------------------------------------------------------------------------------------------------
 -- Unfavorite Article
+
+data UnfavoriteArticleCommand = UnfavoriteArticleCommand
+  { unfavoriteArticleToken :: Text,
+    unfavoriteArticleSlug :: Text
+  }
+  deriving (Show, Eq, Generic)
+
+data UnfavoriteArticleResult = UnfavoriteArticleResult
+  { unfavoriteArticleResultSlug :: Text,
+    unfavoriteArticleResultTitle :: Text,
+    unfavoriteArticleResultDescription :: Text,
+    unfavoriteArticleResultBody :: Text,
+    unfavoriteArticleResultCreatedAt :: UTCTime,
+    unfavoriteArticleResultUpdatedAt :: Maybe UTCTime,
+    unfavoriteArticleResultTags :: [Text],
+    unfavoriteArticleResultFavoritesCount :: Int,
+    unfavoriteArticleResultAuthorUsername :: Text
+  }
+  deriving (Show, Eq)
+
+data UnfavoriteArticleError
+  = UnfavoriteArticleErrorInvalidToken
+  | UnfavoriteArticleErrorInvalidSlug
+  | UnfavoriteArticleErrorArticleNotFound
+  | UnfavroiteArticleErrorUserNotFound
+  | UnfavroiteArticleErrorIsNotFavorited
+  deriving (Show, Eq)
+
+unfavoriteArticle ::
+  ( MonadIO m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TokenGateway m,
+    TxManager m
+  ) =>
+  UnfavoriteArticleCommand ->
+  m (Either UnfavoriteArticleError UnfavoriteArticleResult)
+unfavoriteArticle UnfavoriteArticleCommand {..} = runExceptT $ do
+  slug <- mkSlug unfavoriteArticleSlug ?? UnfavoriteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token unfavoriteArticleToken) !? UnfavoriteArticleErrorInvalidToken
+  (article, actor) <- withTx $ do
+    article <- ArticleRepository.findBySlug slug !? UnfavoriteArticleErrorArticleNotFound
+    actor <- UserRepository.findById actorId !? UnfavroiteArticleErrorUserNotFound
+    let favoriteId = mkFavoriteId (articleId article) actorId
+    favorite <- FavoriteRepository.findById favoriteId !? UnfavroiteArticleErrorIsNotFavorited
+    lift $ FavoriteRepository.delete favorite
+    pure (article, actor)
+  pure
+    $ UnfavoriteArticleResult
+      { unfavoriteArticleResultSlug = unSlug $ articleSlug article,
+        unfavoriteArticleResultTitle = unTitle . articleTitle $ article,
+        unfavoriteArticleResultDescription = unDescription . articleDescription $ article,
+        unfavoriteArticleResultBody = unArticleBody . articleBody $ article,
+        unfavoriteArticleResultCreatedAt = articleCreatedAt article,
+        unfavoriteArticleResultUpdatedAt = articleUpdatedAt article,
+        unfavoriteArticleResultTags = unTag <$> articleTags article,
+        unfavoriteArticleResultFavoritesCount = articleFavoritesCount article,
+        unfavoriteArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ actor
+      }

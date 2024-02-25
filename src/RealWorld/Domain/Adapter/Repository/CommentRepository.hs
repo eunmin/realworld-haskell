@@ -4,7 +4,7 @@ import Data.ULID (ULID)
 import RealWorld.Domain.Command.Article.Entity.Comment (Comment)
 import Relude
 
-class (Monad m) => CommentRepository m where
+class CommentRepository m where
   save :: Comment -> m ()
   findById :: ULID -> m (Maybe Comment)
   delete :: Comment -> m ()

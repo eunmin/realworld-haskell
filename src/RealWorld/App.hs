@@ -16,6 +16,7 @@ import RealWorld.Domain.Adapter.Repository.ArticleRepository
 import RealWorld.Domain.Adapter.Repository.CommentRepository
   ( CommentRepository (..),
   )
+import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository (..))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
@@ -24,6 +25,7 @@ import qualified RealWorld.Infra.Gateway.JwtToken as JwtTokenGateway
 import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
 import qualified RealWorld.Infra.Repository.PgArticleRepository as PgArticleRepository
 import qualified RealWorld.Infra.Repository.PgCommentRepository as PgCommentRepository
+import qualified RealWorld.Infra.Repository.PgFavoriteRepository as PgFavoriteRepository
 import qualified RealWorld.Infra.Repository.PgQuery as PgQuery
 import qualified RealWorld.Infra.Repository.PgUserRepository as PgUserRepository
 import qualified RealWorld.Infra.System as System
@@ -63,6 +65,11 @@ instance CommentRepository App where
   save = PgCommentRepository.save
   findById = PgCommentRepository.findById
   delete = PgCommentRepository.delete
+
+instance FavoriteRepository App where
+  findById = PgFavoriteRepository.findById
+  save = PgFavoriteRepository.save
+  delete = PgFavoriteRepository.delete
 
 instance TokenGateway App where
   generate = JwtTokenGateway.generate

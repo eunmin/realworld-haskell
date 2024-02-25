@@ -1,5 +1,6 @@
 module RealWorld.Domain.Command.Article.Value where
 
+import Data.ULID (ULID)
 import Relude
 
 ----------------------------------------------------------------------------------------------------
@@ -58,3 +59,15 @@ newtype Tag = Tag {unTag :: Text}
 
 mkTag :: Text -> Maybe Tag
 mkTag = Just . Tag
+
+----------------------------------------------------------------------------------------------------
+-- Tag
+
+data FavoriteId = FavoriteId
+  { favoriteIdArticleId :: ULID,
+    favoriteIdUserId :: ULID
+  }
+  deriving (Show, Eq, Generic)
+
+mkFavoriteId :: ULID -> ULID -> FavoriteId
+mkFavoriteId = FavoriteId

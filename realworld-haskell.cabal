@@ -31,9 +31,11 @@ library
       RealWorld.Domain.Adapter.Manager.TxManager
       RealWorld.Domain.Adapter.Repository.ArticleRepository
       RealWorld.Domain.Adapter.Repository.CommentRepository
+      RealWorld.Domain.Adapter.Repository.FavoriteRepository
       RealWorld.Domain.Adapter.Repository.UserRepository
       RealWorld.Domain.Command.Article.Entity.Article
       RealWorld.Domain.Command.Article.Entity.Comment
+      RealWorld.Domain.Command.Article.Entity.Favorite
       RealWorld.Domain.Command.Article.UseCase
       RealWorld.Domain.Command.Article.Value
       RealWorld.Domain.Command.User.Entity.User
@@ -52,6 +54,7 @@ library
       RealWorld.Infra.Manager.PgTxManager
       RealWorld.Infra.Repository.PgArticleRepository
       RealWorld.Infra.Repository.PgCommentRepository
+      RealWorld.Infra.Repository.PgFavoriteRepository
       RealWorld.Infra.Repository.PgQuery
       RealWorld.Infra.Repository.PgUserRepository
       RealWorld.Infra.System
