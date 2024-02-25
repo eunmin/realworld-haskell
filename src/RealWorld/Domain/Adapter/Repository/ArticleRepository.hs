@@ -6,7 +6,7 @@ import RealWorld.Domain.Command.Article.Value (Slug)
 import Relude
 
 class ArticleRepository m where
-  save :: Article -> m ()
+  save :: Article -> m Bool
   findById :: ULID -> m (Maybe Article)
   findBySlug :: Slug -> m (Maybe Article)
-  delete :: Article -> m ()
+  delete :: Article -> m Bool

@@ -37,12 +37,12 @@ instance FromRow Favorite where
       <$> (FavoriteId <$> field <*> field)
       <*> field
 
-save :: (Database r m) => Favorite -> m ()
+save :: (Database r m) => Favorite -> m Bool
 save favorite =
   withConnection $ \conn ->
     liftIO
-      $ void
-      $ execute
+      $ (> 0)
+      <$> execute
         conn
         "INSERT INTO favorites \
         \ (article_id, user_id, created_at)\
@@ -61,13 +61,13 @@ findById (FavoriteId articleId userId) =
         \FROM favorites WHERE article_id = ? AND user_id = ?"
         (articleId, userId)
 
-delete :: (Database r m) => Favorite -> m ()
+delete :: (Database r m) => Favorite -> m Bool
 delete favorite = do
   let FavoriteId articleId userId = favoriteId favorite
   withConnection $ \conn ->
     liftIO
-      $ void
-      $ execute
+      $ (> 0)
+      <$> execute
         conn
         "DELETE FROM favorites WHERE article_id = ? AND user_id = ?"
         (articleId, userId)

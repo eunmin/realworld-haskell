@@ -90,12 +90,12 @@ instance FromRow Article where
       <*> field
       <*> field
 
-save :: (Database r m) => Article -> m ()
+save :: (Database r m) => Article -> m Bool
 save user =
   withConnection $ \conn ->
     liftIO $
-      void $
-        execute
+      (> 0)
+        <$> execute
           conn
           "INSERT INTO articles \
           \ (id, slug, title, description, body, tags, author_id, favorites_count, created_at)\
@@ -136,7 +136,7 @@ findBySlug slug =
           \FROM articles WHERE slug = ?"
           (Only $ unSlug slug)
 
-delete :: (Database r m) => Article -> m ()
+delete :: (Database r m) => Article -> m Bool
 delete article =
   withConnection $ \conn ->
-    liftIO $ void $ execute conn "DELETE FROM articles WHERE id = ?" (Only $ articleId article)
+    liftIO $ (> 0) <$> execute conn "DELETE FROM articles WHERE id = ?" (Only $ articleId article)

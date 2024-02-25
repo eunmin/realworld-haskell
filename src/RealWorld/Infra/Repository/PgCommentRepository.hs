@@ -56,12 +56,12 @@ instance FromRow Comment where
       <*> field
       <*> field
 
-save :: (Database r m) => Comment -> m ()
+save :: (Database r m) => Comment -> m Bool
 save comment =
   withConnection $ \conn ->
     liftIO $
-      void $
-        execute
+      (> 0)
+        <$> execute
           conn
           "INSERT INTO comments \
           \ (id, body, created_at, updated_at, author_id, article_id)\
@@ -86,7 +86,7 @@ findById commentId =
           \FROM comments WHERE id = ?"
           (Only commentId)
 
-delete :: (Database r m) => Comment -> m ()
+delete :: (Database r m) => Comment -> m Bool
 delete comment =
   withConnection $ \conn ->
-    liftIO $ void $ execute conn "DELETE FROM comments WHERE id = ?" (Only $ commentId comment)
+    liftIO $ (> 0) <$> execute conn "DELETE FROM comments WHERE id = ?" (Only $ commentId comment)

@@ -78,12 +78,12 @@ deriving instance FromField Image
 
 type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
 
-save :: (Database r m) => User -> m ()
+save :: (Database r m) => User -> m Bool
 save user = do
   withConnection $ \conn ->
     liftIO $
-      void $
-        execute
+      (> 0)
+        <$> execute
           conn
           "INSERT INTO users (id, username, email, hashed_password, bio, image, created_at)\
           \ VALUES (?, ?, ?, ?, ?, ?, ?)\

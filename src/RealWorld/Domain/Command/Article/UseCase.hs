@@ -107,8 +107,7 @@ createArticle CreateArticleCommand {..} = runExceptT $ do
           tags
           createdAt
           authorId
-  withTx $ do
-    lift $ ArticleRepository.save article
+  _ <- withTx $ lift $ ArticleRepository.save article
   pure
     $ CreateArticleResult
       { createArticleResultSlug = unSlug $ articleSlug article,
@@ -166,7 +165,7 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
     article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
     author <- UserRepository.findById (articleAuthorId article) !? UpdateArticleErrorAuthorNotFound
     article' <- Article.update article actorId title description body ?? UpdateArticleErrorAuthorMismatch
-    lift $ ArticleRepository.save article'
+    _ <- lift $ ArticleRepository.save article'
     pure (article', author)
   pure
     $ UpdateArticleResult
@@ -209,7 +208,7 @@ deleteArticle ::
 deleteArticle DeleteArticleCommand {..} = runExceptT $ do
   slug <- mkSlug deleteArticleCommandSlug ?? DeleteArticleErrorInvalidSlug
   actorId <- TokenGateway.verify (Token deleteArticleCommandToken) !? DeleteArticleErrorInvalidToken
-  withTx $ do
+  _ <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
     when (Article.isDeletable article actorId)
       $ throwE DeleteArticleErrorAuthorMismatch
@@ -309,7 +308,7 @@ deleteComment DeleteCommentCommand {..} = runExceptT $ do
   slug <- mkSlug deleteCommentCommandSlug ?? DeleteCommentErrorInvalidSlug
   actorId <- TokenGateway.verify (Token deleteCommentCommandToken) !? DeleteCommentErrorInvalidToken
   commentId <- readMaybe (unpack deleteCommentCommandCommentId) ?? DeleteCommentErrorInvalidCommentId
-  withTx $ do
+  _ <- withTx $ do
     _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
     comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
     when (Comment.isDeletable comment actorId)
@@ -369,8 +368,13 @@ favoriteArticle FavoriteArticleCommand {..} = runExceptT $ do
     actor <- UserRepository.findById actorId !? FavroiteArticleErrorUserNotFound
     let favoriteId = mkFavoriteId (articleId article) actorId
     let favorite = mkFavorite favoriteId createdAt
-    lift $ FavoriteRepository.save favorite
-    pure (article, actor)
+    success <- lift $ FavoriteRepository.save favorite
+    if success
+      then do
+        let article' = Article.increseFavoritesCount article
+        _ <- lift $ ArticleRepository.save article'
+        pure (article', actor)
+      else pure (article, actor)
   pure
     $ FavoriteArticleResult
       { favoriteArticleResultSlug = unSlug $ articleSlug article,
@@ -432,8 +436,13 @@ unfavoriteArticle UnfavoriteArticleCommand {..} = runExceptT $ do
     actor <- UserRepository.findById actorId !? UnfavroiteArticleErrorUserNotFound
     let favoriteId = mkFavoriteId (articleId article) actorId
     favorite <- FavoriteRepository.findById favoriteId !? UnfavroiteArticleErrorIsNotFavorited
-    lift $ FavoriteRepository.delete favorite
-    pure (article, actor)
+    success <- lift $ FavoriteRepository.delete favorite
+    if success
+      then do
+        let article' = Article.decreseFavoritesCount article
+        _ <- lift $ ArticleRepository.save article'
+        pure (article', actor)
+      else pure (article, actor)
   pure
     $ UnfavoriteArticleResult
       { unfavoriteArticleResultSlug = unSlug $ articleSlug article,

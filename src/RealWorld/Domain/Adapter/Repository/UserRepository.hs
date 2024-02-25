@@ -6,7 +6,7 @@ import RealWorld.Domain.Command.User.Value (Email, Username)
 import Relude
 
 class UserRepository m where
-  save :: User -> m ()
+  save :: User -> m Bool
   findById :: ULID -> m (Maybe User)
   findByUsername :: Username -> m (Maybe User)
   findByEmail :: Email -> m (Maybe User)

@@ -6,5 +6,5 @@ import Relude
 
 class FavoriteRepository m where
   findById :: FavoriteId -> m (Maybe Favorite)
-  save :: Favorite -> m ()
-  delete :: Favorite -> m ()
+  save :: Favorite -> m Bool
+  delete :: Favorite -> m Bool

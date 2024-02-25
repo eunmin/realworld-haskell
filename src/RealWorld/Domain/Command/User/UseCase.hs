@@ -69,7 +69,7 @@ registration RegistrationCommand {..} = runExceptT $ do
   email <- mkEmail registrationCommandEmail ?? RegistrationErrorInvalidUsername
   password <- mkPassword registrationCommandPassword ?? RegistrationErrorInvalidPassword
   hashedPassword <- PasswordGateway.hashPassword password !? RegistrationErrorInvalidPassword
-  withTx $ do
+  _ <- withTx $ do
     (justToNothing <$> UserRepo.findByUsername username) !? RegistrationErrorUsernameAlreadyExists
     (justToNothing <$> UserRepo.findByEmail email) !? RegistrationErrorEmailAlreadyExists
     let user = User.mkUser userId username email hashedPassword createdAt
@@ -174,7 +174,7 @@ updateUser UpdateUserCommand {..} = runExceptT $ do
         (justToNothing <$> UserRepo.findByUsername username')
           !? UpdateUserErrorUsernameAlreadyExists
     let user' = User.update user username email hashedPassword bio image
-    lift $ UserRepo.save user'
+    _ <- lift $ UserRepo.save user'
     pure user'
   pure
     $ UpdateUserResult
