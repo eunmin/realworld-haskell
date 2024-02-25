@@ -8,12 +8,17 @@ import RealWorld.Infra.Web.ErrorResponse
 import Relude
 import Web.Scotty.Trans (ActionT, ScottyError, header, raise)
 
-withToken :: (MonadIO m) => (Text -> ActionT ErrorResponse m ()) -> ActionT ErrorResponse m ()
-withToken action = do
+withRequiredToken :: (MonadIO m) => (Text -> ActionT ErrorResponse m ()) -> ActionT ErrorResponse m ()
+withRequiredToken action = do
   token <- getToken
   case token of
     Nothing -> raise $ forbidden "token required"
     Just token' -> action token'
+
+withOptionalToken :: (MonadIO m) => (Maybe Text -> ActionT ErrorResponse m ()) -> ActionT ErrorResponse m ()
+withOptionalToken action = do
+  token <- getToken
+  action token
 
 getToken :: (MonadIO m) => ActionT ErrorResponse m (Maybe Text)
 getToken = do

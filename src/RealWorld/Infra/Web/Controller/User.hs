@@ -32,7 +32,7 @@ import RealWorld.Infra.Web.ErrorResponse
     notFound,
     unauthorized,
   )
-import RealWorld.Infra.Web.Util (withToken, (!?))
+import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
 import Relude hiding (null, optional)
 import Web.Scotty.Trans (ActionT, json, jsonData, param, raise)
 
@@ -129,7 +129,7 @@ authentication = do
 
 getCurrentUser :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getCurrentUser = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
     let params = Query.GetCurrentUserParams $ show userId
     user <- QueryService.getCurrentUser params !? notFound "User not found"
@@ -165,7 +165,7 @@ updateUser ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
   ActionT ErrorResponse m ()
 updateUser = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     UserWrapper input <- jsonData
     result <- lift $ UserUseCase.updateUser $ toCommand input token
     case result of
@@ -197,10 +197,10 @@ updateUser = do
 
 getProfile :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getProfile = do
-  withToken $ \token -> do
-    userId <-
-      TokenGateway.verify (RealWorld.Domain.Command.User.Value.Token token)
-        !? unauthorized "Unauthorized"
+  withOptionalToken $ \token -> do
+    userId <- case Token <$> token of
+      Just token' -> lift $ TokenGateway.verify token'
+      Nothing -> pure Nothing
     username <- param "username"
     let params = Query.GetProfileParams (Just $ show userId) username
     profile <- QueryService.getProfile params !? notFound "Profile not found"
@@ -211,7 +211,7 @@ getProfile = do
 
 follow :: (MonadIO m, UserRepository m, TokenGateway m, TxManager m) => ActionT ErrorResponse m ()
 follow = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     username <- param "username"
     result <- lift $ UserUseCase.followUser $ toCommand token username
     case result of
@@ -238,7 +238,7 @@ follow = do
 
 unfollow :: (MonadIO m, UserRepository m, TokenGateway m, TxManager m) => ActionT ErrorResponse m ()
 unfollow = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     username <- param "username"
     result <- lift $ UserUseCase.unfollowUser $ toCommand token username
     case result of

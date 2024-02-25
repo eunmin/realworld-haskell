@@ -33,7 +33,7 @@ import RealWorld.Domain.Query.Service (QueryService)
 import qualified RealWorld.Domain.Query.Service as QueryService
 import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound, unauthorized)
-import RealWorld.Infra.Web.Util (withToken, (!?))
+import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
 import Relude hiding ((??))
 import Web.Scotty.Trans
   ( ActionT,
@@ -58,8 +58,10 @@ data CommentWrapper a = CommentWrapper
 
 listArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 listArticles = do
-  withToken $ \token -> do
-    userId <- lift $ TokenGateway.verify (Token token)
+  withOptionalToken $ \token -> do
+    userId <- case Token <$> token of
+      Just token' -> lift $ TokenGateway.verify token'
+      Nothing -> pure Nothing
     tag <- optional $ param "tag"
     author <- optional $ param "author"
     favorited <- optional $ param "favorited"
@@ -81,7 +83,7 @@ listArticles = do
 
 feedArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 feedArticles = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
     tag <- optional $ param "tag"
     author <- optional $ param "author"
@@ -125,7 +127,7 @@ createArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, TxManager m, TokenGateway m, QueryService m) =>
   ActionT ErrorResponse m ()
 createArticle = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     ArticleWrapper input <- jsonData
     result <- lift $ ArticleUseCase.createArticle $ toCommand token input
     case result of
@@ -183,7 +185,7 @@ updateArticle ::
   ) =>
   ActionT ErrorResponse m ()
 updateArticle = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     ArticleWrapper input <- jsonData
     slug <- param "slug"
     result <- lift $ ArticleUseCase.updateArticle $ toCommand token slug input
@@ -225,7 +227,7 @@ deleteArticle ::
   (MonadIO m, ArticleRepository m, TxManager m, TokenGateway m) =>
   ActionT ErrorResponse m ()
 deleteArticle = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     slug <- param "slug"
     result <- lift $ ArticleUseCase.deleteArticle $ toCommand token slug
     case result of
@@ -257,7 +259,7 @@ addComments ::
   ) =>
   ActionT ErrorResponse m ()
 addComments = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     slug <- param "slug"
     CommentWrapper input <- jsonData
     result <- lift $ ArticleUseCase.addComments $ toCommand token slug input
@@ -290,8 +292,10 @@ addComments = do
 
 getComments :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
 getComments = do
-  withToken $ \token -> do
-    userId <- lift $ TokenGateway.verify (Token token)
+  withOptionalToken $ \token -> do
+    userId <- case Token <$> token of
+      Just token' -> lift $ TokenGateway.verify token'
+      Nothing -> pure Nothing
     slug <- param "slug"
     let params =
           Query.GetCommentsParams
@@ -307,7 +311,7 @@ deleteComment ::
   (MonadIO m, ArticleRepository m, CommentRepository m, TxManager m, TokenGateway m) =>
   ActionT ErrorResponse m ()
 deleteComment = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     slug <- param "slug"
     commentId <- param "comment-id"
     result <- lift $ ArticleUseCase.deleteComment $ toCommand token slug commentId
@@ -332,7 +336,7 @@ favorite ::
   ) =>
   ActionT ErrorResponse m ()
 favorite = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     slug <- param "slug"
     result <- lift $ ArticleUseCase.favoriteArticle $ toCommand token slug
     case result of
@@ -373,7 +377,7 @@ unfavorite ::
   ) =>
   ActionT ErrorResponse m ()
 unfavorite = do
-  withToken $ \token -> do
+  withRequiredToken $ \token -> do
     slug <- param "slug"
     result <- lift $ ArticleUseCase.unfavoriteArticle $ toCommand token slug
     case result of
