@@ -7,12 +7,14 @@ module RealWorld.Infra.Repository.PgQuery where
 import Control.Error (headMay)
 import Data.Has (Has (..))
 import Data.Pool (withResource)
-import Database.PostgreSQL.Simple (Only (Only), query)
+import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
+import Database.PostgreSQL.Simple.ToField (ToField (..))
+import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (PGArray (..))
 import RealWorld.Domain.Query.Data
   ( Article (Article),
-    ArticleList,
+    ArticleList (..),
     Comment (..),
     CommentList (..),
     FeedArticlesParams,
@@ -20,7 +22,7 @@ import RealWorld.Domain.Query.Data
     GetCommentsParams (..),
     GetCurrentUserParams (..),
     GetProfileParams (..),
-    ListArticlesParams,
+    ListArticlesParams (..),
     Profile (..),
     TagList (..),
     User,
@@ -86,8 +88,58 @@ getProfile GetProfileParams {..} = do
           \WHERE username = ?"
           (getProfileParamsActorId, getProfileParamsUsername)
 
+instance ToRow ListArticlesParams where
+  toRow ListArticlesParams {..} =
+    catMaybes
+      [ toField <$> listArticlesParamsActorId,
+        toField <$> listArticlesParamsAuthor,
+        toField <$> listArticlesParamsTag,
+        toField <$> listArticlesParamsFavorited,
+        pure (toField listArticlesParamsLimit),
+        pure (toField listArticlesParamsOffset)
+      ]
+
 listArticles :: (QueryDatabase r m) => ListArticlesParams -> m ArticleList
-listArticles = undefined
+listArticles params@ListArticlesParams {..} = do
+  (Database.State pool _) <- gets getter
+  liftIO $ withResource pool $ \conn -> do
+    articles <-
+      liftIO $
+        query
+          conn
+          ( "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
+            \false, a.favorites_count, au.username, au.bio, au.image, false \
+            \FROM articles a LEFT JOIN users au ON au.id = a.author_id "
+              <> actorFavoritedJoinQuery listArticlesParamsActorId
+              <> favoritedJoinQuery listArticlesParamsFavorited
+              <> "WHERE true "
+              <> authorWhereQuery listArticlesParamsAuthor
+              <> tagWhereQuery listArticlesParamsTag
+              <> favoritedWhereQuery listArticlesParamsFavorited
+              <> "ORDER BY a.updated_at DESC LIMIT ? OFFSET ?"
+          )
+          params
+    pure $ ArticleList articles 0
+  where
+    actorFavoritedJoinQuery :: Maybe Text -> Query
+    actorFavoritedJoinQuery (Just _) =
+      "LEFT JOIN users aa ON aa.username = ? \
+      \LEFT JOIN favorites fa ON fa.article_id = a.id AND fa.user_id = aa.id "
+    actorFavoritedJoinQuery Nothing = ""
+    favoritedJoinQuery :: Maybe Text -> Query
+    favoritedJoinQuery (Just _) =
+      "LEFT JOIN favorites f ON f.article_id = a.id \
+      \ LEFT JOIN users fu ON fu.id = f.user_id "
+    favoritedJoinQuery Nothing = ""
+    authorWhereQuery :: Maybe Text -> Query
+    authorWhereQuery (Just _) = "AND au.username = ? "
+    authorWhereQuery Nothing = ""
+    tagWhereQuery :: Maybe Text -> Query
+    tagWhereQuery (Just _) = "AND ? = ANY(a.tags) "
+    tagWhereQuery Nothing = ""
+    favoritedWhereQuery :: Maybe Text -> Query
+    favoritedWhereQuery (Just _) = "AND fu.username = ? "
+    favoritedWhereQuery Nothing = ""
 
 feedArticles :: (QueryDatabase r m) => FeedArticlesParams -> m ArticleList
 feedArticles = undefined
