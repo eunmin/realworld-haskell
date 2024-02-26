@@ -7,7 +7,7 @@ module RealWorld.Infra.Repository.PgQuery where
 import Control.Error (headMay)
 import Data.Has (Has (..))
 import Data.Pool (withResource)
-import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query, query_)
+import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
@@ -17,7 +17,7 @@ import RealWorld.Domain.Query.Data
     ArticleList (..),
     Comment (..),
     CommentList (..),
-    FeedArticlesParams,
+    FeedArticlesParams (..),
     GetArticleParams (..),
     GetCommentsParams (..),
     GetCurrentUserParams (..),
@@ -160,8 +160,44 @@ listArticles params@ListArticlesParams {..} = do
     favoritedWhereQuery (Just _) = "AND fu.username = ? "
     favoritedWhereQuery Nothing = ""
 
+instance ToRow FeedArticlesParams where
+  toRow FeedArticlesParams {..} =
+    [ toField feedArticlesParamsActorId,
+      toField feedArticlesParamsActorId,
+      toField feedArticlesParamsLimit,
+      toField feedArticlesParamsOffset
+    ]
+
 feedArticles :: (QueryDatabase r m) => FeedArticlesParams -> m ArticleList
-feedArticles = undefined
+feedArticles params@FeedArticlesParams {..} = do
+  (Database.State pool _) <- gets getter
+  liftIO $ withResource pool $ \conn -> do
+    let selectSql =
+          "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
+          \ CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, \
+          \ a.favorites_count, au.username, au.bio, au.image, true "
+    let sql =
+          "FROM articles a \
+          \ LEFT JOIN users au ON au.id = a.author_id \
+          \ LEFT JOIN favorites fa ON fa.article_id = a.id AND fa.user_id = ? \
+          \WHERE \
+          \ a.author_id in (SELECT following_id FROM followings WHERE user_id = ?) "
+    articles <-
+      liftIO $
+        query
+          conn
+          ( selectSql
+              <> sql
+              <> "ORDER BY a.updated_at DESC LIMIT ? OFFSET ?"
+          )
+          params
+    [Only articlesCount] <-
+      liftIO $
+        query
+          conn
+          ("SELECT count(*) " <> sql)
+          (feedArticlesParamsActorId, feedArticlesParamsActorId)
+    pure $ ArticleList articles articlesCount
 
 getArticle :: (QueryDatabase r m) => GetArticleParams -> m (Maybe Article)
 getArticle GetArticleParams {..} = do

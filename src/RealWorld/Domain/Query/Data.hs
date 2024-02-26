@@ -29,9 +29,6 @@ data ListArticlesParams = ListArticlesParams
 
 data FeedArticlesParams = FeedArticlesParams
   { feedArticlesParamsActorId :: Text,
-    feedArticlesParamsTag :: Maybe Text,
-    feedArticlesParamsAuthor :: Maybe Text,
-    feedArticlesParamsFavorited :: Maybe Text,
     feedArticlesParamsLimit :: Int,
     feedArticlesParamsOffset :: Int
   }

@@ -85,17 +85,11 @@ feedArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResp
 feedArticles = do
   withRequiredToken $ \token -> do
     userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
-    tag <- optional $ param "tag"
-    author <- optional $ param "author"
-    favorited <- optional $ param "favorited"
     limit <- fromMaybe 20 <$> optional (param "limit")
     offset <- fromMaybe 0 <$> optional (param "offset")
     let params =
           Query.FeedArticlesParams
             { feedArticlesParamsActorId = show userId,
-              feedArticlesParamsTag = tag,
-              feedArticlesParamsAuthor = author,
-              feedArticlesParamsFavorited = favorited,
               feedArticlesParamsLimit = limit,
               feedArticlesParamsOffset = offset
             }
