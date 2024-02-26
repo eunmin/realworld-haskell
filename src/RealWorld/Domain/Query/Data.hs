@@ -22,8 +22,8 @@ data ListArticlesParams = ListArticlesParams
     listArticlesParamsTag :: Maybe Text,
     listArticlesParamsAuthor :: Maybe Text,
     listArticlesParamsFavorited :: Maybe Text,
-    listArticlesParamsLimit :: Int,
-    listArticlesParamsOffset :: Int
+    listArticlesParamsLimit :: Maybe Int,
+    listArticlesParamsOffset :: Maybe Int
   }
   deriving (Show, Eq)
 

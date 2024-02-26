@@ -7,7 +7,7 @@ module RealWorld.Infra.Repository.PgQuery where
 import Control.Error (headMay)
 import Data.Has (Has (..))
 import Data.Pool (withResource)
-import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query)
+import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query, query_)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
@@ -92,39 +92,58 @@ instance ToRow ListArticlesParams where
   toRow ListArticlesParams {..} =
     catMaybes
       [ toField <$> listArticlesParamsActorId,
+        toField <$> listArticlesParamsActorId,
         toField <$> listArticlesParamsAuthor,
         toField <$> listArticlesParamsTag,
         toField <$> listArticlesParamsFavorited,
-        pure (toField listArticlesParamsLimit),
-        pure (toField listArticlesParamsOffset)
+        toField <$> listArticlesParamsLimit,
+        toField <$> listArticlesParamsOffset
       ]
 
 listArticles :: (QueryDatabase r m) => ListArticlesParams -> m ArticleList
 listArticles params@ListArticlesParams {..} = do
   (Database.State pool _) <- gets getter
   liftIO $ withResource pool $ \conn -> do
+    let selectSql =
+          "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, "
+            <> ( if isJust listArticlesParamsActorId
+                   then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
+                   else "false, "
+               )
+            <> "a.favorites_count, au.username, au.bio, au.image "
+            <> ( if isJust listArticlesParamsActorId
+                   then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
+                   else "false "
+               )
+    let sql =
+          "FROM articles a LEFT JOIN users au ON au.id = a.author_id "
+            <> actorFavoritedJoinQuery listArticlesParamsActorId
+            <> favoritedJoinQuery listArticlesParamsFavorited
+            <> "WHERE true "
+            <> authorWhereQuery listArticlesParamsAuthor
+            <> tagWhereQuery listArticlesParamsTag
+            <> favoritedWhereQuery listArticlesParamsFavorited
     articles <-
       liftIO $
         query
           conn
-          ( "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
-            \false, a.favorites_count, au.username, au.bio, au.image, false \
-            \FROM articles a LEFT JOIN users au ON au.id = a.author_id "
-              <> actorFavoritedJoinQuery listArticlesParamsActorId
-              <> favoritedJoinQuery listArticlesParamsFavorited
-              <> "WHERE true "
-              <> authorWhereQuery listArticlesParamsAuthor
-              <> tagWhereQuery listArticlesParamsTag
-              <> favoritedWhereQuery listArticlesParamsFavorited
+          ( selectSql
+              <> sql
               <> "ORDER BY a.updated_at DESC LIMIT ? OFFSET ?"
           )
           params
-    pure $ ArticleList articles 0
+    [Only articlesCount] <-
+      liftIO $
+        query
+          conn
+          ("SELECT count(*) " <> sql)
+          params {listArticlesParamsLimit = Nothing, listArticlesParamsOffset = Nothing}
+    pure $ ArticleList articles articlesCount
   where
     actorFavoritedJoinQuery :: Maybe Text -> Query
     actorFavoritedJoinQuery (Just _) =
-      "LEFT JOIN users aa ON aa.username = ? \
-      \LEFT JOIN favorites fa ON fa.article_id = a.id AND fa.user_id = aa.id "
+      "LEFT JOIN favorites fa ON fa.article_id = a.id AND fa.user_id = ? \
+      \LEFT JOIN followings fw ON fw.user_id = ? AND fw.following_id = a.author_id "
     actorFavoritedJoinQuery Nothing = ""
     favoritedJoinQuery :: Maybe Text -> Query
     favoritedJoinQuery (Just _) =

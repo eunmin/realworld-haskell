@@ -65,8 +65,8 @@ listArticles = do
     tag <- optional $ param "tag"
     author <- optional $ param "author"
     favorited <- optional $ param "favorited"
-    limit <- fromMaybe 20 <$> optional (param "limit")
-    offset <- fromMaybe 0 <$> optional (param "offset")
+    limit <- optional $ param "limit" <|> pure 20
+    offset <- optional $ param "offset" <|> pure 0
     let params =
           Query.ListArticlesParams
             { listArticlesParamsActorId = show <$> userId,
