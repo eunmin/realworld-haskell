@@ -180,7 +180,7 @@ instance FromJSON UpdateArticleInput where
   parseJSON = genericParseJSON $ aesonDrop 18 camelCase
 
 updateArticle ::
-  ( MonadIO m,
+  ( KatipContext m,
     ArticleRepository m,
     UserRepository m,
     FavoriteRepository m,
@@ -199,7 +199,10 @@ updateArticle = do
         let params = Query.GetProfileParams Nothing updateArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "updateArticle error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
     toCommand token slug UpdateArticleInput {..} =
@@ -229,7 +232,7 @@ updateArticle = do
 -- Delete Article
 
 deleteArticle ::
-  (MonadIO m, ArticleRepository m, TxManager m, TokenGateway m) =>
+  (KatipContext m, ArticleRepository m, TxManager m, TokenGateway m) =>
   ActionT ErrorResponse m ()
 deleteArticle = do
   withRequiredToken $ \token -> do
@@ -237,7 +240,10 @@ deleteArticle = do
     result <- lift $ ArticleUseCase.deleteArticle $ toCommand token slug
     case result of
       Right _ -> json emptyObject
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "deleteArticle error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> ArticleUseCase.DeleteArticleCommand
     toCommand = ArticleUseCase.DeleteArticleCommand
@@ -254,7 +260,7 @@ instance FromJSON AddCommentsInput where
   parseJSON = genericParseJSON $ aesonDrop 16 camelCase
 
 addComments ::
-  ( MonadIO m,
+  ( KatipContext m,
     ArticleRepository m,
     TxManager m,
     TokenGateway m,
@@ -273,7 +279,10 @@ addComments = do
         let params = Query.GetProfileParams Nothing addCommentsResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ CommentWrapper $ toComment result' (addCommentsInputBody input) profile
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "addComments error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
     toCommand token slug AddCommentsInput {..} =
@@ -313,7 +322,7 @@ getComments = do
 -- Delete Comment
 
 deleteComment ::
-  (MonadIO m, ArticleRepository m, CommentRepository m, TxManager m, TokenGateway m) =>
+  (KatipContext m, ArticleRepository m, CommentRepository m, TxManager m, TokenGateway m) =>
   ActionT ErrorResponse m ()
 deleteComment = do
   withRequiredToken $ \token -> do
@@ -322,7 +331,10 @@ deleteComment = do
     result <- lift $ ArticleUseCase.deleteComment $ toCommand token slug commentId
     case result of
       Right _ -> json emptyObject
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "deleteComment error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> Text -> ArticleUseCase.DeleteCommentCommand
     toCommand = ArticleUseCase.DeleteCommentCommand
@@ -331,7 +343,7 @@ deleteComment = do
 -- Favorite Article
 
 favorite ::
-  ( MonadIO m,
+  ( KatipContext m,
     ArticleRepository m,
     FavoriteRepository m,
     UserRepository m,
@@ -349,7 +361,10 @@ favorite = do
         let params = Query.GetProfileParams Nothing favoriteArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "favorite error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> ArticleUseCase.FavoriteArticleCommand
     toCommand = ArticleUseCase.FavoriteArticleCommand
@@ -372,7 +387,7 @@ favorite = do
 -- Unfavorite Article
 
 unfavorite ::
-  ( MonadIO m,
+  ( KatipContext m,
     ArticleRepository m,
     FavoriteRepository m,
     UserRepository m,
@@ -390,7 +405,10 @@ unfavorite = do
         let params = Query.GetProfileParams Nothing unfavoriteArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "unfavorite error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> Text -> ArticleUseCase.UnfavoriteArticleCommand
     toCommand = ArticleUseCase.UnfavoriteArticleCommand

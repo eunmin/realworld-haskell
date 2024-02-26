@@ -151,7 +151,7 @@ data UpdateArticleError
   | UpdateArticleErrorInvalidDescription
   | UpdateArticleErrorAuthorNotFound
   | UpdateArticleErrorAuthorMismatch
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 updateArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TokenGateway m, TxManager m) =>
@@ -203,7 +203,7 @@ data DeleteArticleError
   | DeleteArticleErrorInvalidSlug
   | DeleteArticleErrorArticleNotFound
   | DeleteArticleErrorAuthorMismatch
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 deleteArticle ::
   (MonadIO m, ArticleRepository m, TokenGateway m, TxManager m) =>
@@ -242,7 +242,7 @@ data AddCommentsError
   | AddCommentsErrorArticleNotFound
   | AddCommentsErrorAuthorNotFound
   | AddCommentsErrorInvalidSlug
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 addComments ::
   ( MonadIO m,
@@ -302,7 +302,7 @@ data DeleteCommentError
   | DeleteCommentErrorArticleNotFound
   | DeleteCommentErrorCommentNotFound
   | DeleteCommentErrorAuthorMismatch
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 deleteComment ::
   (MonadIO m, ArticleRepository m, TokenGateway m, CommentRepository m, TxManager m) =>
@@ -351,7 +351,7 @@ data FavoriteArticleError
   | FavoriteArticleErrorInvalidSlug
   | FavoriteArticleErrorArticleNotFound
   | FavroiteArticleErrorUserNotFound
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 favoriteArticle ::
   ( MonadIO m,
@@ -420,7 +420,7 @@ data UnfavoriteArticleError
   | UnfavoriteArticleErrorArticleNotFound
   | UnfavroiteArticleErrorUserNotFound
   | UnfavroiteArticleErrorIsNotFavorited
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 unfavoriteArticle ::
   ( MonadIO m,
