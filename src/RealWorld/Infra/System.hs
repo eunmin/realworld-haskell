@@ -1,5 +1,6 @@
 module RealWorld.Infra.System where
 
+import Katip (Environment)
 import qualified RealWorld.Infra.Component.Database as Database
 import qualified RealWorld.Infra.Component.HttpServer as HttpServer
 import RealWorld.Infra.Util.Env (envRead)
@@ -8,7 +9,8 @@ import Relude hiding (State, state, withState)
 data Config = Config
   { configHttpServer :: HttpServer.Config,
     configDatabase :: Database.Config,
-    configJwtSecret :: Text
+    configJwtSecret :: Text,
+    configLogEnv :: Environment
   }
   deriving (Show, Eq)
 
@@ -25,6 +27,7 @@ configFromEnv =
     <$> HttpServer.configFromEnv
     <*> Database.configFromEnv
     <*> envRead "JWT_SECRET"
+    <*> envRead "ENV_NAME"
 
 devConfig :: Config
 devConfig =
@@ -43,5 +46,6 @@ devConfig =
             Database.configPoolMaxSize = 12,
             Database.configPoolIdleTimeoutSec = 3.0
           },
-      configJwtSecret = "secret"
+      configJwtSecret = "secret",
+      configLogEnv = "dev"
     }

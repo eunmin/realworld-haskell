@@ -98,6 +98,7 @@ library
     , exceptions
     , http-types
     , jwt
+    , katip
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
@@ -147,6 +148,7 @@ executable dev
     , exceptions
     , http-types
     , jwt
+    , katip
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
@@ -197,6 +199,7 @@ executable realworld-exe
     , exceptions
     , http-types
     , jwt
+    , katip
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
@@ -248,6 +251,7 @@ test-suite realworld-test
     , exceptions
     , http-types
     , jwt
+    , katip
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple

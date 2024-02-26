@@ -2,6 +2,7 @@
 
 module RealWorld.Infra.Web.Routes where
 
+import Katip (KatipContext)
 import Network.Wai.Middleware.RequestLogger (logStdout)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
@@ -33,7 +34,7 @@ import Web.Scotty.Trans
   )
 
 routes ::
-  ( MonadIO m,
+  ( KatipContext m,
     TxManager m,
     ArticleRepository m,
     UserRepository m,

@@ -84,7 +84,7 @@ data CreateArticleError
   | CreateArticleErrorInvalidDescription
   | CreateArticleErrorInvalidTag
   | CreateArticleErrorAuthorNotFound
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 createArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, TokenGateway m, TxManager m) =>

@@ -1,5 +1,6 @@
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module RealWorld.Infra.Web.Controller.Article where
@@ -7,6 +8,7 @@ module RealWorld.Infra.Web.Controller.Article where
 import Data.Aeson (FromJSON (parseJSON), ToJSON, genericParseJSON)
 import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Aeson.Types (emptyObject)
+import Katip
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
@@ -118,7 +120,13 @@ instance FromJSON CreateArticleInput where
   parseJSON = genericParseJSON $ aesonDrop 18 camelCase
 
 createArticle ::
-  (MonadIO m, ArticleRepository m, UserRepository m, TxManager m, TokenGateway m, QueryService m) =>
+  ( KatipContext m,
+    ArticleRepository m,
+    UserRepository m,
+    TxManager m,
+    TokenGateway m,
+    QueryService m
+  ) =>
   ActionT ErrorResponse m ()
 createArticle = do
   withRequiredToken $ \token -> do
@@ -129,7 +137,10 @@ createArticle = do
         let params = Query.GetProfileParams Nothing createArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle input result' profile
-      Left err -> raise $ invalid $ show err
+      Left err -> do
+        lift $ katipAddContext (sl "error" err) $ do
+          $(logTM) ErrorS "createArticle error"
+        raise $ invalid $ show err
   where
     toCommand :: Text -> CreateArticleInput -> ArticleUseCase.CreateArticleCommand
     toCommand token CreateArticleInput {..} =

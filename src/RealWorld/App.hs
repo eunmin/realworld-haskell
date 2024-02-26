@@ -6,7 +6,24 @@ module RealWorld.App
   )
 where
 
+import Control.Exception (bracket)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
+import Katip
+  ( ColorStrategy (ColorIfTerminal),
+    Katip,
+    KatipContext,
+    KatipContextT,
+    Severity (InfoS),
+    Verbosity (V2),
+    closeScribes,
+    defaultScribeSettings,
+    initLogEnv,
+    jsonFormat,
+    mkHandleScribeWithFormatter,
+    permitItem,
+    registerScribe,
+    runKatipContextT,
+  )
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway (..))
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
@@ -28,12 +45,13 @@ import qualified RealWorld.Infra.Repository.PgCommentRepository as PgCommentRepo
 import qualified RealWorld.Infra.Repository.PgFavoriteRepository as PgFavoriteRepository
 import qualified RealWorld.Infra.Repository.PgQuery as PgQuery
 import qualified RealWorld.Infra.Repository.PgUserRepository as PgUserRepository
+import RealWorld.Infra.System (Config (configLogEnv))
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
 import Relude
-import Web.Scotty.Trans
+import Web.Scotty.Trans (scottyT)
 
-newtype App a = App {unApp :: StateT System.State IO a}
+newtype App a = App {unApp :: StateT System.State (KatipContextT IO) a}
   deriving newtype
     ( Applicative,
       Functor,
@@ -43,7 +61,9 @@ newtype App a = App {unApp :: StateT System.State IO a}
       MonadThrow,
       MonadState System.State,
       MonadMask,
-      MonadFail
+      MonadFail,
+      KatipContext,
+      Katip
     )
 
 instance UserRepository App where
@@ -93,9 +113,17 @@ instance QueryService App where
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do
+  handleScribe <- mkHandleScribeWithFormatter jsonFormat ColorIfTerminal stdout (permitItem InfoS) V2
   let port = config & System.configHttpServer & HttpServerConfig.configPort
+  let mkLogEnv =
+        registerScribe "stdout" handleScribe defaultScribeSettings
+          =<< initLogEnv "RealWorld" (configLogEnv config)
   System.withState config $ \state' -> do
-    scottyT port (\app -> fst <$> runStateT (unApp app) state') routes
+    bracket mkLogEnv closeScribes $ \le -> do
+      scottyT
+        port
+        (\app -> fst <$> runKatipContextT le () "main" (runStateT (unApp app) state'))
+        routes
 
 main :: IO ()
 main = do

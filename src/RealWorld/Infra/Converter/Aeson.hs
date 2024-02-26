@@ -7,12 +7,14 @@ module RealWorld.Infra.Converter.Aeson where
 
 import Data.Aeson
   ( ToJSON (toJSON),
+    defaultOptions,
     genericToJSON,
     withText,
   )
 import Data.Aeson.Casing (aesonDrop, aesonPrefix, camelCase)
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
+import RealWorld.Domain.Command.Article.UseCase
 import RealWorld.Domain.Command.User.Value
   ( Bio (..),
     Email (..),
@@ -45,6 +47,9 @@ deriving newtype instance ToJSON Token
 deriving newtype instance ToJSON (BoundedText min max)
 
 deriving newtype instance ToJSON Username
+
+instance ToJSON CreateArticleError where
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON User where
   toJSON = genericToJSON $ aesonPrefix camelCase
