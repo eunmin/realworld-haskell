@@ -32,6 +32,13 @@ packages:
       size: 670
   original:
     hackage: th-abstraction-0.5.0.0
+- completed:
+    hackage: quickcheck-string-random-0.1.4.2@sha256:3365336646a03df17802ea64a2a250802ca3419b1245c7ace30da13ff57bc7f0,1456
+    pantry-tree:
+      sha256: 63b9270e132ab018c3d46b085580aee18a3cb24ae88c3c469586a842d92142ed
+      size: 321
+  original:
+    hackage: quickcheck-string-random-0.1.4.2
 snapshots:
 - completed:
     sha256: a81fb3877c4f9031e1325eb3935122e608d80715dc16b586eb11ddbff8671ecd

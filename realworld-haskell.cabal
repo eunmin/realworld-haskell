@@ -219,6 +219,8 @@ test-suite realworld-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RealWorld.Domain.Command.User.Entity.UserSpec
+      RealWorld.Domain.Command.User.ValueSpec
       Paths_realworld_haskell
   autogen-modules:
       Paths_realworld_haskell
@@ -242,19 +244,23 @@ test-suite realworld-test
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , aeson-casing
     , base >=4.7 && <5
     , bcrypt
     , data-has
     , errors
     , exceptions
+    , hspec
     , http-types
     , jwt
     , katip
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
+    , quickcheck-string-random
+    , quickcheck-text
     , realworld-haskell
     , relude
     , resource-pool

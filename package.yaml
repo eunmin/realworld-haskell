@@ -104,3 +104,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - realworld-haskell
+    - hspec
+    - QuickCheck
+    - quickcheck-text
+    - quickcheck-string-random
