@@ -106,5 +106,5 @@ tests:
     - realworld-haskell
     - hspec
     - QuickCheck
-    - quickcheck-text
     - quickcheck-string-random
+    - quickcheck-instances

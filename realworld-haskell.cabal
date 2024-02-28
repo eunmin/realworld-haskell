@@ -221,6 +221,8 @@ test-suite realworld-test
   other-modules:
       RealWorld.Domain.Command.User.Entity.UserSpec
       RealWorld.Domain.Command.User.ValueSpec
+      RealWorld.Domain.Util.BoundedTextSpec
+      RealWorld.QuickCheck.Instances
       Paths_realworld_haskell
   autogen-modules:
       Paths_realworld_haskell
@@ -259,8 +261,8 @@ test-suite realworld-test
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
+    , quickcheck-instances
     , quickcheck-string-random
-    , quickcheck-text
     , realworld-haskell
     , relude
     , resource-pool
