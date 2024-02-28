@@ -1,7 +1,11 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module RealWorld.QuickCheck.Instances where
 
 import Data.Text (pack)
-import Relude hiding (max, min)
+import GHC.TypeLits (natVal)
+import RealWorld.Domain.Util.BoundedText
+import Relude hiding (max, min, natVal)
 import Test.QuickCheck
   ( Arbitrary (arbitrary),
     Gen,
@@ -18,16 +22,6 @@ genTextBounded min max =
     <$> listOf (choose ('A', 'z'))
     `suchThat` (\x -> length x >= min && length x <= max)
 
-newtype ValidBoundedText = ValidBoundedText Text deriving (Eq, Show)
-
-instance Arbitrary ValidBoundedText where
-  arbitrary = ValidBoundedText <$> genTextBounded 1 10
-
-newtype InvalidBoundedText = InvalidBoundedText Text deriving (Eq, Show)
-
-instance Arbitrary InvalidBoundedText where
-  arbitrary = InvalidBoundedText <$> genTextBounded 11 20
-
 newtype ValidEmailText = ValidEmailText Text deriving (Eq, Show)
 
 instance Arbitrary ValidEmailText where
@@ -37,3 +31,14 @@ newtype InvalidEmailText = InvalidEmailText Text deriving (Eq, Show)
 
 instance Arbitrary InvalidEmailText where
   arbitrary = InvalidEmailText <$> arbitrary
+
+instance
+  forall min max.
+  (KnownNat min, KnownNat max) =>
+  Arbitrary (BoundedText min max)
+  where
+  arbitrary =
+    BoundedText
+      <$> genTextBounded
+        (fromIntegral $ natVal (Proxy :: Proxy min))
+        (fromIntegral $ natVal (Proxy :: Proxy max))
