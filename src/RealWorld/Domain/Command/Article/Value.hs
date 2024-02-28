@@ -1,5 +1,6 @@
 module RealWorld.Domain.Command.Article.Value where
 
+import Data.Text (replace, toLower)
 import Data.ULID (ULID)
 import Relude
 
@@ -12,8 +13,9 @@ newtype Slug = Slug {unSlug :: Text}
 mkSlug :: Text -> Maybe Slug
 mkSlug = Just . Slug
 
+-- TODO: use a better slugify algorithm
 toSlug :: Title -> Slug
-toSlug = Slug . unTitle
+toSlug = Slug . replace " " "-" . toLower . unTitle
 
 ----------------------------------------------------------------------------------------------------
 -- Title
@@ -21,6 +23,7 @@ toSlug = Slug . unTitle
 newtype Title = Title {unTitle :: Text}
   deriving (Show, Eq, Generic)
 
+-- TODO: validate title
 mkTitle :: Text -> Maybe Title
 mkTitle = Just . Title
 

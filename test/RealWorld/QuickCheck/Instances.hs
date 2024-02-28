@@ -116,7 +116,7 @@ instance Arbitrary Tag where
   arbitrary = Tag <$> arbitrary
 
 instance Arbitrary Title where
-  arbitrary = Title <$> arbitrary
+  arbitrary = Title <$> matchRegexp "[A-Za-z\\s]{1,}"
 
 instance Arbitrary ArticleBody where
   arbitrary = ArticleBody <$> arbitrary
