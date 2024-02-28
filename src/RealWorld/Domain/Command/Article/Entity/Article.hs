@@ -68,7 +68,7 @@ update article actorId title description body =
           }
 
 isDeletable :: Article -> ULID -> Bool
-isDeletable article actorId = actorId /= articleAuthorId article
+isDeletable article actorId = actorId == articleAuthorId article
 
 increseFavoritesCount :: Article -> Article
 increseFavoritesCount article =

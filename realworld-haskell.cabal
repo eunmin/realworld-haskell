@@ -219,6 +219,7 @@ test-suite realworld-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      RealWorld.Domain.Command.Article.Entity.ArticleSpec
       RealWorld.Domain.Command.User.Entity.UserSpec
       RealWorld.Domain.Command.User.ValueSpec
       RealWorld.Domain.Util.BoundedTextSpec
