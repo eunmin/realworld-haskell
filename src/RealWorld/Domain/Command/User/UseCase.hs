@@ -66,7 +66,7 @@ registration RegistrationCommand {..} = runExceptT $ do
   userId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
   username <- mkUsername registrationCommandUsername ?? RegistrationErrorInvalidUsername
-  email <- mkEmail registrationCommandEmail ?? RegistrationErrorInvalidUsername
+  email <- mkEmail registrationCommandEmail ?? RegistrationErrorInvalidEmail
   password <- mkPassword registrationCommandPassword ?? RegistrationErrorInvalidPassword
   hashedPassword <- PasswordGateway.hashPassword password !? RegistrationErrorInvalidPassword
   _ <- withTx $ do

@@ -221,7 +221,10 @@ test-suite realworld-test
   other-modules:
       RealWorld.Domain.Command.Article.Entity.ArticleSpec
       RealWorld.Domain.Command.Article.ValueSpec
+      RealWorld.Domain.Command.Fixture
+      RealWorld.Domain.Command.TestApp
       RealWorld.Domain.Command.User.Entity.UserSpec
+      RealWorld.Domain.Command.User.UseCaseSpec
       RealWorld.Domain.Command.User.ValueSpec
       RealWorld.Domain.Util.BoundedTextSpec
       RealWorld.QuickCheck.Instances
