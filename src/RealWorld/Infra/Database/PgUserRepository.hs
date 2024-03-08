@@ -2,7 +2,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Repository.PgUserRepository where
+module RealWorld.Infra.Database.PgUserRepository where
 
 import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)

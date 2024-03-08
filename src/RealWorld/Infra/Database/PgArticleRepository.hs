@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Repository.PgArticleRepository where
+module RealWorld.Infra.Database.PgArticleRepository where
 
 import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)

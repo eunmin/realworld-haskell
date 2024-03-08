@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Repository.PgQuery where
+module RealWorld.Infra.Database.PgQueryService where
 
 import Control.Error (headMay)
 import Data.Has (Has (..))

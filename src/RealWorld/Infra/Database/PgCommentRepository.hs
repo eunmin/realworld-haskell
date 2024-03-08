@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module RealWorld.Infra.Repository.PgCommentRepository where
+module RealWorld.Infra.Database.PgCommentRepository where
 
 import Control.Exception.Safe (MonadMask)
 import Data.Has (Has)

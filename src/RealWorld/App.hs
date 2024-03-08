@@ -37,14 +37,14 @@ import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepositor
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.Service (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
+import qualified RealWorld.Infra.Database.PgArticleRepository as PgArticleRepository
+import qualified RealWorld.Infra.Database.PgCommentRepository as PgCommentRepository
+import qualified RealWorld.Infra.Database.PgFavoriteRepository as PgFavoriteRepository
+import qualified RealWorld.Infra.Database.PgQueryService as PgQueryService
+import qualified RealWorld.Infra.Database.PgUserRepository as PgUserRepository
 import qualified RealWorld.Infra.Gateway.BcryptPasswordGateway as BcryptPasswordGateway
-import qualified RealWorld.Infra.Gateway.JwtToken as JwtTokenGateway
+import qualified RealWorld.Infra.Gateway.JwtTokenGateway as JwtTokenGateway
 import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
-import qualified RealWorld.Infra.Repository.PgArticleRepository as PgArticleRepository
-import qualified RealWorld.Infra.Repository.PgCommentRepository as PgCommentRepository
-import qualified RealWorld.Infra.Repository.PgFavoriteRepository as PgFavoriteRepository
-import qualified RealWorld.Infra.Repository.PgQuery as PgQuery
-import qualified RealWorld.Infra.Repository.PgUserRepository as PgUserRepository
 import RealWorld.Infra.System (Config (configLogEnv))
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
@@ -103,13 +103,13 @@ instance TxManager App where
   withTx = PgTxManager.withTx
 
 instance QueryService App where
-  getCurrentUser = PgQuery.getCurrentUser
-  getProfile = PgQuery.getProfile
-  listArticles = PgQuery.listArticles
-  feedArticles = PgQuery.feedArticles
-  getArticle = PgQuery.getArticle
-  getComments = PgQuery.getComments
-  getTags = PgQuery.getTags
+  getCurrentUser = PgQueryService.getCurrentUser
+  getProfile = PgQueryService.getProfile
+  listArticles = PgQueryService.listArticles
+  feedArticles = PgQueryService.feedArticles
+  getArticle = PgQueryService.getArticle
+  getComments = PgQueryService.getComments
+  getTags = PgQueryService.getTags
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do

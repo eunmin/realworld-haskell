@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module RealWorld.Infra.Gateway.JwtToken where
+module RealWorld.Infra.Gateway.JwtTokenGateway where
 
 import qualified Data.Aeson.Types as JSON
 import Data.Has (Has (getter))
@@ -50,13 +50,13 @@ generate :: (Has Text r, MonadState r m, MonadIO m) => ULID -> Int -> m Token
 generate userId expiresInSec = do
   secret <- gets getter
   now <- liftIO getPOSIXTime
-  pure
-    $ Token
-    $ signJWT
-      (fromList [("userId", JSON.String $ show userId)])
-      secret
-      now
-      (fromInteger . toInteger $ expiresInSec)
+  pure $
+    Token $
+      signJWT
+        (fromList [("userId", JSON.String $ show userId)])
+        secret
+        now
+        (fromInteger . toInteger $ expiresInSec)
 
 verify :: (Has Text r, MonadState r m, MonadIO m) => Token -> m (Maybe ULID)
 verify (Token token) = do

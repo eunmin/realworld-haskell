@@ -214,7 +214,7 @@ deleteArticle DeleteArticleCommand {..} = runExceptT $ do
   actorId <- TokenGateway.verify (Token deleteArticleCommandToken) !? DeleteArticleErrorInvalidToken
   _ <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
-    when (Article.isDeletable article actorId)
+    unless (Article.isDeletable article actorId)
       $ throwE DeleteArticleErrorAuthorMismatch
     lift $ ArticleRepository.delete article
   pure $ DeleteArticleResult {deleteArticleResultSlug = unSlug slug}
@@ -315,7 +315,7 @@ deleteComment DeleteCommentCommand {..} = runExceptT $ do
   _ <- withTx $ do
     _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
     comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
-    when (Comment.isDeletable comment actorId)
+    unless (Comment.isDeletable comment actorId)
       $ throwE DeleteCommentErrorAuthorMismatch
     lift $ CommentRepository.delete comment
   pure

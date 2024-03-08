@@ -49,14 +49,14 @@ library
       RealWorld.Infra.Component.HttpServer
       RealWorld.Infra.Converter.Aeson
       RealWorld.Infra.Converter.PostgreSQL
+      RealWorld.Infra.Database.PgArticleRepository
+      RealWorld.Infra.Database.PgCommentRepository
+      RealWorld.Infra.Database.PgFavoriteRepository
+      RealWorld.Infra.Database.PgQueryService
+      RealWorld.Infra.Database.PgUserRepository
       RealWorld.Infra.Gateway.BcryptPasswordGateway
-      RealWorld.Infra.Gateway.JwtToken
+      RealWorld.Infra.Gateway.JwtTokenGateway
       RealWorld.Infra.Manager.PgTxManager
-      RealWorld.Infra.Repository.PgArticleRepository
-      RealWorld.Infra.Repository.PgCommentRepository
-      RealWorld.Infra.Repository.PgFavoriteRepository
-      RealWorld.Infra.Repository.PgQuery
-      RealWorld.Infra.Repository.PgUserRepository
       RealWorld.Infra.System
       RealWorld.Infra.Util.Env
       RealWorld.Infra.Util.Pool
