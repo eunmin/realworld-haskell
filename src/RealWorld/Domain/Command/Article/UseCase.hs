@@ -420,6 +420,7 @@ data UnfavoriteArticleError
   | UnfavoriteArticleErrorArticleNotFound
   | UnfavroiteArticleErrorUserNotFound
   | UnfavroiteArticleErrorIsNotFavorited
+  | UnfavoriteArticleErrorNotFavorited
   deriving (Show, Eq, Generic)
 
 unfavoriteArticle ::
@@ -441,12 +442,11 @@ unfavoriteArticle UnfavoriteArticleCommand {..} = runExceptT $ do
     let favoriteId = mkFavoriteId (articleId article) actorId
     favorite <- FavoriteRepository.findById favoriteId !? UnfavroiteArticleErrorIsNotFavorited
     success <- lift $ FavoriteRepository.delete favorite
-    if success
-      then do
-        let article' = Article.decreseFavoritesCount article
-        _ <- lift $ ArticleRepository.save article'
-        pure (article', actor)
-      else pure (article, actor)
+    unless success
+      $ throwE UnfavoriteArticleErrorNotFavorited
+    let article' = Article.decreseFavoritesCount article
+    _ <- lift $ ArticleRepository.save article'
+    pure (article', actor)
   pure
     $ UnfavoriteArticleResult
       { unfavoriteArticleResultSlug = unSlug $ articleSlug article,
