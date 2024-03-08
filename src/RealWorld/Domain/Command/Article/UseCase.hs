@@ -351,6 +351,7 @@ data FavoriteArticleError
   | FavoriteArticleErrorInvalidSlug
   | FavoriteArticleErrorArticleNotFound
   | FavroiteArticleErrorUserNotFound
+  | FavoriteArticleErrorAlreadyFavorited
   deriving (Show, Eq, Generic)
 
 favoriteArticle ::
@@ -373,12 +374,11 @@ favoriteArticle FavoriteArticleCommand {..} = runExceptT $ do
     let favoriteId = mkFavoriteId (articleId article) actorId
     let favorite = mkFavorite favoriteId createdAt
     success <- lift $ FavoriteRepository.save favorite
-    if success
-      then do
-        let article' = Article.increseFavoritesCount article
-        _ <- lift $ ArticleRepository.save article'
-        pure (article', actor)
-      else pure (article, actor)
+    unless success
+      $ throwE FavoriteArticleErrorAlreadyFavorited
+    let article' = Article.increseFavoritesCount article
+    _ <- lift $ ArticleRepository.save article'
+    pure (article', actor)
   pure
     $ FavoriteArticleResult
       { favoriteArticleResultSlug = unSlug $ articleSlug article,
