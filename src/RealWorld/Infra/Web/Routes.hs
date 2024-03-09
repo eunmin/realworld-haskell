@@ -11,7 +11,7 @@ import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
-import RealWorld.Domain.Query.Service (QueryService)
+import RealWorld.Domain.Query.QueryService (QueryService)
 import qualified RealWorld.Infra.Web.Controller.Article as Article
 import qualified RealWorld.Infra.Web.Controller.User as User
 import RealWorld.Infra.Web.ErrorResponse

@@ -25,8 +25,8 @@ import qualified RealWorld.Domain.Command.User.UseCase as UserUseCase
 import RealWorld.Domain.Command.User.Value (Token (Token))
 import RealWorld.Domain.Query.Data (userToken)
 import qualified RealWorld.Domain.Query.Data as Query
-import RealWorld.Domain.Query.Service (QueryService)
-import qualified RealWorld.Domain.Query.Service as QueryService
+import RealWorld.Domain.Query.QueryService (QueryService)
+import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse
   ( ErrorResponse,

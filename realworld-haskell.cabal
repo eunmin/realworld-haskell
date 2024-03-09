@@ -42,7 +42,7 @@ library
       RealWorld.Domain.Command.User.UseCase
       RealWorld.Domain.Command.User.Value
       RealWorld.Domain.Query.Data
-      RealWorld.Domain.Query.Service
+      RealWorld.Domain.Query.QueryService
       RealWorld.Domain.Util.BoundedText
       RealWorld.Domain.Util.Maybe
       RealWorld.Infra.Component.Database

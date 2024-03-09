@@ -35,7 +35,7 @@ import RealWorld.Domain.Adapter.Repository.CommentRepository
   )
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository (..))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
-import RealWorld.Domain.Query.Service (QueryService (..))
+import RealWorld.Domain.Query.QueryService (QueryService (..))
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
 import qualified RealWorld.Infra.Database.PgArticleRepository as PgArticleRepository
 import qualified RealWorld.Infra.Database.PgCommentRepository as PgCommentRepository

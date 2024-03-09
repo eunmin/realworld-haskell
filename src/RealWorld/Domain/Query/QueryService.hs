@@ -1,4 +1,4 @@
-module RealWorld.Domain.Query.Service where
+module RealWorld.Domain.Query.QueryService where
 
 import RealWorld.Domain.Query.Data
   ( Article,
