@@ -1,3 +1,6 @@
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module RealWorld.Domain.Command.User.UseCaseSpec where
 
 import RealWorld.Domain.Command.Fixture
@@ -14,10 +17,7 @@ import RealWorld.Domain.Command.Fixture
 import RealWorld.Domain.Command.TestApp (runApp)
 import RealWorld.Domain.Command.User.UseCase
   ( RegistrationCommand (RegistrationCommand),
-    RegistrationError
-      ( RegistrationErrorEmailAlreadyExists,
-        RegistrationErrorUsernameAlreadyExists
-      ),
+    RegistrationError (..),
     RegistrationResult (RegistrationResult),
     registration,
   )
@@ -27,6 +27,8 @@ import RealWorld.Domain.Command.User.Value
   )
 import Relude
 import Test.Hspec (Spec, describe, it, shouldReturn)
+
+deriving instance Show RegistrationError
 
 spec :: Spec
 spec = describe "registration" $ do

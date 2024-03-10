@@ -56,7 +56,7 @@ data RegistrationError
   | RegistrationErrorInvalidPassword
   | RegistrationErrorInvalidUsername
   | RegistrationErrorInvalidEmail
-  deriving (Show, Eq, Generic)
+  deriving (Eq, Generic)
 
 registration ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
@@ -98,7 +98,7 @@ data AuthenticationError
   = AuthenticationErrorUserNotFound
   | AuthenticationErrorInvalidPassword
   | AuthenticationErrorInvalidEmail
-  deriving (Show, Eq, Generic)
+  deriving (Eq, Generic)
 
 authentication ::
   (MonadIO m, UserRepository m, PasswordGateway m, TokenGateway m) =>
@@ -208,7 +208,7 @@ data FollowUserError
   | FollowUserErrorCantFollowSelf
   | FollowUserErrorAlreadyFollowing
   | FollowUserErrorInvalidUsername
-  deriving (Show, Eq, Generic)
+  deriving (Eq, Generic)
 
 followUser ::
   (MonadIO m, UserRepository m, TokenGateway m, TxManager m) =>

@@ -35,6 +35,7 @@ import RealWorld.Domain.Query.QueryService (QueryService)
 import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound, unauthorized)
+import RealWorld.Infra.Web.Errors ()
 import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
 import Relude hiding ((??))
 import Web.Scotty.Trans

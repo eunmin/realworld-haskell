@@ -34,6 +34,7 @@ import RealWorld.Infra.Web.ErrorResponse
     notFound,
     unauthorized,
   )
+import RealWorld.Infra.Web.Errors ()
 import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
 import Relude hiding (null, optional)
 import Web.Scotty.Trans (ActionT, json, jsonData, param, raise)

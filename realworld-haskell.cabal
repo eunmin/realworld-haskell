@@ -63,6 +63,7 @@ library
       RealWorld.Infra.Web.Controller.Article
       RealWorld.Infra.Web.Controller.User
       RealWorld.Infra.Web.ErrorResponse
+      RealWorld.Infra.Web.Errors
       RealWorld.Infra.Web.Routes
       RealWorld.Infra.Web.Util
   other-modules:
