@@ -77,7 +77,6 @@ instance UserRepository App where
 
 instance ArticleRepository App where
   save = PgArticleRepository.save
-  findById = PgArticleRepository.findById
   findBySlug = PgArticleRepository.findBySlug
   delete = PgArticleRepository.delete
 

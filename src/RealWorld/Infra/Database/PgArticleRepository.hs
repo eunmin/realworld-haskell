@@ -6,7 +6,6 @@ module RealWorld.Infra.Database.PgArticleRepository where
 import Control.Error (headMay)
 import Control.Monad.Catch (MonadMask)
 import Data.Has (Has)
-import Data.ULID (ULID)
 import Database.PostgreSQL.Simple
   ( FromRow,
     Only (Only),
@@ -110,18 +109,6 @@ save user =
         \   favorites_count = ?,\
         \   updated_at = now()"
         user
-
-findById :: (Database r m) => ULID -> m (Maybe Article)
-findById articleId =
-  withConnection $ \conn ->
-    liftIO
-      $ headMay
-      <$> query
-        conn
-        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
-        \       favorites_count, author_id \
-        \FROM articles WHERE id = ?"
-        (Only articleId)
 
 findBySlug :: (Database r m) => Slug -> m (Maybe Article)
 findBySlug slug =
