@@ -150,7 +150,7 @@ data UpdateArticleError
   | UpdateArticleErrorInvalidBody
   | UpdateArticleErrorInvalidDescription
   | UpdateArticleErrorAuthorNotFound
-  | UpdateArticleErrorAuthorMismatch
+  | UpdateArticleErrorEditPermissionDenied
   deriving (Show, Eq, Generic)
 
 updateArticle ::
@@ -166,7 +166,9 @@ updateArticle UpdateArticleCommand {..} = runExceptT $ do
   (article, author, favorited) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
     author <- UserRepository.findById (articleAuthorId article) !? UpdateArticleErrorAuthorNotFound
-    article' <- Article.update article actorId title description body ?? UpdateArticleErrorAuthorMismatch
+    unless (Article.isEditable article actorId)
+      $ throwE UpdateArticleErrorEditPermissionDenied
+    let article' = Article.update article title description body
     _ <- lift $ ArticleRepository.save article'
     favorited <- lift $ FavoriteRepository.findById $ FavoriteId (articleId article) actorId
     pure (article', author, isJust favorited)
@@ -202,7 +204,7 @@ data DeleteArticleError
   = DeleteArticleErrorInvalidToken
   | DeleteArticleErrorInvalidSlug
   | DeleteArticleErrorArticleNotFound
-  | DeleteArticleErrorAuthorMismatch
+  | DeleteArticleErrorDeletePermissionDenied
   deriving (Show, Eq, Generic)
 
 deleteArticle ::
@@ -215,7 +217,7 @@ deleteArticle DeleteArticleCommand {..} = runExceptT $ do
   _ <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
     unless (Article.isDeletable article actorId)
-      $ throwE DeleteArticleErrorAuthorMismatch
+      $ throwE DeleteArticleErrorDeletePermissionDenied
     lift $ ArticleRepository.delete article
   pure $ DeleteArticleResult {deleteArticleResultSlug = unSlug slug}
 
@@ -301,7 +303,7 @@ data DeleteCommentError
   | DeleteCommentErrorInvalidCommentId
   | DeleteCommentErrorArticleNotFound
   | DeleteCommentErrorCommentNotFound
-  | DeleteCommentErrorAuthorMismatch
+  | DeleteCommentErrorDeletePermissionDenied
   deriving (Show, Eq, Generic)
 
 deleteComment ::
@@ -316,7 +318,7 @@ deleteComment DeleteCommentCommand {..} = runExceptT $ do
     _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
     comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
     unless (Comment.isDeletable comment actorId)
-      $ throwE DeleteCommentErrorAuthorMismatch
+      $ throwE DeleteCommentErrorDeletePermissionDenied
     lift $ CommentRepository.delete comment
   pure
     $ DeleteCommentResult

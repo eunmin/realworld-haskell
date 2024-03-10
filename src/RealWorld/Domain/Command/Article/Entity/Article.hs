@@ -50,22 +50,20 @@ mkArticle articleId title description body tags createdAt authorId =
 
 update ::
   Article ->
-  ULID ->
   Maybe Title ->
   Maybe Description ->
   Maybe ArticleBody ->
-  Maybe Article
-update article actorId title description body =
-  if actorId /= articleAuthorId article
-    then Nothing
-    else
-      Just
-        $ article
-          { articleTitle = title ?: articleTitle article,
-            articleDescription = description ?: articleDescription article,
-            articleBody = body ?: articleBody article,
-            articleSlug = maybe (toSlug $ articleTitle article) toSlug title
-          }
+  Article
+update article title description body =
+  article
+    { articleTitle = title ?: articleTitle article,
+      articleDescription = description ?: articleDescription article,
+      articleBody = body ?: articleBody article,
+      articleSlug = maybe (toSlug $ articleTitle article) toSlug title
+    }
+
+isEditable :: Article -> ULID -> Bool
+isEditable article actorId = actorId == articleAuthorId article
 
 isDeletable :: Article -> ULID -> Bool
 isDeletable article actorId = actorId == articleAuthorId article
