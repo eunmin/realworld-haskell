@@ -26,7 +26,6 @@ data Article = Article
     articleTags :: [Tag],
     articleCreatedAt :: UTCTime,
     articleUpdatedAt :: Maybe UTCTime,
-    articleFavorited :: Bool,
     articleFavoritesCount :: Int,
     articleAuthorId :: ULID
   }
@@ -43,7 +42,6 @@ mkArticle articleId title description body tags createdAt authorId =
       articleTags = tags,
       articleCreatedAt = createdAt,
       articleUpdatedAt = Nothing,
-      articleFavorited = False,
       articleFavoritesCount = 0,
       articleAuthorId = authorId
     }

@@ -88,53 +88,52 @@ instance FromRow Article where
       <*> field
       <*> field
       <*> field
-      <*> field
 
 save :: (Database r m) => Article -> m Bool
 save user =
   withConnection $ \conn ->
-    liftIO $
-      (> 0)
-        <$> execute
-          conn
-          "INSERT INTO articles \
-          \ (id, slug, title, description, body, tags, author_id, favorites_count, created_at)\
-          \ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\
-          \ ON CONFLICT (id) DO\
-          \ UPDATE SET\
-          \   slug = ?,\
-          \   title = ?,\
-          \   description = ?,\
-          \   body = ?,\
-          \   tags = ?,\
-          \   author_id = ?,\
-          \   favorites_count = ?,\
-          \   updated_at = now()"
-          user
+    liftIO
+      $ (> 0)
+      <$> execute
+        conn
+        "INSERT INTO articles \
+        \ (id, slug, title, description, body, tags, author_id, favorites_count, created_at)\
+        \ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\
+        \ ON CONFLICT (id) DO\
+        \ UPDATE SET\
+        \   slug = ?,\
+        \   title = ?,\
+        \   description = ?,\
+        \   body = ?,\
+        \   tags = ?,\
+        \   author_id = ?,\
+        \   favorites_count = ?,\
+        \   updated_at = now()"
+        user
 
 findById :: (Database r m) => ULID -> m (Maybe Article)
 findById articleId =
   withConnection $ \conn ->
-    liftIO $
-      headMay
-        <$> query
-          conn
-          "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
-          \       favorites_count, author_id \
-          \FROM articles WHERE id = ?"
-          (Only articleId)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+        \       favorites_count, author_id \
+        \FROM articles WHERE id = ?"
+        (Only articleId)
 
 findBySlug :: (Database r m) => Slug -> m (Maybe Article)
 findBySlug slug =
   withConnection $ \conn ->
-    liftIO $
-      headMay
-        <$> query
-          conn
-          "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
-          \       favorites_count, author_id \
-          \FROM articles WHERE slug = ?"
-          (Only $ unSlug slug)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT id, slug, title, description, body, tags, created_at, updated_at, false,\
+        \       favorites_count, author_id \
+        \FROM articles WHERE slug = ?"
+        (Only $ unSlug slug)
 
 delete :: (Database r m) => Article -> m Bool
 delete article =
