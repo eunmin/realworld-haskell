@@ -5,7 +5,7 @@ import RealWorld.Infra.Util.Env (envRead)
 data Config = Config
   { configPort :: Int
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 configFromEnv :: IO Config
 configFromEnv =

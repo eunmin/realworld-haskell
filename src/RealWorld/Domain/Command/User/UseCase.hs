@@ -44,12 +44,12 @@ data RegistrationCommand = RegistrationCommand
   , registrationCommandEmail :: Text
   , registrationCommandPassword :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data RegistrationResult = RegistrationResult
   { registrationResultToken :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data RegistrationError
   = RegistrationErrorUsernameAlreadyExists
@@ -57,7 +57,7 @@ data RegistrationError
   | RegistrationErrorInvalidPassword
   | RegistrationErrorInvalidUsername
   | RegistrationErrorInvalidEmail
-  deriving (Eq, Generic)
+  deriving stock (Eq, Generic)
 
 registration ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
@@ -85,7 +85,7 @@ data AuthenticationCommand = AuthenticationCommand
   { authenticationCommandEmail :: Text
   , authenticationCommandPassword :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data AuthenticationResult = AuthenticationResult
   { authenticationResultToken :: Text
@@ -93,13 +93,13 @@ data AuthenticationResult = AuthenticationResult
   , authenticationResultBio :: Text
   , authenticationResultImage :: Maybe Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data AuthenticationError
   = AuthenticationErrorUserNotFound
   | AuthenticationErrorInvalidPassword
   | AuthenticationErrorInvalidEmail
-  deriving (Eq, Generic)
+  deriving stock (Eq, Generic)
 
 authentication ::
   (MonadIO m, UserRepository m, PasswordGateway m, TokenGateway m) =>
@@ -131,7 +131,7 @@ data UpdateUserCommand = UpdateUserCommand
   , updateUserCommandBio :: Maybe Text
   , updateUserCommandImage :: Maybe (Maybe Text)
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data UpdateUserResult = UpdateUserResult
   { updateUserResultToken :: Text
@@ -140,7 +140,7 @@ data UpdateUserResult = UpdateUserResult
   , updateUserResultBio :: Text
   , updateUserResultImage :: Maybe Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data UpdateUserError
   = UpdateUserErrorInvalidToken
@@ -149,7 +149,7 @@ data UpdateUserError
   | UpdateUserErrorInvalidPassword
   | UpdateUserErrorUserNotFound
   | UpdateUserErrorUsernameAlreadyExists
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 updateUser ::
   (MonadIO m, UserRepository m, PasswordGateway m, TokenGateway m, TxManager m) =>
@@ -193,7 +193,7 @@ data FollowUserCommand = FollowUserCommand
   { followUserCommandToken :: Text
   , followUserCommandUsername :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data FollowUserResult = FollowUserResult
   { followUserResultUsername :: Text
@@ -201,7 +201,7 @@ data FollowUserResult = FollowUserResult
   , followUserResultImage :: Maybe Text
   , followUserResultFollowing :: Bool
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data FollowUserError
   = FollowUserErrorInvalidToken
@@ -209,7 +209,7 @@ data FollowUserError
   | FollowUserErrorCantFollowSelf
   | FollowUserErrorAlreadyFollowing
   | FollowUserErrorInvalidUsername
-  deriving (Eq, Generic)
+  deriving stock (Eq, Generic)
 
 followUser ::
   (MonadIO m, UserRepository m, TokenGateway m, TxManager m) =>
@@ -240,7 +240,7 @@ data UnfollowUserCommand = UnfollowUserCommand
   { unfollowUserCommandToken :: Text
   , unfollowUserCommandUsername :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data UnfollowUserResult = UnfollowUserResult
   { unfollowUserResultUsername :: Text
@@ -248,13 +248,13 @@ data UnfollowUserResult = UnfollowUserResult
   , unfollowUserResultImage :: Maybe Text
   , unfollowUserResultFollowing :: Bool
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data UnfollowUserError
   = UnfollowUserErrorInvalidToken
   | UnfollowUserErrorInvalidUsername
   | UnfollowUserErrorUserNotFound
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 unfollowUser ::
   (MonadIO m, UserRepository m, TokenGateway m, TxManager m) =>

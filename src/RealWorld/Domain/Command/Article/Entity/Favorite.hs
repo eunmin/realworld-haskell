@@ -7,10 +7,10 @@ import Data.Time (UTCTime)
 import RealWorld.Domain.Command.Article.Value (FavoriteId)
 
 data Favorite = Favorite
-  { favoriteId :: FavoriteId,
-    favroiteCreatedAt :: UTCTime
+  { favoriteId :: FavoriteId
+  , favroiteCreatedAt :: UTCTime
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 mkFavorite :: FavoriteId -> UTCTime -> Favorite
 mkFavorite = Favorite

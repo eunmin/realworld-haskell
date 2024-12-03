@@ -9,28 +9,29 @@ module RealWorld.Infra.Web.ErrorResponse where
 import Control.Error (headMay)
 import Data.Aeson (ToJSON (..))
 import Network.HTTP.Types (Status)
-import Network.HTTP.Types.Status
-  ( status401,
-    status403,
-    status404,
-    status422,
-    status500,
-  )
+import Network.HTTP.Types.Status (
+  status401,
+  status403,
+  status404,
+  status422,
+  status500,
+ )
 import Web.Scotty.Internal.Types (ScottyError (..))
 
 data ErrorResponse = ErrorResponse
-  { errroResponseStatus :: Status,
-    errorResponseErrors :: Errors
+  { errroResponseStatus :: Status
+  , errorResponseErrors :: Errors
   }
-  deriving (Show, Generic)
+  deriving stock (Show, Generic)
 
 data Errors = Errors
   {errors :: ErrorsBody}
-  deriving (Show, Generic, ToJSON)
-
+  deriving stock (Show, Generic)
+  deriving anyclass (ToJSON)
 data ErrorsBody = ErrorsBody
   {body :: [Text]}
-  deriving (Show, Generic, ToJSON)
+  deriving stock (Show, Generic)
+  deriving anyclass (ToJSON)
 
 instance ScottyError ErrorResponse where
   stringError = mkErrorResponse status500 . toText

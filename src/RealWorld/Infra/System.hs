@@ -13,7 +13,7 @@ data Config = Config
   , configJwtSecret :: Text
   , configLogEnv :: Environment
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 type State = (Database.State, Text)
 

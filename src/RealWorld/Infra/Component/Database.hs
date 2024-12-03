@@ -7,73 +7,73 @@ import Control.Exception.Safe (throwString)
 import Control.Monad.Catch (MonadMask)
 import Data.Has (Has (..))
 import Data.Pool
-import qualified Data.Text as T
-import Database.PostgreSQL.Simple
-  ( ConnectInfo
-      ( ConnectInfo,
-        connectDatabase,
-        connectHost,
-        connectPassword,
-        connectPort,
-        connectUser
-      ),
-    Connection,
-    close,
-    connect,
-  )
-import Database.PostgreSQL.Simple.Migration
-  ( MigrationCommand (MigrationDirectory, MigrationInitialization),
-    MigrationResult (..),
-    defaultOptions,
-    runMigrations,
-  )
+import Data.Text qualified as T
+import Database.PostgreSQL.Simple (
+  ConnectInfo (
+    ConnectInfo,
+    connectDatabase,
+    connectHost,
+    connectPassword,
+    connectPort,
+    connectUser
+  ),
+  Connection,
+  close,
+  connect,
+ )
+import Database.PostgreSQL.Simple.Migration (
+  MigrationCommand (MigrationDirectory, MigrationInitialization),
+  MigrationResult (..),
+  defaultOptions,
+  runMigrations,
+ )
 import RealWorld.Infra.Util.Env (envRead)
-import qualified RealWorld.Infra.Util.Pool as Pool
+import RealWorld.Infra.Util.Pool qualified as Pool
 import Relude hiding (State, state, withState)
-import Prelude hiding (State)
 import System.Environment (getEnv)
+import Prelude hiding (State, state, withState)
 
 data Config = Config
-  { configHost :: Text,
-    configPort :: Int,
-    configUser :: Text,
-    configPassword :: Text,
-    configDatabase :: Text,
-    configPoolMaxSize :: Int,
-    configPoolIdleTimeoutSec :: Double
+  { configHost :: Text
+  , configPort :: Int
+  , configUser :: Text
+  , configPassword :: Text
+  , configDatabase :: Text
+  , configPoolMaxSize :: Int
+  , configPoolIdleTimeoutSec :: Double
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data State = State
-  { stateConnectionPool :: Pool Connection,
-    stateConnection :: Maybe Connection
+  { stateConnectionPool :: Pool Connection
+  , stateConnection :: Maybe Connection
   }
 
 withPool :: Config -> (Pool Connection -> IO a) -> IO a
 withPool
   Config
-    { configHost = host,
-      configPort = port,
-      configUser = user,
-      configPassword = password,
-      configDatabase = database,
-      configPoolMaxSize = poolSize,
-      configPoolIdleTimeoutSec = idleTimeoutSec
+    { configHost = host
+    , configPort = port
+    , configUser = user
+    , configPassword = password
+    , configDatabase = database
+    , configPoolMaxSize = poolSize
+    , configPoolIdleTimeoutSec = idleTimeoutSec
     } =
     bracket initPool cleanPool
-    where
-      initPool = newPool $ defaultPoolConfig openConn closeConn idleTimeoutSec poolSize
-      cleanPool = destroyAllResources
-      openConn =
-        connect
-          $ ConnectInfo
-            { connectHost = T.unpack host,
-              connectPort = fromIntegral port,
-              connectUser = T.unpack user,
-              connectPassword = T.unpack password,
-              connectDatabase = T.unpack database
-            }
-      closeConn = close
+   where
+    initPool = newPool $ defaultPoolConfig openConn closeConn idleTimeoutSec poolSize
+    cleanPool = destroyAllResources
+    openConn =
+      connect $
+        ConnectInfo
+          { connectHost = T.unpack host
+          , connectPort = fromIntegral port
+          , connectUser = T.unpack user
+          , connectPassword = T.unpack password
+          , connectDatabase = T.unpack database
+          }
+    closeConn = close
 
 withState :: Config -> (State -> IO ()) -> IO ()
 withState config action =
@@ -100,11 +100,11 @@ migrate (State pool _) = do
     case result of
       MigrationError err -> throwString err
       _ -> return ()
-  where
-    cmds =
-      [ MigrationInitialization,
-        MigrationDirectory "sql/migrations"
-      ]
+ where
+  cmds =
+    [ MigrationInitialization
+    , MigrationDirectory "sql/migrations"
+    ]
 
 withConnection ::
   (Has State r, MonadIO m, MonadState r m, MonadMask m) =>

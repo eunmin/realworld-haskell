@@ -69,14 +69,14 @@ data CreateArticleCommand = CreateArticleCommand
   , createArticleCommandTagList :: [Text]
   , createArticleCommandToken :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data CreateArticleResult = CreateArticleResult
   { createArticleResultSlug :: Text
   , createArticleResultCreatedAt :: UTCTime
   , createArticleResultAuthorUsername :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data CreateArticleError
   = CreateArticleErrorInvalidTitle
@@ -85,7 +85,7 @@ data CreateArticleError
   | CreateArticleErrorInvalidDescription
   | CreateArticleErrorInvalidTag
   | CreateArticleErrorAuthorNotFound
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 createArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, TokenGateway m, TxManager m) =>
@@ -127,7 +127,7 @@ data UpdateArticleCommand = UpdateArticleCommand
   , updateArticleCommandDescription :: Maybe Text
   , updateArticleCommandBody :: Maybe Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data UpdateArticleResult = UpdateArticleResult
   { updateArticleResultSlug :: Text
@@ -141,7 +141,7 @@ data UpdateArticleResult = UpdateArticleResult
   , updateArticleResultAuthorUsername :: Text
   , updateArticleResultFavorited :: Bool
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data UpdateArticleError
   = UpdateArticleErrorInvalidTitle
@@ -152,7 +152,7 @@ data UpdateArticleError
   | UpdateArticleErrorInvalidDescription
   | UpdateArticleErrorAuthorNotFound
   | UpdateArticleErrorEditPermissionDenied
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 updateArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TokenGateway m, TxManager m) =>
@@ -194,19 +194,19 @@ data DeleteArticleCommand = DeleteArticleCommand
   { deleteArticleCommandToken :: Text
   , deleteArticleCommandSlug :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data DeleteArticleResult = DeleteArticleResult
   { deleteArticleResultSlug :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data DeleteArticleError
   = DeleteArticleErrorInvalidToken
   | DeleteArticleErrorInvalidSlug
   | DeleteArticleErrorArticleNotFound
   | DeleteArticleErrorDeletePermissionDenied
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 deleteArticle ::
   (MonadIO m, ArticleRepository m, TokenGateway m, TxManager m) =>
@@ -230,14 +230,14 @@ data AddCommentsCommand = AddCommentsCommand
   , addCommentsCommandSlug :: Text
   , addCommentsCommandBody :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data AddCommentsResult = AddCommentsResult
   { addCommentsResultCommentId :: Text
   , addCommentsResultCreatedAt :: UTCTime
   , addCommentsResultAuthorUsername :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data AddCommentsError
   = AddCommentsErrorInvalidToken
@@ -245,7 +245,7 @@ data AddCommentsError
   | AddCommentsErrorArticleNotFound
   | AddCommentsErrorAuthorNotFound
   | AddCommentsErrorInvalidSlug
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 addComments ::
   ( MonadIO m
@@ -290,13 +290,13 @@ data DeleteCommentCommand = DeleteCommentCommand
   , deleteCommentCommandSlug :: Text
   , deleteCommentCommandCommentId :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data DeleteCommentResult = DeleteCommentResult
   { deleteCommentResultSlug :: Text
   , deleteCommentResultCommentId :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data DeleteCommentError
   = DeleteCommentErrorInvalidToken
@@ -305,7 +305,7 @@ data DeleteCommentError
   | DeleteCommentErrorArticleNotFound
   | DeleteCommentErrorCommentNotFound
   | DeleteCommentErrorDeletePermissionDenied
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 deleteComment ::
   (MonadIO m, ArticleRepository m, TokenGateway m, CommentRepository m, TxManager m) =>
@@ -334,7 +334,7 @@ data FavoriteArticleCommand = FavoriteArticleCommand
   { favoriteArticleToken :: Text
   , favoriteArticleSlug :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data FavoriteArticleResult = FavoriteArticleResult
   { favoriteArticleResultSlug :: Text
@@ -347,7 +347,7 @@ data FavoriteArticleResult = FavoriteArticleResult
   , favoriteArticleResultFavoritesCount :: Int
   , favoriteArticleResultAuthorUsername :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data FavoriteArticleError
   = FavoriteArticleErrorInvalidToken
@@ -355,7 +355,7 @@ data FavoriteArticleError
   | FavoriteArticleErrorArticleNotFound
   | FavroiteArticleErrorUserNotFound
   | FavoriteArticleErrorAlreadyFavorited
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 favoriteArticle ::
   ( MonadIO m
@@ -402,7 +402,7 @@ data UnfavoriteArticleCommand = UnfavoriteArticleCommand
   { unfavoriteArticleToken :: Text
   , unfavoriteArticleSlug :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 data UnfavoriteArticleResult = UnfavoriteArticleResult
   { unfavoriteArticleResultSlug :: Text
@@ -415,7 +415,7 @@ data UnfavoriteArticleResult = UnfavoriteArticleResult
   , unfavoriteArticleResultFavoritesCount :: Int
   , unfavoriteArticleResultAuthorUsername :: Text
   }
-  deriving (Show, Eq)
+  deriving stock (Show, Eq)
 
 data UnfavoriteArticleError
   = UnfavoriteArticleErrorInvalidToken
@@ -424,7 +424,7 @@ data UnfavoriteArticleError
   | UnfavroiteArticleErrorUserNotFound
   | UnfavroiteArticleErrorIsNotFavorited
   | UnfavoriteArticleErrorNotFavorited
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 unfavoriteArticle ::
   ( MonadIO m

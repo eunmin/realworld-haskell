@@ -11,7 +11,8 @@ import Relude hiding (natVal)
 import Prelude hiding (natVal)
 
 newtype BoundedText min max = BoundedText {unBoundedText :: Text}
-  deriving (Eq, Show, IsString, Generic)
+  deriving stock (Eq, Show, Generic)
+  deriving newtype (IsString)
 
 mkBoundedText ::
   forall min max.
