@@ -29,24 +29,3 @@ configFromEnv =
     <*> Database.configFromEnv
     <*> (getEnv "JWT_SECRET" <&> toText)
     <*> (Environment . toText <$> getEnv "ENV_NAME")
-
-devConfig :: Config
-devConfig =
-  Config
-    { configHttpServer =
-        HttpServer.Config
-          { HttpServer.configPort = 3000
-          }
-    , configDatabase =
-        Database.Config
-          { Database.configHost = "localhost"
-          , Database.configPort = 5432
-          , Database.configUser = "realworld"
-          , Database.configPassword = ""
-          , Database.configDatabase = "realworld_hs"
-          , Database.configPoolMaxSize = 12
-          , Database.configPoolIdleTimeoutSec = 3.0
-          }
-    , configJwtSecret = "secret"
-    , configLogEnv = "dev"
-    }
