@@ -31,7 +31,7 @@
         aeson.source = "1.5.0.0" # Hackage version
         shower.source = inputs.shower; # Flake input
         */
-        scotty.source = "0.12.1";
+        scotty.source = "0.22";
       };
 
       # Add your package overrides here

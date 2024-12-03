@@ -2,6 +2,7 @@
 
 module RealWorld.Infra.Web.Routes where
 
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Katip (KatipContext)
 import Network.Wai.Middleware.RequestLogger (logStdout)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
@@ -14,9 +15,7 @@ import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Query.QueryService (QueryService)
 import RealWorld.Infra.Web.Controller.Article qualified as Article
 import RealWorld.Infra.Web.Controller.User qualified as User
-import RealWorld.Infra.Web.ErrorResponse (
-  ErrorResponse (ErrorResponse),
- )
+import RealWorld.Infra.Web.ErrorResponse (handleEx)
 import RealWorld.Infra.Web.ErrorResponse qualified as ErrorResponse
 import Relude hiding (get, put)
 import Web.Scotty.Trans (
@@ -24,13 +23,11 @@ import Web.Scotty.Trans (
   defaultHandler,
   delete,
   get,
-  json,
   middleware,
   notFound,
   post,
   put,
-  raise,
-  status,
+  throw,
  )
 import Prelude hiding (get, put)
 
@@ -44,14 +41,13 @@ routes ::
   , TokenGateway m
   , PasswordGateway m
   , QueryService m
+  , MonadUnliftIO m
   ) =>
-  ScottyT ErrorResponse m ()
+  ScottyT m ()
 routes = do
   middleware logStdout
 
-  defaultHandler $ \(ErrorResponse status' errors) -> do
-    status status'
-    json errors
+  defaultHandler handleEx
 
   post "/api/users/login" User.authentication
 
@@ -91,4 +87,4 @@ routes = do
 
   get "/api/tags" Article.getTags
 
-  notFound $ raise $ ErrorResponse.notFound "API not found"
+  notFound $ throw $ ErrorResponse.notFound "API not found"

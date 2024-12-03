@@ -4,16 +4,16 @@ module RealWorld.Infra.Manager.PgTxManager where
 
 import Control.Monad.Catch (MonadMask (mask), onException)
 import Database.PostgreSQL.Simple (Connection)
-import Database.PostgreSQL.Simple.Transaction
-  ( IsolationLevel (..),
-    ReadWriteMode (..),
-    TransactionMode (..),
-    beginMode,
-    commit,
-    rollback,
-  )
-import qualified RealWorld.Infra.Component.Database as Database
-import qualified RealWorld.Infra.System as System
+import Database.PostgreSQL.Simple.Transaction (
+  IsolationLevel (..),
+  ReadWriteMode (..),
+  TransactionMode (..),
+  beginMode,
+  commit,
+  rollback,
+ )
+import RealWorld.Infra.Component.Database qualified as Database
+import RealWorld.Infra.System qualified as System
 import RealWorld.Infra.Util.Pool (withResource)
 
 defaultTransactionMode :: TransactionMode
@@ -28,13 +28,13 @@ withTransaction mode conn act = mask $ \unmask -> do
   liftIO $ commit conn
   pure r
 
-withTxMode :: (MonadState System.State m, MonadIO m, MonadMask m) => TransactionMode -> m a -> m a
+withTxMode :: (MonadReader System.State m, MonadIO m, MonadMask m) => TransactionMode -> m a -> m a
 withTxMode txMode action = do
-  (Database.State {..}, secret) <- get
+  (Database.State {..}, secret) <- ask
   withResource stateConnectionPool $ \conn -> do
     withTransaction txMode conn $ do
-      modify (const (Database.State stateConnectionPool (Just conn), secret))
+      -- modify (const (Database.State stateConnectionPool (Just conn), secret))
       action
 
-withTx :: (MonadState System.State m, MonadIO m, MonadMask m) => ExceptT e m a -> ExceptT e m a
+withTx :: (MonadReader System.State m, MonadIO m, MonadMask m) => ExceptT e m a -> ExceptT e m a
 withTx = withTxMode defaultTransactionMode

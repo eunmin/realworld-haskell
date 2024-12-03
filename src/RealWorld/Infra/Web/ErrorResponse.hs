@@ -6,7 +6,6 @@
 
 module RealWorld.Infra.Web.ErrorResponse where
 
-import Control.Error (headMay)
 import Data.Aeson (ToJSON (..))
 import Network.HTTP.Types (Status)
 import Network.HTTP.Types.Status (
@@ -14,9 +13,9 @@ import Network.HTTP.Types.Status (
   status403,
   status404,
   status422,
-  status500,
  )
-import Web.Scotty.Internal.Types (ScottyError (..))
+import Web.Scotty.Internal.Types (ErrorHandler)
+import Web.Scotty.Trans (Handler (..), json, status)
 
 data ErrorResponse = ErrorResponse
   { errroResponseStatus :: Status
@@ -28,26 +27,32 @@ data Errors = Errors
   {errors :: ErrorsBody}
   deriving stock (Show, Generic)
   deriving anyclass (ToJSON)
+
 data ErrorsBody = ErrorsBody
   {body :: [Text]}
   deriving stock (Show, Generic)
   deriving anyclass (ToJSON)
 
-instance ScottyError ErrorResponse where
-  stringError = mkErrorResponse status500 . toText
-  showError = toLazy . fromMaybe "Unknown Error" . headMay . body . errors . errorResponseErrors
+data Except = Except
+  { exceptStatus :: Status
+  , exceptMessage :: Text
+  }
+  deriving stock (Show, Eq, Typeable)
+  deriving anyclass (Exception)
 
-mkErrorResponse :: Status -> Text -> ErrorResponse
-mkErrorResponse status message = ErrorResponse status $ Errors $ ErrorsBody [message]
+invalid :: Text -> Except
+invalid = Except status422
 
-invalid :: Text -> ErrorResponse
-invalid = mkErrorResponse status422
+unauthorized :: Text -> Except
+unauthorized = Except status401
 
-unauthorized :: Text -> ErrorResponse
-unauthorized = mkErrorResponse status401
+forbidden :: Text -> Except
+forbidden = Except status403
 
-forbidden :: Text -> ErrorResponse
-forbidden = mkErrorResponse status403
+notFound :: Text -> Except
+notFound = Except status404
 
-notFound :: Text -> ErrorResponse
-notFound = mkErrorResponse status404
+handleEx :: (MonadIO m) => ErrorHandler m
+handleEx = Handler $ \(Except status' message) -> do
+  status status'
+  json $ Errors $ ErrorsBody [message]

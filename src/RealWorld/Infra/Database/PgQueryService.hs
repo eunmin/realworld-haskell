@@ -12,28 +12,28 @@ import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (PGArray (..))
-import RealWorld.Domain.Query.Data
-  ( Article (Article),
-    ArticleList (..),
-    Comment (..),
-    CommentList (..),
-    FeedArticlesParams (..),
-    GetArticleParams (..),
-    GetCommentsParams (..),
-    GetCurrentUserParams (..),
-    GetProfileParams (..),
-    ListArticlesParams (..),
-    Profile (..),
-    TagList (..),
-    User,
-  )
-import qualified RealWorld.Infra.Component.Database as Database
+import RealWorld.Domain.Query.Data (
+  Article (Article),
+  ArticleList (..),
+  Comment (..),
+  CommentList (..),
+  FeedArticlesParams (..),
+  GetArticleParams (..),
+  GetCommentsParams (..),
+  GetCurrentUserParams (..),
+  GetProfileParams (..),
+  ListArticlesParams (..),
+  Profile (..),
+  TagList (..),
+  User,
+ )
+import RealWorld.Infra.Component.Database qualified as Database
 
-type QueryDatabase r m = (Has Database.State r, MonadIO m, MonadState r m)
+type QueryDatabase r m = (Has Database.State r, MonadIO m, MonadReader r m)
 
-deriving instance FromRow User
+deriving anyclass instance FromRow User
 
-deriving instance FromRow Profile
+deriving anyclass instance FromRow Profile
 
 instance FromRow Article where
   fromRow =
@@ -63,7 +63,7 @@ instance FromRow TagList where
 
 getCurrentUser :: (QueryDatabase r m) => GetCurrentUserParams -> m (Maybe User)
 getCurrentUser GetCurrentUserParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
       headMay
@@ -74,7 +74,7 @@ getCurrentUser GetCurrentUserParams {..} = do
 
 getProfile :: (QueryDatabase r m) => GetProfileParams -> m (Maybe Profile)
 getProfile GetProfileParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
       headMay
@@ -90,29 +90,29 @@ getProfile GetProfileParams {..} = do
 instance ToRow ListArticlesParams where
   toRow ListArticlesParams {..} =
     catMaybes
-      [ toField <$> listArticlesParamsActorId,
-        toField <$> listArticlesParamsActorId,
-        toField <$> listArticlesParamsAuthor,
-        toField <$> listArticlesParamsTag,
-        toField <$> listArticlesParamsFavorited,
-        toField <$> listArticlesParamsLimit,
-        toField <$> listArticlesParamsOffset
+      [ toField <$> listArticlesParamsActorId
+      , toField <$> listArticlesParamsActorId
+      , toField <$> listArticlesParamsAuthor
+      , toField <$> listArticlesParamsTag
+      , toField <$> listArticlesParamsFavorited
+      , toField <$> listArticlesParamsLimit
+      , toField <$> listArticlesParamsOffset
       ]
 
 listArticles :: (QueryDatabase r m) => ListArticlesParams -> m ArticleList
 listArticles params@ListArticlesParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     let selectSql =
           "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, "
             <> ( if isJust listArticlesParamsActorId
-                   then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
-                   else "false, "
+                  then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
+                  else "false, "
                )
             <> "a.favorites_count, au.username, au.bio, au.image "
             <> ( if isJust listArticlesParamsActorId
-                   then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
-                   else "false "
+                  then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
+                  else "false "
                )
     let sql =
           "FROM articles a LEFT JOIN users au ON au.id = a.author_id "
@@ -161,15 +161,15 @@ listArticles params@ListArticlesParams {..} = do
 
 instance ToRow FeedArticlesParams where
   toRow FeedArticlesParams {..} =
-    [ toField feedArticlesParamsActorId,
-      toField feedArticlesParamsActorId,
-      toField feedArticlesParamsLimit,
-      toField feedArticlesParamsOffset
+    [ toField feedArticlesParamsActorId
+    , toField feedArticlesParamsActorId
+    , toField feedArticlesParamsLimit
+    , toField feedArticlesParamsOffset
     ]
 
 feedArticles :: (QueryDatabase r m) => FeedArticlesParams -> m ArticleList
 feedArticles params@FeedArticlesParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     let selectSql =
           "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
@@ -200,7 +200,7 @@ feedArticles params@FeedArticlesParams {..} = do
 
 getArticle :: (QueryDatabase r m) => GetArticleParams -> m (Maybe Article)
 getArticle GetArticleParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
       headMay
@@ -215,7 +215,7 @@ getArticle GetArticleParams {..} = do
 
 getComments :: (QueryDatabase r m) => GetCommentsParams -> m CommentList
 getComments GetCommentsParams {..} = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     comments <-
       liftIO $
@@ -231,7 +231,7 @@ getComments GetCommentsParams {..} = do
 
 getTags :: (QueryDatabase r m) => m TagList
 getTags = do
-  (Database.State pool _) <- gets getter
+  (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     fromMaybe (TagList [])
       <$> liftIO

@@ -6,13 +6,13 @@ module RealWorld.Infra.Database.PgCommentRepository where
 import Control.Exception.Safe (MonadMask)
 import Data.Has (Has)
 import Data.ULID (ULID)
-import Database.PostgreSQL.Simple
-  ( FromRow,
-    Only (Only),
-    ToRow,
-    execute,
-    query,
-  )
+import Database.PostgreSQL.Simple (
+  FromRow,
+  Only (Only),
+  ToRow,
+  execute,
+  query,
+ )
 import Database.PostgreSQL.Simple.FromField (FromField)
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
@@ -20,27 +20,27 @@ import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import RealWorld.Domain.Command.Article.Entity.Comment
 import RealWorld.Domain.Command.Article.Value (CommentBody (..))
 import RealWorld.Infra.Component.Database (withConnection)
-import qualified RealWorld.Infra.Component.Database as Database
+import RealWorld.Infra.Component.Database qualified as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
 import Safe (headMay)
 
-type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
+type Database r m = (Has Database.State r, MonadIO m, MonadReader r m, MonadMask m, MonadFail m)
 
-deriving instance ToField CommentBody
+deriving newtype instance ToField CommentBody
 
 instance ToRow Comment where
   toRow Comment {..} =
-    [ toField commentId,
-      toField commentBody,
-      toField commentCreatedAt,
-      toField commentUpdatedAt,
-      toField commentAuthorId,
-      toField commentArticleId,
-      -- for on conflict update
-      toField commentBody,
-      toField commentCreatedAt,
-      toField commentAuthorId,
-      toField commentArticleId
+    [ toField commentId
+    , toField commentBody
+    , toField commentCreatedAt
+    , toField commentUpdatedAt
+    , toField commentAuthorId
+    , toField commentArticleId
+    , -- for on conflict update
+      toField commentBody
+    , toField commentCreatedAt
+    , toField commentAuthorId
+    , toField commentArticleId
     ]
 
 deriving instance FromField CommentBody

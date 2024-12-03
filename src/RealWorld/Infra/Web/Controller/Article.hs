@@ -34,7 +34,7 @@ import RealWorld.Domain.Query.Data qualified as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
 import RealWorld.Domain.Query.QueryService qualified as QueryService
 import RealWorld.Infra.Converter.Aeson ()
-import RealWorld.Infra.Web.ErrorResponse (ErrorResponse, invalid, notFound, unauthorized)
+import RealWorld.Infra.Web.ErrorResponse (invalid, notFound, unauthorized)
 import RealWorld.Infra.Web.Errors ()
 import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
 import Web.Scotty.Trans (
@@ -42,7 +42,9 @@ import Web.Scotty.Trans (
   json,
   jsonData,
   param,
-  raise,
+  pathParam,
+  queryParamMaybe,
+  throw,
  )
 
 data ArticleWrapper a = ArticleWrapper
@@ -60,51 +62,51 @@ data CommentWrapper a = CommentWrapper
 ----------------------------------------------------------------------------------------------------
 -- List Articles
 
-listArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+listArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT m ()
 listArticles = do
   withOptionalToken $ \token -> do
     userId <- case Token <$> token of
       Just token' -> lift $ TokenGateway.verify token'
       Nothing -> pure Nothing
-    tag <- optional $ param "tag"
-    author <- optional $ param "author"
-    favorited <- optional $ param "favorited"
-    limit <- optional $ param "limit" <|> pure 20
-    offset <- optional $ param "offset" <|> pure 0
+    tag <- queryParamMaybe "tag"
+    author <- queryParamMaybe "author"
+    favorited <- queryParamMaybe "favorited"
+    limit <- queryParamMaybe "limit"
+    offset <- queryParamMaybe "offset"
     let params =
           Query.ListArticlesParams
             { listArticlesParamsActorId = show <$> userId
             , listArticlesParamsTag = tag
             , listArticlesParamsAuthor = author
             , listArticlesParamsFavorited = favorited
-            , listArticlesParamsLimit = limit
-            , listArticlesParamsOffset = offset
+            , listArticlesParamsLimit = Just $ fromMaybe 20 limit
+            , listArticlesParamsOffset = Just $ fromMaybe 0 offset
             }
     json =<< lift (QueryService.listArticles params)
 
 ----------------------------------------------------------------------------------------------------
 -- Feed Articles
 
-feedArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+feedArticles :: (MonadIO m, QueryService m, TokenGateway m) => ActionT m ()
 feedArticles = do
   withRequiredToken $ \token -> do
     userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
-    limit <- fromMaybe 20 <$> optional (param "limit")
-    offset <- fromMaybe 0 <$> optional (param "offset")
+    limit <- queryParamMaybe "limit"
+    offset <- queryParamMaybe "offset"
     let params =
           Query.FeedArticlesParams
             { feedArticlesParamsActorId = show userId
-            , feedArticlesParamsLimit = limit
-            , feedArticlesParamsOffset = offset
+            , feedArticlesParamsLimit = fromMaybe 20 limit
+            , feedArticlesParamsOffset = fromMaybe 0 offset
             }
     json =<< lift (QueryService.feedArticles params)
 
 ----------------------------------------------------------------------------------------------------
 -- Get Article
 
-getArticle :: (MonadIO m, QueryService m) => ActionT ErrorResponse m ()
+getArticle :: (MonadIO m, QueryService m) => ActionT m ()
 getArticle = do
-  slug <- param "slug"
+  slug <- pathParam "slug"
   json =<< lift (QueryService.getArticle (Query.GetArticleParams slug))
 
 ----------------------------------------------------------------------------------------------------
@@ -129,44 +131,44 @@ createArticle ::
   , TokenGateway m
   , QueryService m
   ) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 createArticle = do
   withRequiredToken $ \token -> do
     ArticleWrapper input <- jsonData
     result <- lift $ ArticleUseCase.createArticle $ toCommand token input
     case result of
-      Right result'@CreateArticleResult{..} -> do
+      Right result'@CreateArticleResult {..} -> do
         let params = Query.GetProfileParams Nothing createArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle input result' profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "createArticle error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> CreateArticleInput -> ArticleUseCase.CreateArticleCommand
-  toCommand token CreateArticleInput{..} =
-    CreateArticleCommand
-      { createArticleCommandTitle = createArticleInputTitle
-      , createArticleCommandDescription = createArticleInputDescription
-      , createArticleCommandBody = createArticleInputBody
-      , createArticleCommandTagList = createArticleInputTagList
-      , createArticleCommandToken = token
-      }
-  toArticle :: CreateArticleInput -> ArticleUseCase.CreateArticleResult -> Profile -> Article
-  toArticle CreateArticleInput{..} CreateArticleResult{..} author =
-    Article
-      { articleSlug = createArticleResultSlug
-      , articleTitle = createArticleInputTitle
-      , articleDescription = createArticleInputDescription
-      , articleBody = createArticleInputBody
-      , articleTagList = createArticleInputTagList
-      , articleCreatedAt = createArticleResultCreatedAt
-      , articleUpdatedAt = Nothing
-      , articleFavorited = False
-      , articleFavoritesCount = 0
-      , articleAuthor = author
-      }
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> CreateArticleInput -> ArticleUseCase.CreateArticleCommand
+    toCommand token CreateArticleInput {..} =
+      CreateArticleCommand
+        { createArticleCommandTitle = createArticleInputTitle
+        , createArticleCommandDescription = createArticleInputDescription
+        , createArticleCommandBody = createArticleInputBody
+        , createArticleCommandTagList = createArticleInputTagList
+        , createArticleCommandToken = token
+        }
+    toArticle :: CreateArticleInput -> ArticleUseCase.CreateArticleResult -> Profile -> Article
+    toArticle CreateArticleInput {..} CreateArticleResult {..} author =
+      Article
+        { articleSlug = createArticleResultSlug
+        , articleTitle = createArticleInputTitle
+        , articleDescription = createArticleInputDescription
+        , articleBody = createArticleInputBody
+        , articleTagList = createArticleInputTagList
+        , articleCreatedAt = createArticleResultCreatedAt
+        , articleUpdatedAt = Nothing
+        , articleFavorited = False
+        , articleFavoritesCount = 0
+        , articleAuthor = author
+        }
 
 ----------------------------------------------------------------------------------------------------
 -- Update Article
@@ -190,65 +192,65 @@ updateArticle ::
   , TokenGateway m
   , QueryService m
   ) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 updateArticle = do
   withRequiredToken $ \token -> do
     ArticleWrapper input <- jsonData
-    slug <- param "slug"
+    slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.updateArticle $ toCommand token slug input
     case result of
-      Right result'@UpdateArticleResult{..} -> do
+      Right result'@UpdateArticleResult {..} -> do
         let params = Query.GetProfileParams Nothing updateArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "updateArticle error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
-  toCommand token slug UpdateArticleInput{..} =
-    UpdateArticleCommand
-      { updateArticleCommandToken = token
-      , updateArticleCommandSlug = slug
-      , updateArticleCommandTitle = updateArticleInputTitle
-      , updateArticleCommandDescription = updateArticleInputDescription
-      , updateArticleCommandBody = updateArticleInputBody
-      }
-  toArticle :: ArticleUseCase.UpdateArticleResult -> Profile -> Article
-  toArticle UpdateArticleResult{..} author =
-    Article
-      { articleSlug = updateArticleResultSlug
-      , articleTitle = updateArticleResultTitle
-      , articleDescription = updateArticleResultDescription
-      , articleBody = updateArticleResultBody
-      , articleTagList = updateArticleResultTags
-      , articleCreatedAt = updateArticleResultCreatedAt
-      , articleUpdatedAt = updateArticleResultUpdatedAt
-      , articleFavorited = updateArticleResultFavorited
-      , articleFavoritesCount = updateArticleResultFavoritesCount
-      , articleAuthor = author
-      }
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
+    toCommand token slug UpdateArticleInput {..} =
+      UpdateArticleCommand
+        { updateArticleCommandToken = token
+        , updateArticleCommandSlug = slug
+        , updateArticleCommandTitle = updateArticleInputTitle
+        , updateArticleCommandDescription = updateArticleInputDescription
+        , updateArticleCommandBody = updateArticleInputBody
+        }
+    toArticle :: ArticleUseCase.UpdateArticleResult -> Profile -> Article
+    toArticle UpdateArticleResult {..} author =
+      Article
+        { articleSlug = updateArticleResultSlug
+        , articleTitle = updateArticleResultTitle
+        , articleDescription = updateArticleResultDescription
+        , articleBody = updateArticleResultBody
+        , articleTagList = updateArticleResultTags
+        , articleCreatedAt = updateArticleResultCreatedAt
+        , articleUpdatedAt = updateArticleResultUpdatedAt
+        , articleFavorited = updateArticleResultFavorited
+        , articleFavoritesCount = updateArticleResultFavoritesCount
+        , articleAuthor = author
+        }
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Article
 
 deleteArticle ::
   (KatipContext m, ArticleRepository m, TxManager m, TokenGateway m) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 deleteArticle = do
   withRequiredToken $ \token -> do
-    slug <- param "slug"
+    slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.deleteArticle $ toCommand token slug
     case result of
       Right _ -> json emptyObject
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "deleteArticle error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> ArticleUseCase.DeleteArticleCommand
-  toCommand = ArticleUseCase.DeleteArticleCommand
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.DeleteArticleCommand
+    toCommand = ArticleUseCase.DeleteArticleCommand
 
 ----------------------------------------------------------------------------------------------------
 -- Add Comments to an Article
@@ -270,49 +272,49 @@ addComments ::
   , CommentRepository m
   , QueryService m
   ) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 addComments = do
   withRequiredToken $ \token -> do
-    slug <- param "slug"
+    slug <- pathParam "slug"
     CommentWrapper input <- jsonData
     result <- lift $ ArticleUseCase.addComments $ toCommand token slug input
     case result of
-      Right result'@AddCommentsResult{..} -> do
+      Right result'@AddCommentsResult {..} -> do
         let params = Query.GetProfileParams Nothing addCommentsResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ CommentWrapper $ toComment result' (addCommentsInputBody input) profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "addComments error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
-  toCommand token slug AddCommentsInput{..} =
-    ArticleUseCase.AddCommentsCommand
-      { addCommentsCommandToken = token
-      , addCommentsCommandSlug = slug
-      , addCommentsCommandBody = addCommentsInputBody
-      }
-  toComment :: ArticleUseCase.AddCommentsResult -> Text -> Profile -> Query.Comment
-  toComment AddCommentsResult{..} body profile =
-    Comment
-      { commentId = addCommentsResultCommentId
-      , commentCreatedAt = addCommentsResultCreatedAt
-      , commentUpdatedAt = Nothing
-      , commentBody = body
-      , commentAuthor = profile
-      }
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
+    toCommand token slug AddCommentsInput {..} =
+      ArticleUseCase.AddCommentsCommand
+        { addCommentsCommandToken = token
+        , addCommentsCommandSlug = slug
+        , addCommentsCommandBody = addCommentsInputBody
+        }
+    toComment :: ArticleUseCase.AddCommentsResult -> Text -> Profile -> Query.Comment
+    toComment AddCommentsResult {..} body profile =
+      Comment
+        { commentId = addCommentsResultCommentId
+        , commentCreatedAt = addCommentsResultCreatedAt
+        , commentUpdatedAt = Nothing
+        , commentBody = body
+        , commentAuthor = profile
+        }
 
 ----------------------------------------------------------------------------------------------------
 -- Get Comments from an Article
 
-getComments :: (MonadIO m, QueryService m, TokenGateway m) => ActionT ErrorResponse m ()
+getComments :: (MonadIO m, QueryService m, TokenGateway m) => ActionT m ()
 getComments = do
   withOptionalToken $ \token -> do
     userId <- case Token <$> token of
       Just token' -> lift $ TokenGateway.verify token'
       Nothing -> pure Nothing
-    slug <- param "slug"
+    slug <- pathParam "slug"
     let params =
           Query.GetCommentsParams
             { getCommentsParamsActorId = show <$> userId
@@ -325,21 +327,21 @@ getComments = do
 
 deleteComment ::
   (KatipContext m, ArticleRepository m, CommentRepository m, TxManager m, TokenGateway m) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 deleteComment = do
   withRequiredToken $ \token -> do
-    slug <- param "slug"
-    commentId <- param "comment-id"
+    slug <- pathParam "slug"
+    commentId <- pathParam "comment-id"
     result <- lift $ ArticleUseCase.deleteComment $ toCommand token slug commentId
     case result of
       Right _ -> json emptyObject
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "deleteComment error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> Text -> ArticleUseCase.DeleteCommentCommand
-  toCommand = ArticleUseCase.DeleteCommentCommand
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> Text -> ArticleUseCase.DeleteCommentCommand
+    toCommand = ArticleUseCase.DeleteCommentCommand
 
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article
@@ -353,37 +355,37 @@ favorite ::
   , QueryService m
   , TokenGateway m
   ) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 favorite = do
   withRequiredToken $ \token -> do
-    slug <- param "slug"
+    slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.favoriteArticle $ toCommand token slug
     case result of
-      Right result'@FavoriteArticleResult{..} -> do
+      Right result'@FavoriteArticleResult {..} -> do
         let params = Query.GetProfileParams Nothing favoriteArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "favorite error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> ArticleUseCase.FavoriteArticleCommand
-  toCommand = ArticleUseCase.FavoriteArticleCommand
-  toArticle :: ArticleUseCase.FavoriteArticleResult -> Profile -> Article
-  toArticle FavoriteArticleResult{..} author =
-    Article
-      { articleSlug = favoriteArticleResultSlug
-      , articleTitle = favoriteArticleResultTitle
-      , articleDescription = favoriteArticleResultDescription
-      , articleBody = favoriteArticleResultBody
-      , articleTagList = favoriteArticleResultTags
-      , articleCreatedAt = favoriteArticleResultCreatedAt
-      , articleUpdatedAt = favoriteArticleResultUpdatedAt
-      , articleFavorited = True
-      , articleFavoritesCount = favoriteArticleResultFavoritesCount
-      , articleAuthor = author
-      }
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.FavoriteArticleCommand
+    toCommand = ArticleUseCase.FavoriteArticleCommand
+    toArticle :: ArticleUseCase.FavoriteArticleResult -> Profile -> Article
+    toArticle FavoriteArticleResult {..} author =
+      Article
+        { articleSlug = favoriteArticleResultSlug
+        , articleTitle = favoriteArticleResultTitle
+        , articleDescription = favoriteArticleResultDescription
+        , articleBody = favoriteArticleResultBody
+        , articleTagList = favoriteArticleResultTags
+        , articleCreatedAt = favoriteArticleResultCreatedAt
+        , articleUpdatedAt = favoriteArticleResultUpdatedAt
+        , articleFavorited = True
+        , articleFavoritesCount = favoriteArticleResultFavoritesCount
+        , articleAuthor = author
+        }
 
 ----------------------------------------------------------------------------------------------------
 -- Unfavorite Article
@@ -397,40 +399,40 @@ unfavorite ::
   , QueryService m
   , TokenGateway m
   ) =>
-  ActionT ErrorResponse m ()
+  ActionT m ()
 unfavorite = do
   withRequiredToken $ \token -> do
-    slug <- param "slug"
+    slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.unfavoriteArticle $ toCommand token slug
     case result of
-      Right result'@UnfavoriteArticleResult{..} -> do
+      Right result'@UnfavoriteArticleResult {..} -> do
         let params = Query.GetProfileParams Nothing unfavoriteArticleResultAuthorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "unfavorite error"
-        raise $ invalid $ show err
- where
-  toCommand :: Text -> Text -> ArticleUseCase.UnfavoriteArticleCommand
-  toCommand = ArticleUseCase.UnfavoriteArticleCommand
-  toArticle :: ArticleUseCase.UnfavoriteArticleResult -> Profile -> Article
-  toArticle UnfavoriteArticleResult{..} author =
-    Article
-      { articleSlug = unfavoriteArticleResultSlug
-      , articleTitle = unfavoriteArticleResultTitle
-      , articleDescription = unfavoriteArticleResultDescription
-      , articleBody = unfavoriteArticleResultBody
-      , articleTagList = unfavoriteArticleResultTags
-      , articleCreatedAt = unfavoriteArticleResultCreatedAt
-      , articleUpdatedAt = unfavoriteArticleResultUpdatedAt
-      , articleFavorited = False
-      , articleFavoritesCount = unfavoriteArticleResultFavoritesCount
-      , articleAuthor = author
-      }
+        throw $ invalid $ show err
+  where
+    toCommand :: Text -> Text -> ArticleUseCase.UnfavoriteArticleCommand
+    toCommand = ArticleUseCase.UnfavoriteArticleCommand
+    toArticle :: ArticleUseCase.UnfavoriteArticleResult -> Profile -> Article
+    toArticle UnfavoriteArticleResult {..} author =
+      Article
+        { articleSlug = unfavoriteArticleResultSlug
+        , articleTitle = unfavoriteArticleResultTitle
+        , articleDescription = unfavoriteArticleResultDescription
+        , articleBody = unfavoriteArticleResultBody
+        , articleTagList = unfavoriteArticleResultTags
+        , articleCreatedAt = unfavoriteArticleResultCreatedAt
+        , articleUpdatedAt = unfavoriteArticleResultUpdatedAt
+        , articleFavorited = False
+        , articleFavoritesCount = unfavoriteArticleResultFavoritesCount
+        , articleAuthor = author
+        }
 
 ----------------------------------------------------------------------------------------------------
 -- Get Tags
 
-getTags :: (MonadIO m, QueryService m) => ActionT ErrorResponse m ()
+getTags :: (MonadIO m, QueryService m) => ActionT m ()
 getTags = json =<< lift QueryService.getTags

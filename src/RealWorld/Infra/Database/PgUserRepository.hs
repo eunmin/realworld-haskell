@@ -9,73 +9,73 @@ import Control.Monad.Catch (MonadMask)
 import Data.Has (Has)
 import Data.ULID (ULID)
 import Database.PostgreSQL.Simple (execute, query)
-import Database.PostgreSQL.Simple.FromField
-  ( FromField (..),
-  )
+import Database.PostgreSQL.Simple.FromField (
+  FromField (..),
+ )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
-import RealWorld.Domain.Command.User.Entity.User
-  ( User (..),
-  )
-import RealWorld.Domain.Command.User.Value
-  ( Bio (..),
-    Email (..),
-    HashedPassword (..),
-    Image (..),
-    Username (..),
-  )
+import RealWorld.Domain.Command.User.Entity.User (
+  User (..),
+ )
+import RealWorld.Domain.Command.User.Value (
+  Bio (..),
+  Email (..),
+  HashedPassword (..),
+  Image (..),
+  Username (..),
+ )
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 import RealWorld.Infra.Component.Database (withConnection)
-import qualified RealWorld.Infra.Component.Database as Database
+import RealWorld.Infra.Component.Database qualified as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
 
 instance ToRow User where
   toRow User {..} =
-    [ toField userId,
-      toField userUsername,
-      toField userEmail,
-      toField userHashedPassword,
-      toField userBio,
-      toField userImage,
-      toField userCreatedAt,
-      -- for on conflict update
-      toField userUsername,
-      toField userEmail,
-      toField userHashedPassword,
-      toField userBio,
-      toField userImage
+    [ toField userId
+    , toField userUsername
+    , toField userEmail
+    , toField userHashedPassword
+    , toField userBio
+    , toField userImage
+    , toField userCreatedAt
+    , -- for on conflict update
+      toField userUsername
+    , toField userEmail
+    , toField userHashedPassword
+    , toField userBio
+    , toField userImage
     ]
 
-deriving instance ToField (BoundedText min max)
+deriving newtype instance ToField (BoundedText min max)
 
-deriving instance ToField Username
+deriving newtype instance ToField Username
 
-deriving instance ToField Email
+deriving newtype instance ToField Email
 
-deriving instance ToField HashedPassword
+deriving newtype instance ToField HashedPassword
 
-deriving instance ToField Bio
+deriving newtype instance ToField Bio
 
-deriving instance ToField Image
+deriving newtype instance ToField Image
 
 instance FromRow User where
   fromRow = User <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
-deriving instance FromField (BoundedText min max)
+deriving newtype instance FromField (BoundedText min max)
 
-deriving instance FromField Username
+deriving newtype instance FromField Username
 
-deriving instance FromField Email
+deriving newtype instance FromField Email
 
-deriving instance FromField HashedPassword
+deriving newtype instance FromField HashedPassword
 
-deriving instance FromField Bio
+deriving newtype instance FromField Bio
 
-deriving instance FromField Image
+deriving newtype instance FromField Image
 
-type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
+type Database r m = (Has Database.State r, MonadIO m, MonadReader r m, MonadMask m, MonadFail m)
 
 save :: (Database r m) => User -> m Bool
 save user = do

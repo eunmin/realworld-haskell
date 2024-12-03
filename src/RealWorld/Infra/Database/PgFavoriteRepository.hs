@@ -5,29 +5,29 @@ module RealWorld.Infra.Database.PgFavoriteRepository where
 
 import Control.Exception.Safe (MonadMask)
 import Data.Has (Has)
-import Database.PostgreSQL.Simple
-  ( FromRow,
-    ToRow,
-    execute,
-    query,
-  )
+import Database.PostgreSQL.Simple (
+  FromRow,
+  ToRow,
+  execute,
+  query,
+ )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import RealWorld.Domain.Command.Article.Entity.Favorite (Favorite (..))
 import RealWorld.Domain.Command.Article.Value (FavoriteId (..))
 import RealWorld.Infra.Component.Database (withConnection)
-import qualified RealWorld.Infra.Component.Database as Database
+import RealWorld.Infra.Component.Database qualified as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
 import Safe (headMay)
 
-type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
+type Database r m = (Has Database.State r, MonadIO m, MonadReader r m, MonadMask m, MonadFail m)
 
 instance ToRow Favorite where
   toRow Favorite {..} =
-    [ toField $ favoriteIdArticleId favoriteId,
-      toField $ favoriteIdUserId favoriteId,
-      toField favroiteCreatedAt
+    [ toField $ favoriteIdArticleId favoriteId
+    , toField $ favoriteIdUserId favoriteId
+    , toField favroiteCreatedAt
     ]
 
 instance FromRow Favorite where

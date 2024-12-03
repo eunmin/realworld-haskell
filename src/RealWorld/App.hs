@@ -7,6 +7,7 @@ where
 
 import Control.Exception (bracket)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Katip (
   ColorStrategy (ColorIfTerminal),
   Katip,
@@ -49,7 +50,7 @@ import RealWorld.Infra.System qualified as System
 import RealWorld.Infra.Web.Routes (routes)
 import Web.Scotty.Trans (scottyT)
 
-newtype App a = App {unApp :: StateT System.State (KatipContextT IO) a}
+newtype App a = App {unApp :: ReaderT System.State (KatipContextT IO) a}
   deriving newtype
     ( Applicative
     , Functor
@@ -57,11 +58,12 @@ newtype App a = App {unApp :: StateT System.State (KatipContextT IO) a}
     , MonadIO
     , MonadCatch
     , MonadThrow
-    , MonadState System.State
+    , MonadReader System.State
     , MonadMask
     , MonadFail
     , KatipContext
     , Katip
+    , MonadUnliftIO
     )
 
 instance UserRepository App where
@@ -119,7 +121,7 @@ mainWithConfig config = do
     bracket mkLogEnv closeScribes $ \le -> do
       scottyT
         port
-        (\app -> fst <$> runKatipContextT le () "main" (runStateT (unApp app) state'))
+        (\app -> runKatipContextT le () "main" (runReaderT (unApp app) state'))
         routes
 
 main :: IO ()
