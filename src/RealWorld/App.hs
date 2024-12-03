@@ -48,7 +48,6 @@ import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
 import RealWorld.Infra.System (Config (configLogEnv))
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
-import Relude
 import Web.Scotty.Trans (scottyT)
 
 newtype App a = App {unApp :: StateT System.State (KatipContextT IO) a}

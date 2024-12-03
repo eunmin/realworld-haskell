@@ -28,7 +28,6 @@ import RealWorld.Domain.Query.Data
     User,
   )
 import qualified RealWorld.Infra.Component.Database as Database
-import Relude
 
 type QueryDatabase r m = (Has Database.State r, MonadIO m, MonadState r m)
 

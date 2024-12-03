@@ -6,7 +6,6 @@
 module RealWorld.Domain.Command.User.Value where
 
 import RealWorld.Domain.Util.BoundedText (BoundedText, mkBoundedText)
-import Relude
 import Text.Regex.PCRE.Heavy (Regex, re, (=~))
 
 ----------------------------------------------------------------------------------------------------

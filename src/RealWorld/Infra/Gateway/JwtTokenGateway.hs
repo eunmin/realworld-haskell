@@ -2,7 +2,7 @@
 
 module RealWorld.Infra.Gateway.JwtTokenGateway where
 
-import qualified Data.Aeson.Types as JSON
+import Data.Aeson.Types qualified as JSON
 import Data.Has (Has (getter))
 import Data.Map.Strict (lookup)
 import Data.Text (unpack)
@@ -11,28 +11,29 @@ import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.User.Value (Token (..))
 import Relude hiding (State, exp)
-import Web.JWT
-  ( ClaimsMap (..),
-    JWT,
-    JWTClaimsSet (exp, unregisteredClaims),
-    VerifiedJWT,
-    decodeAndVerifySignature,
-    encodeSigned,
-    hmacSecret,
-    numericDate,
-    toVerify,
-  )
-import qualified Web.JWT as JWT
+import Web.JWT (
+  ClaimsMap (..),
+  JWT,
+  JWTClaimsSet (exp, unregisteredClaims),
+  VerifiedJWT,
+  decodeAndVerifySignature,
+  encodeSigned,
+  hmacSecret,
+  numericDate,
+  toVerify,
+ )
+import Web.JWT qualified as JWT
+import Prelude hiding (State, exp)
 
 signJWT :: Map Text JSON.Value -> Text -> NominalDiffTime -> NominalDiffTime -> Text
 signJWT claims secret currentTime expiresIn =
   encodeSigned (hmacSecret secret) mempty claimSet
-  where
-    claimSet =
-      mempty
-        { unregisteredClaims = ClaimsMap claims,
-          exp = numericDate $ currentTime + expiresIn
-        }
+ where
+  claimSet =
+    mempty
+      { unregisteredClaims = ClaimsMap claims
+      , exp = numericDate $ currentTime + expiresIn
+      }
 
 unsignJWT :: Text -> Text -> NominalDiffTime -> Maybe (Map Text JSON.Value)
 unsignJWT jwt secret currentTime = do
@@ -41,10 +42,10 @@ unsignJWT jwt secret currentTime = do
     (isExpired verifiedJwt)
     Nothing
     $ pure (unClaimsMap . unregisteredClaims . JWT.claims $ verifiedJwt)
-  where
-    isExpired :: JWT VerifiedJWT -> Maybe Bool
-    isExpired verifiedJWT =
-      (<) <$> (exp . JWT.claims $ verifiedJWT) <*> numericDate currentTime
+ where
+  isExpired :: JWT VerifiedJWT -> Maybe Bool
+  isExpired verifiedJWT =
+    (<) <$> (exp . JWT.claims $ verifiedJWT) <*> numericDate currentTime
 
 generate :: (Has Text r, MonadState r m, MonadIO m) => ULID -> Int -> m Token
 generate userId expiresInSec = do
@@ -66,7 +67,7 @@ verify (Token token) = do
     claims <- unsignJWT token secret now
     userId <- lookup "userId" claims
     valutToText userId >>= readMaybe . unpack
-  where
-    valutToText :: JSON.Value -> Maybe Text
-    valutToText (JSON.String t) = Just t
-    valutToText _ = Nothing
+ where
+  valutToText :: JSON.Value -> Maybe Text
+  valutToText (JSON.String t) = Just t
+  valutToText _ = Nothing

@@ -4,7 +4,6 @@
 module RealWorld.Domain.Query.Data where
 
 import Data.Time (UTCTime)
-import Relude
 
 data GetCurrentUserParams = GetCurrentUserParams
   { getCurrentUserParamsActorId :: Text

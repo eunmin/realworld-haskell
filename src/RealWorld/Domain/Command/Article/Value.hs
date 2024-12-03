@@ -2,7 +2,6 @@ module RealWorld.Domain.Command.Article.Value where
 
 import Data.Text (replace, toLower)
 import Data.ULID (ULID)
-import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- Slug

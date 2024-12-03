@@ -12,37 +12,38 @@ import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Query.QueryService (QueryService)
-import qualified RealWorld.Infra.Web.Controller.Article as Article
-import qualified RealWorld.Infra.Web.Controller.User as User
-import RealWorld.Infra.Web.ErrorResponse
-  ( ErrorResponse (ErrorResponse),
-  )
-import qualified RealWorld.Infra.Web.ErrorResponse as ErrorResponse
+import RealWorld.Infra.Web.Controller.Article qualified as Article
+import RealWorld.Infra.Web.Controller.User qualified as User
+import RealWorld.Infra.Web.ErrorResponse (
+  ErrorResponse (ErrorResponse),
+ )
+import RealWorld.Infra.Web.ErrorResponse qualified as ErrorResponse
 import Relude hiding (get, put)
-import Web.Scotty.Trans
-  ( ScottyT,
-    defaultHandler,
-    delete,
-    get,
-    json,
-    middleware,
-    notFound,
-    post,
-    put,
-    raise,
-    status,
-  )
+import Web.Scotty.Trans (
+  ScottyT,
+  defaultHandler,
+  delete,
+  get,
+  json,
+  middleware,
+  notFound,
+  post,
+  put,
+  raise,
+  status,
+ )
+import Prelude hiding (get, put)
 
 routes ::
-  ( KatipContext m,
-    TxManager m,
-    ArticleRepository m,
-    UserRepository m,
-    CommentRepository m,
-    FavoriteRepository m,
-    TokenGateway m,
-    PasswordGateway m,
-    QueryService m
+  ( KatipContext m
+  , TxManager m
+  , ArticleRepository m
+  , UserRepository m
+  , CommentRepository m
+  , FavoriteRepository m
+  , TokenGateway m
+  , PasswordGateway m
+  , QueryService m
   ) =>
   ScottyT ErrorResponse m ()
 routes = do

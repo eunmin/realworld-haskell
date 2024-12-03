@@ -39,7 +39,6 @@ import RealWorld.Domain.Command.User.Value
   )
 import RealWorld.Domain.Query.Data (Article, ArticleList, Comment, CommentList, Profile, TagList, User)
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
-import Relude
 
 instance ToJSON ULID where
   toJSON = show

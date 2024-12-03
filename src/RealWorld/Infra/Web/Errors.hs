@@ -3,7 +3,6 @@
 module RealWorld.Infra.Web.Errors where
 
 import RealWorld.Domain.Command.User.UseCase
-import Relude
 import qualified Text.Show
 
 data Messages

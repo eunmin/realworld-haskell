@@ -29,7 +29,6 @@ import RealWorld.Domain.Command.Article.Value
 import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
-import Relude
 
 type Database r m = (Has Database.State r, MonadIO m, MonadState r m, MonadMask m, MonadFail m)
 

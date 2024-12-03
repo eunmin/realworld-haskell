@@ -15,7 +15,6 @@ import Database.PostgreSQL.Simple.Transaction
 import qualified RealWorld.Infra.Component.Database as Database
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Util.Pool (withResource)
-import Relude
 
 defaultTransactionMode :: TransactionMode
 defaultTransactionMode = TransactionMode ReadCommitted ReadWrite

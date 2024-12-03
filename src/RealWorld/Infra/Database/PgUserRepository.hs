@@ -30,7 +30,6 @@ import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
-import Relude
 
 instance ToRow User where
   toRow User {..} =

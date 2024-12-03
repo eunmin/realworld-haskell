@@ -1,282 +1,158 @@
-cabal-version: 2.2
+cabal-version:      2.4
+name:               realworld-haskell
+version:            0.1.0.0
+license:            MIT
+copyright:          2022 Eunmin Kim
+maintainer:         srid@srid.ca
+author:             Eunmin Kim
+category:           Web
+homepage:           https://srid.ca/realworld-haskell
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
---
--- see: https://github.com/sol/hpack
+-- TODO: Before hackage release.
+-- A short (one-line) description of the package.
+synopsis:           A template for Haskell projects using Nix
 
-name:           realworld-haskell
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/eunmin/realworld-haskell#readme>
-homepage:       https://github.com/eunmin/realworld-haskell#readme
-bug-reports:    https://github.com/eunmin/realworld-haskell/issues
-author:         Eunmin Kim
-maintainer:     telepopsound@gmail.com
-copyright:      2024 Eunmin Kim
-license:        BSD-3-Clause
-license-file:   LICENSE
-build-type:     Simple
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
 extra-source-files:
-    README.md
-    CHANGELOG.md
+  LICENSE
+  README.md
 
-source-repository head
-  type: git
-  location: https://github.com/eunmin/realworld-haskell
+common shared
+  ghc-options:
+    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
+    -fprint-explicit-foralls -fprint-explicit-kinds
 
-library
-  exposed-modules:
-      RealWorld.App
-      RealWorld.Domain.Adapter.Gateway.PasswordGateway
-      RealWorld.Domain.Adapter.Gateway.TokenGateway
-      RealWorld.Domain.Adapter.Manager.TxManager
-      RealWorld.Domain.Adapter.Repository.ArticleRepository
-      RealWorld.Domain.Adapter.Repository.CommentRepository
-      RealWorld.Domain.Adapter.Repository.FavoriteRepository
-      RealWorld.Domain.Adapter.Repository.UserRepository
-      RealWorld.Domain.Command.Article.Entity.Article
-      RealWorld.Domain.Command.Article.Entity.Comment
-      RealWorld.Domain.Command.Article.Entity.Favorite
-      RealWorld.Domain.Command.Article.UseCase
-      RealWorld.Domain.Command.Article.Value
-      RealWorld.Domain.Command.User.Entity.User
-      RealWorld.Domain.Command.User.UseCase
-      RealWorld.Domain.Command.User.Value
-      RealWorld.Domain.Query.Data
-      RealWorld.Domain.Query.QueryService
-      RealWorld.Domain.Util.BoundedText
-      RealWorld.Domain.Util.Maybe
-      RealWorld.Infra.Component.Database
-      RealWorld.Infra.Component.HttpServer
-      RealWorld.Infra.Converter.Aeson
-      RealWorld.Infra.Converter.PostgreSQL
-      RealWorld.Infra.Database.PgArticleRepository
-      RealWorld.Infra.Database.PgCommentRepository
-      RealWorld.Infra.Database.PgFavoriteRepository
-      RealWorld.Infra.Database.PgQueryService
-      RealWorld.Infra.Database.PgUserRepository
-      RealWorld.Infra.Gateway.BcryptPasswordGateway
-      RealWorld.Infra.Gateway.JwtTokenGateway
-      RealWorld.Infra.Manager.PgTxManager
-      RealWorld.Infra.System
-      RealWorld.Infra.Util.Env
-      RealWorld.Infra.Util.Pool
-      RealWorld.Infra.Web.Controller.Article
-      RealWorld.Infra.Web.Controller.User
-      RealWorld.Infra.Web.ErrorResponse
-      RealWorld.Infra.Web.Errors
-      RealWorld.Infra.Web.Routes
-      RealWorld.Infra.Web.Util
-  other-modules:
-      Paths_realworld_haskell
-  autogen-modules:
-      Paths_realworld_haskell
-  hs-source-dirs:
-      src
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude
+
   default-extensions:
-      NoImplicitPrelude
-      ConstraintKinds
-      DeriveGeneric
-      DerivingStrategies
-      GeneralizedNewtypeDeriving
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      OverloadedStrings
-      RecordWildCards
-      ScopedTypeVariables
-      StandaloneDeriving
-      TupleSections
-      TypeApplications
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
-  build-depends:
-      aeson
-    , aeson-casing
-    , base >=4.7 && <5
-    , bcrypt
-    , data-has
-    , errors
-    , exceptions
-    , http-types
-    , jwt
-    , katip
-    , pcre-heavy
-    , postgresql-migration
-    , postgresql-simple
-    , relude
-    , resource-pool
-    , safe
-    , safe-exceptions
-    , scotty
-    , time
-    , ulid
-    , wai
-    , wai-extra
-  default-language: Haskell2010
+    BangPatterns
+    ConstraintKinds
+    DataKinds
+    DeriveDataTypeable
+    DeriveFoldable
+    DeriveFunctor
+    DeriveGeneric
+    DeriveLift
+    DeriveTraversable
+    DerivingStrategies
+    DerivingVia
+    EmptyCase
+    EmptyDataDecls
+    EmptyDataDeriving
+    ExistentialQuantification
+    ExplicitForAll
+    FlexibleContexts
+    FlexibleInstances
+    GADTSyntax
+    GeneralisedNewtypeDeriving
+    ImportQualifiedPost
+    KindSignatures
+    LambdaCase
+    MultiParamTypeClasses
+    MultiWayIf
+    NoStarIsType
+    NumericUnderscores
+    OverloadedStrings
+    PolyKinds
+    PostfixOperators
+    RankNTypes
+    RecordWildCards
+    ScopedTypeVariables
+    StandaloneDeriving
+    StandaloneKindSignatures
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+    ViewPatterns
 
-executable dev
-  main-is: Main.hs
-  other-modules:
-      Paths_realworld_haskell
-  autogen-modules:
-      Paths_realworld_haskell
-  hs-source-dirs:
-      dev
-  default-extensions:
-      NoImplicitPrelude
-      ConstraintKinds
-      DeriveGeneric
-      DerivingStrategies
-      GeneralizedNewtypeDeriving
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      OverloadedStrings
-      RecordWildCards
-      ScopedTypeVariables
-      StandaloneDeriving
-      TupleSections
-      TypeApplications
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
-    , aeson-casing
-    , base >=4.7 && <5
-    , bcrypt
-    , data-has
-    , errors
-    , exceptions
-    , http-types
-    , jwt
-    , katip
-    , pcre-heavy
-    , postgresql-migration
-    , postgresql-simple
-    , realworld-haskell
-    , relude
-    , resource-pool
-    , safe
-    , safe-exceptions
-    , scotty
-    , time
-    , ulid
-    , wai
-    , wai-extra
-  default-language: Haskell2010
-
-executable realworld-exe
-  main-is: Main.hs
-  other-modules:
-      Paths_realworld_haskell
-  autogen-modules:
-      Paths_realworld_haskell
-  hs-source-dirs:
-      app
-  default-extensions:
-      NoImplicitPrelude
-      ConstraintKinds
-      DeriveGeneric
-      DerivingStrategies
-      GeneralizedNewtypeDeriving
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      OverloadedStrings
-      RecordWildCards
-      ScopedTypeVariables
-      StandaloneDeriving
-      TupleSections
-      TypeApplications
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      aeson
-    , aeson-casing
-    , base >=4.7 && <5
-    , bcrypt
-    , data-has
-    , errors
-    , exceptions
-    , http-types
-    , jwt
-    , katip
-    , pcre-heavy
-    , postgresql-migration
-    , postgresql-simple
-    , realworld-haskell
-    , relude
-    , resource-pool
-    , safe
-    , safe-exceptions
-    , scotty
-    , time
-    , ulid
-    , wai
-    , wai-extra
-  default-language: Haskell2010
-
-test-suite realworld-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  other-modules:
-      RealWorld.Domain.Command.Article.Entity.ArticleSpec
-      RealWorld.Domain.Command.Article.ValueSpec
-      RealWorld.Domain.Command.Fixture
-      RealWorld.Domain.Command.TestApp
-      RealWorld.Domain.Command.User.Entity.UserSpec
-      RealWorld.Domain.Command.User.UseCaseSpec
-      RealWorld.Domain.Command.User.ValueSpec
-      RealWorld.Domain.Util.BoundedTextSpec
-      RealWorld.QuickCheck.Instances
-      Paths_realworld_haskell
-  autogen-modules:
-      Paths_realworld_haskell
-  hs-source-dirs:
-      test
-  default-extensions:
-      NoImplicitPrelude
-      ConstraintKinds
-      DeriveGeneric
-      DerivingStrategies
-      GeneralizedNewtypeDeriving
-      InstanceSigs
-      KindSignatures
-      LambdaCase
-      OverloadedStrings
-      RecordWildCards
-      ScopedTypeVariables
-      StandaloneDeriving
-      TupleSections
-      TypeApplications
-      ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      QuickCheck
     , aeson
     , aeson-casing
-    , base >=4.7 && <5
+    , async
+    , base          >=4   && <5
     , bcrypt
+    , data-default
     , data-has
+    , directory
     , errors
     , exceptions
-    , hspec
+    , filepath
     , http-types
     , jwt
     , katip
+    , mtl
+    , optics-core
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
-    , quickcheck-instances
-    , quickcheck-string-random
-    , realworld-haskell
-    , relude
+    , profunctors
+    , relude        >=1.0
     , resource-pool
     , safe
     , safe-exceptions
     , scotty
+    , shower
     , time
     , ulid
     , wai
     , wai-extra
-  default-language: Haskell2010
+    , with-utf8
+  
+  default-language:   Haskell2010
+  other-modules:
+    RealWorld.App
+    RealWorld.Domain.Adapter.Gateway.PasswordGateway
+    RealWorld.Domain.Adapter.Gateway.TokenGateway
+    RealWorld.Domain.Adapter.Manager.TxManager
+    RealWorld.Domain.Adapter.Repository.ArticleRepository
+    RealWorld.Domain.Adapter.Repository.CommentRepository
+    RealWorld.Domain.Adapter.Repository.FavoriteRepository
+    RealWorld.Domain.Adapter.Repository.UserRepository
+    RealWorld.Domain.Command.Article.Entity.Article
+    RealWorld.Domain.Command.Article.Entity.Comment
+    RealWorld.Domain.Command.Article.Entity.Favorite
+    RealWorld.Domain.Command.Article.UseCase
+    RealWorld.Domain.Command.Article.Value
+    RealWorld.Domain.Command.User.Entity.User
+    RealWorld.Domain.Command.User.UseCase
+    RealWorld.Domain.Command.User.Value
+    RealWorld.Domain.Query.Data
+    RealWorld.Domain.Query.QueryService
+    RealWorld.Domain.Util.BoundedText
+    RealWorld.Domain.Util.Maybe
+    RealWorld.Infra.Component.Database
+    RealWorld.Infra.Component.HttpServer
+    RealWorld.Infra.Converter.Aeson
+    RealWorld.Infra.Converter.PostgreSQL
+    RealWorld.Infra.Database.PgArticleRepository
+    RealWorld.Infra.Database.PgCommentRepository
+    RealWorld.Infra.Database.PgFavoriteRepository
+    RealWorld.Infra.Database.PgQueryService
+    RealWorld.Infra.Database.PgUserRepository
+    RealWorld.Infra.Gateway.BcryptPasswordGateway
+    RealWorld.Infra.Gateway.JwtTokenGateway
+    RealWorld.Infra.Manager.PgTxManager
+    RealWorld.Infra.System
+    RealWorld.Infra.Util.Env
+    RealWorld.Infra.Util.Pool
+    RealWorld.Infra.Web.Controller.Article
+    RealWorld.Infra.Web.Controller.User
+    RealWorld.Infra.Web.ErrorResponse
+    RealWorld.Infra.Web.Errors
+    RealWorld.Infra.Web.Routes
+    RealWorld.Infra.Web.Util
+
+executable realworld-haskell
+  import:  shared
+  hs-source-dirs:     src
+  main-is: Main.hs

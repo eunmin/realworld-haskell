@@ -5,7 +5,6 @@ import RealWorld.Infra.Web.ErrorResponse
   ( ErrorResponse,
     forbidden,
   )
-import Relude
 import Web.Scotty.Trans (ActionT, ScottyError, header, raise)
 
 withRequiredToken :: (MonadIO m) => (Text -> ActionT ErrorResponse m ()) -> ActionT ErrorResponse m ()

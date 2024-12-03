@@ -16,7 +16,6 @@ import Network.HTTP.Types.Status
     status422,
     status500,
   )
-import Relude
 import Web.Scotty.Internal.Types (ScottyError (..))
 
 data ErrorResponse = ErrorResponse

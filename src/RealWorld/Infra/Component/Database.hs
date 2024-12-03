@@ -30,6 +30,7 @@ import Database.PostgreSQL.Simple.Migration
 import RealWorld.Infra.Util.Env (envRead)
 import qualified RealWorld.Infra.Util.Pool as Pool
 import Relude hiding (State, state, withState)
+import Prelude hiding (State)
 import System.Environment (getEnv)
 
 data Config = Config

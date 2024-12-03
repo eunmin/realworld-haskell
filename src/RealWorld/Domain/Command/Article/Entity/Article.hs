@@ -12,7 +12,6 @@ import RealWorld.Domain.Command.Article.Value
     Title,
     toSlug,
   )
-import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- Article

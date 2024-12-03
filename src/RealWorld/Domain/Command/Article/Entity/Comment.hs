@@ -3,7 +3,6 @@ module RealWorld.Domain.Command.Article.Entity.Comment where
 import Data.Time (UTCTime)
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.Article.Value (CommentBody)
-import Relude
 
 data Comment = Comment
   { commentId :: ULID,

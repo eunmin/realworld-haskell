@@ -12,7 +12,6 @@ import RealWorld.Domain.Command.User.Value
     Username,
     emptyBio,
   )
-import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- User
