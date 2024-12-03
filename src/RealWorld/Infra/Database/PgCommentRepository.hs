@@ -43,7 +43,7 @@ instance ToRow Comment where
     , toField commentArticleId
     ]
 
-deriving instance FromField CommentBody
+deriving newtype instance FromField CommentBody
 
 instance FromRow Comment where
   fromRow =

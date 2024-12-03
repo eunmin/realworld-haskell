@@ -30,7 +30,7 @@ withTransaction mode conn act = mask $ \unmask -> do
 
 withTxMode :: (MonadReader System.State m, MonadIO m, MonadMask m) => TransactionMode -> m a -> m a
 withTxMode txMode action = do
-  (Database.State {..}, secret) <- ask
+  (Database.State {..}, _) <- ask
   withResource stateConnectionPool $ \conn -> do
     withTransaction txMode conn $ do
       -- modify (const (Database.State stateConnectionPool (Just conn), secret))

@@ -41,7 +41,6 @@ import Web.Scotty.Trans (
   ActionT,
   json,
   jsonData,
-  param,
   pathParam,
   queryParamMaybe,
   throw,
