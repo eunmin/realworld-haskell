@@ -45,7 +45,7 @@ import RealWorld.Infra.Database.PgUserRepository qualified as PgUserRepository
 import RealWorld.Infra.Gateway.BcryptPasswordGateway qualified as BcryptPasswordGateway
 import RealWorld.Infra.Gateway.JwtTokenGateway qualified as JwtTokenGateway
 import RealWorld.Infra.Manager.PgTxManager qualified as PgTxManager
-import RealWorld.Infra.System (Config (configLogEnv))
+import RealWorld.Infra.System (Config (logEnv))
 import RealWorld.Infra.System qualified as System
 import RealWorld.Infra.Web.Routes (routes)
 import Web.Scotty.Trans (scottyT)
@@ -113,10 +113,10 @@ instance QueryService App where
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do
   handleScribe <- mkHandleScribeWithFormatter jsonFormat ColorIfTerminal stdout (permitItem InfoS) V2
-  let port = config & System.configHttpServer & HttpServerConfig.configPort
+  let port = config & System.httpServer & HttpServerConfig.configPort
   let mkLogEnv =
         registerScribe "stdout" handleScribe defaultScribeSettings
-          =<< initLogEnv "RealWorld" (configLogEnv config)
+          =<< initLogEnv "RealWorld" config.logEnv
   System.withState config $ \state' -> do
     bracket mkLogEnv closeScribes $ \le -> do
       scottyT

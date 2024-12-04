@@ -1,112 +1,109 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use newtype instead of data" #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Query.Data where
 
 import Data.Time (UTCTime)
 
 data GetCurrentUserParams = GetCurrentUserParams
-  { getCurrentUserParamsActorId :: Text
+  { actorId :: Text
   }
   deriving stock (Show, Eq)
 
 data GetProfileParams = GetProfileParams
-  { getProfileParamsActorId :: Maybe Text
-  , getProfileParamsUsername :: Text
+  { actorId :: Maybe Text
+  , username :: Text
   }
   deriving stock (Show, Eq)
 
 data ListArticlesParams = ListArticlesParams
-  { listArticlesParamsActorId :: Maybe Text
-  , listArticlesParamsTag :: Maybe Text
-  , listArticlesParamsAuthor :: Maybe Text
-  , listArticlesParamsFavorited :: Maybe Text
-  , listArticlesParamsLimit :: Maybe Int
-  , listArticlesParamsOffset :: Maybe Int
+  { actorId :: Maybe Text
+  , tag :: Maybe Text
+  , author :: Maybe Text
+  , favorited :: Maybe Text
+  , limit :: Maybe Int
+  , offset :: Maybe Int
   }
   deriving stock (Show, Eq)
 
 data FeedArticlesParams = FeedArticlesParams
-  { feedArticlesParamsActorId :: Text
-  , feedArticlesParamsLimit :: Int
-  , feedArticlesParamsOffset :: Int
+  { actorId :: Text
+  , limit :: Int
+  , offset :: Int
   }
   deriving stock (Show, Eq)
 
 data GetArticleParams = GetArticleParams
-  { getArticleParamsSlug :: Text
+  { slug :: Text
   }
   deriving stock (Show, Eq)
 
 data GetCommentsParams = GetCommentsParams
-  { getCommentsParamsActorId :: Maybe Text
-  , getCommentsParamsSlug :: Text
+  { actorId :: Maybe Text
+  , slug :: Text
   }
   deriving stock (Show, Eq)
 
 data User = User
-  { userEmail :: Text
-  , userToken :: Text
-  , userUsername :: Text
-  , userBio :: Text
-  , userImage :: Maybe Text
+  { email :: Text
+  , token :: Text
+  , username :: Text
+  , bio :: Text
+  , image :: Maybe Text
   }
   deriving stock (Generic, Show, Eq)
 
 data Profile = Profile
-  { profileUsername :: Text
-  , profileBio :: Text
-  , profileImage :: Maybe Text
-  , profileFollowing :: Bool
+  { username :: Text
+  , bio :: Text
+  , image :: Maybe Text
+  , following :: Bool
   }
   deriving stock (Generic, Show, Eq)
 
 userToProfile :: User -> Bool -> Profile
-userToProfile User {..} following =
+userToProfile user following =
   Profile
-    { profileUsername = userUsername
-    , profileBio = userBio
-    , profileImage = userImage
-    , profileFollowing = following
+    { username = user.username
+    , bio = user.bio
+    , image = user.image
+    , following = following
     }
 
 data Article = Article
-  { articleSlug :: Text
-  , articleTitle :: Text
-  , articleDescription :: Text
-  , articleBody :: Text
-  , articleTagList :: [Text]
-  , articleCreatedAt :: UTCTime
-  , articleUpdatedAt :: Maybe UTCTime
-  , articleFavorited :: Bool
-  , articleFavoritesCount :: Int
-  , articleAuthor :: Profile
+  { slug :: Text
+  , title :: Text
+  , description :: Text
+  , body :: Text
+  , tagList :: [Text]
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , favorited :: Bool
+  , favoritesCount :: Int
+  , author :: Profile
   }
   deriving stock (Generic, Show, Eq)
 
 data ArticleList = ArticleList
-  { articleListArticles :: [Article]
-  , articleListArticlesCount :: Int
+  { articles :: [Article]
+  , articlesCount :: Int
   }
   deriving stock (Generic, Show, Eq)
 
 data Comment = Comment
   { commentId :: Text
-  , commentCreatedAt :: UTCTime
-  , commentUpdatedAt :: Maybe UTCTime
-  , commentBody :: Text
-  , commentAuthor :: Profile
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , body :: Text
+  , author :: Profile
   }
   deriving stock (Generic, Show, Eq)
 
 data CommentList = CommentList
-  { commentListComments :: [Comment]
+  { comments :: [Comment]
   }
   deriving stock (Generic, Show, Eq)
 
 data TagList = TagList
-  { tagListTags :: [Text]
+  { tags :: [Text]
   }
   deriving stock (Generic, Show, Eq)

@@ -18,6 +18,8 @@
 - ignore:
       name: Use head
 - ignore:
+      name: Use newtype instead of data
+- ignore:
       name: Use Foldable.forM_
 - hint:
       lhs: "pure ()"

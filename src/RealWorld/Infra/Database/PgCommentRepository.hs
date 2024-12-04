@@ -31,16 +31,16 @@ deriving newtype instance ToField CommentBody
 instance ToRow Comment where
   toRow Comment {..} =
     [ toField commentId
-    , toField commentBody
-    , toField commentCreatedAt
-    , toField commentUpdatedAt
-    , toField commentAuthorId
-    , toField commentArticleId
+    , toField body
+    , toField createdAt
+    , toField updatedAt
+    , toField authorId
+    , toField articleId
     , -- for on conflict update
-      toField commentBody
-    , toField commentCreatedAt
-    , toField commentAuthorId
-    , toField commentArticleId
+      toField body
+    , toField createdAt
+    , toField authorId
+    , toField articleId
     ]
 
 deriving newtype instance FromField CommentBody
@@ -88,4 +88,4 @@ findById commentId =
 delete :: (Database r m) => Comment -> m Bool
 delete comment =
   withConnection $ \conn ->
-    liftIO $ (> 0) <$> execute conn "DELETE FROM comments WHERE id = ?" (Only $ commentId comment)
+    liftIO $ (> 0) <$> execute conn "DELETE FROM comments WHERE id = ?" (Only comment.commentId)

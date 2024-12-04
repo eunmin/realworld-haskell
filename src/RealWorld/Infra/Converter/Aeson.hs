@@ -5,38 +5,37 @@
 
 module RealWorld.Infra.Converter.Aeson where
 
-import Data.Aeson
-  ( ToJSON (toJSON),
-    defaultOptions,
-    genericToJSON,
-    withText,
-  )
-import Data.Aeson.Casing (aesonDrop, aesonPrefix, camelCase)
+import Data.Aeson (
+  ToJSON (toJSON),
+  defaultOptions,
+  genericToJSON,
+  withText,
+ )
 import Data.Aeson.Types (FromJSON (..))
 import Data.ULID (ULID)
-import RealWorld.Domain.Command.Article.UseCase
-  ( AddCommentsError,
-    CreateArticleError,
-    DeleteArticleError,
-    DeleteCommentError,
-    FavoriteArticleError,
-    UnfavoriteArticleError,
-    UpdateArticleError,
-  )
-import RealWorld.Domain.Command.User.UseCase
-  ( AuthenticationError,
-    FollowUserError,
-    RegistrationError,
-    UnfollowUserError,
-    UpdateUserError,
-  )
-import RealWorld.Domain.Command.User.Value
-  ( Bio (..),
-    Email (..),
-    Image (..),
-    Token (..),
-    Username (..),
-  )
+import RealWorld.Domain.Command.Article.UseCase (
+  AddCommentsError,
+  CreateArticleError,
+  DeleteArticleError,
+  DeleteCommentError,
+  FavoriteArticleError,
+  UnfavoriteArticleError,
+  UpdateArticleError,
+ )
+import RealWorld.Domain.Command.User.UseCase (
+  AuthenticationError,
+  FollowUserError,
+  RegistrationError,
+  UnfollowUserError,
+  UpdateUserError,
+ )
+import RealWorld.Domain.Command.User.Value (
+  Bio (..),
+  Email (..),
+  Image (..),
+  Token (..),
+  Username (..),
+ )
 import RealWorld.Domain.Query.Data (Article, ArticleList, Comment, CommentList, Profile, TagList, User)
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 
@@ -45,10 +44,10 @@ instance ToJSON ULID where
 
 instance FromJSON ULID where
   parseJSON =
-    withText "ULID"
-      $ maybe (fail "invalid ULID") pure
-      . readMaybe
-      . toString
+    withText "ULID" $
+      maybe (fail "invalid ULID") pure
+        . readMaybe
+        . toString
 
 deriving newtype instance ToJSON Email
 
@@ -99,22 +98,22 @@ instance ToJSON UnfavoriteArticleError where
   toJSON = genericToJSON defaultOptions
 
 instance ToJSON User where
-  toJSON = genericToJSON $ aesonPrefix camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON Profile where
-  toJSON = genericToJSON $ aesonPrefix camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON Article where
-  toJSON = genericToJSON $ aesonPrefix camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON Comment where
-  toJSON = genericToJSON $ aesonPrefix camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON ArticleList where
-  toJSON = genericToJSON $ aesonDrop 11 camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON CommentList where
-  toJSON = genericToJSON $ aesonDrop 11 camelCase
+  toJSON = genericToJSON defaultOptions
 
 instance ToJSON TagList where
-  toJSON = genericToJSON $ aesonDrop 7 camelCase
+  toJSON = genericToJSON defaultOptions

@@ -8,10 +8,10 @@ import System.Environment (getEnv)
 import Prelude hiding (State, state, withState)
 
 data Config = Config
-  { configHttpServer :: HttpServer.Config
-  , configDatabase :: Database.Config
-  , configJwtSecret :: Text
-  , configLogEnv :: Environment
+  { httpServer :: HttpServer.Config
+  , database :: Database.Config
+  , jwtSecret :: Text
+  , logEnv :: Environment
   }
   deriving stock (Show, Eq)
 
@@ -19,8 +19,8 @@ type State = (Database.State, Text)
 
 withState :: Config -> (State -> IO ()) -> IO ()
 withState config action = do
-  Database.withState (configDatabase config) $ \databaseState -> do
-    action (databaseState, configJwtSecret config)
+  Database.withState config.database $ \databaseState -> do
+    action (databaseState, config.jwtSecret)
 
 configFromEnv :: IO Config
 configFromEnv =

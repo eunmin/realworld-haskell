@@ -34,18 +34,18 @@ import RealWorld.Infra.Converter.PostgreSQL ()
 instance ToRow User where
   toRow User {..} =
     [ toField userId
-    , toField userUsername
-    , toField userEmail
-    , toField userHashedPassword
-    , toField userBio
-    , toField userImage
-    , toField userCreatedAt
+    , toField username
+    , toField email
+    , toField hashedPassword
+    , toField bio
+    , toField image
+    , toField createdAt
     , -- for on conflict update
-      toField userUsername
-    , toField userEmail
-    , toField userHashedPassword
-    , toField userBio
-    , toField userImage
+      toField username
+    , toField email
+    , toField hashedPassword
+    , toField bio
+    , toField image
     ]
 
 deriving newtype instance ToField (BoundedText min max)

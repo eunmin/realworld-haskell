@@ -1,6 +1,5 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
-{-# HLINT ignore "Use newtype instead of data" #-}
 module RealWorld.Domain.Command.Article.Entity.Favorite where
 
 import Data.Time (UTCTime)
@@ -8,7 +7,7 @@ import RealWorld.Domain.Command.Article.Value (FavoriteId)
 
 data Favorite = Favorite
   { favoriteId :: FavoriteId
-  , favroiteCreatedAt :: UTCTime
+  , createdAt :: UTCTime
   }
   deriving stock (Show, Eq, Generic)
 

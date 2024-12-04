@@ -15,11 +15,12 @@ import Network.HTTP.Types.Status (
   status422,
  )
 import Web.Scotty.Internal.Types (ErrorHandler)
-import Web.Scotty.Trans (Handler (..), json, status)
+import Web.Scotty.Trans (Handler (..), json)
+import Web.Scotty.Trans qualified as Scotty
 
 data ErrorResponse = ErrorResponse
-  { errroResponseStatus :: Status
-  , errorResponseErrors :: Errors
+  { status :: Status
+  , errors :: Errors
   }
   deriving stock (Show, Generic)
 
@@ -34,8 +35,8 @@ data ErrorsBody = ErrorsBody
   deriving anyclass (ToJSON)
 
 data Except = Except
-  { exceptStatus :: Status
-  , exceptMessage :: Text
+  { status :: Status
+  , message :: Text
   }
   deriving stock (Show, Eq, Typeable)
   deriving anyclass (Exception)
@@ -54,5 +55,5 @@ notFound = Except status404
 
 handleEx :: (MonadIO m) => ErrorHandler m
 handleEx = Handler $ \(Except status' message) -> do
-  status status'
+  Scotty.status status'
   json $ Errors $ ErrorsBody [message]

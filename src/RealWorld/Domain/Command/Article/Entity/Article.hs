@@ -1,4 +1,5 @@
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.Article.Entity.Article where
 
@@ -18,15 +19,15 @@ import RealWorld.Domain.Command.Article.Value (
 
 data Article = Article
   { articleId :: ULID
-  , articleSlug :: Slug
-  , articleTitle :: Title
-  , articleDescription :: Description
-  , articleBody :: ArticleBody
-  , articleTags :: [Tag]
-  , articleCreatedAt :: UTCTime
-  , articleUpdatedAt :: Maybe UTCTime
-  , articleFavoritesCount :: Int
-  , articleAuthorId :: ULID
+  , slug :: Slug
+  , title :: Title
+  , description :: Description
+  , body :: ArticleBody
+  , tags :: [Tag]
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , favoritesCount :: Int
+  , authorId :: ULID
   }
   deriving stock (Show, Eq, Generic)
 
@@ -34,15 +35,15 @@ mkArticle :: ULID -> Title -> Description -> ArticleBody -> [Tag] -> UTCTime -> 
 mkArticle articleId title description body tags createdAt authorId =
   Article
     { articleId = articleId
-    , articleSlug = toSlug title
-    , articleTitle = title
-    , articleDescription = description
-    , articleBody = body
-    , articleTags = tags
-    , articleCreatedAt = createdAt
-    , articleUpdatedAt = Nothing
-    , articleFavoritesCount = 0
-    , articleAuthorId = authorId
+    , slug = toSlug title
+    , title = title
+    , description = description
+    , body = body
+    , tags = tags
+    , createdAt = createdAt
+    , updatedAt = Nothing
+    , favoritesCount = 0
+    , authorId = authorId
     }
 
 update ::
@@ -53,22 +54,22 @@ update ::
   Article
 update article title description body =
   article
-    { articleTitle = title ?: articleTitle article
-    , articleDescription = description ?: articleDescription article
-    , articleBody = body ?: articleBody article
-    , articleSlug = maybe (toSlug $ articleTitle article) toSlug title
+    { title = title ?: article.title
+    , description = description ?: article.description
+    , body = body ?: article.body
+    , slug = maybe (toSlug $ article.title) toSlug title
     }
 
 isEditable :: Article -> ULID -> Bool
-isEditable article actorId = actorId == articleAuthorId article
+isEditable article actorId = actorId == article.authorId
 
 isDeletable :: Article -> ULID -> Bool
-isDeletable article actorId = actorId == articleAuthorId article
+isDeletable article actorId = actorId == article.authorId
 
 increseFavoritesCount :: Article -> Article
 increseFavoritesCount article =
-  article{articleFavoritesCount = articleFavoritesCount article + 1}
+  article {favoritesCount = article.favoritesCount + 1}
 
 decreseFavoritesCount :: Article -> Article
 decreseFavoritesCount article =
-  article{articleFavoritesCount = articleFavoritesCount article - 1}
+  article {favoritesCount = article.favoritesCount - 1}

@@ -2,7 +2,7 @@ module RealWorld.Domain.Command.Article.Entity.ArticleSpec where
 
 import Data.ULID (ULID)
 import RealWorld.Domain.Command.Article.Entity.Article (
-  Article (articleAuthorId, articleFavoritesCount),
+  Article (..),
   decreseFavoritesCount,
   increseFavoritesCount,
   isDeletable,
@@ -17,7 +17,7 @@ spec = do
   describe "isDeletable" $ do
     prop "author can delete"
       $ \(article :: Article) -> do
-        isDeletable article (articleAuthorId article)
+        isDeletable article article.authorId
           `shouldBe` True
 
     prop "other user can't delete"
@@ -28,11 +28,13 @@ spec = do
   describe "increseFavoritesCount" $ do
     prop "dobule increse"
       $ \(article :: Article) -> do
-        articleFavoritesCount ((increseFavoritesCount . increseFavoritesCount) article)
-          `shouldBe` articleFavoritesCount article + 2
+        let article' = (increseFavoritesCount . increseFavoritesCount) article
+        article'.favoritesCount
+          `shouldBe` article.favoritesCount + 2
 
   describe "increseFavoritesCount" $ do
     prop "dobule decrese"
       $ \(article :: Article) -> do
-        articleFavoritesCount ((decreseFavoritesCount . decreseFavoritesCount) article)
-          `shouldBe` articleFavoritesCount article - 2
+        let article' = (decreseFavoritesCount . decreseFavoritesCount) article
+        article'.favoritesCount
+          `shouldBe` article.favoritesCount - 2

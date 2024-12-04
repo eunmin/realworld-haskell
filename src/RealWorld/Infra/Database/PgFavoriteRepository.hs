@@ -25,9 +25,9 @@ type Database r m = (Has Database.State r, MonadIO m, MonadReader r m, MonadMask
 
 instance ToRow Favorite where
   toRow Favorite {..} =
-    [ toField $ favoriteIdArticleId favoriteId
-    , toField $ favoriteIdUserId favoriteId
-    , toField favroiteCreatedAt
+    [ toField favoriteId.articleId
+    , toField favoriteId.userId
+    , toField createdAt
     ]
 
 instance FromRow Favorite where
@@ -62,7 +62,7 @@ findById (FavoriteId articleId userId) =
 
 delete :: (Database r m) => Favorite -> m Bool
 delete favorite = do
-  let FavoriteId articleId userId = favoriteId favorite
+  let FavoriteId articleId userId = favorite.favoriteId
   withConnection $ \conn ->
     liftIO $
       (> 0)

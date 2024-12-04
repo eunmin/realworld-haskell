@@ -1,4 +1,5 @@
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.User.Entity.User where
 
@@ -18,13 +19,13 @@ import RealWorld.Domain.Command.User.Value (
 
 data User = User
   { userId :: ULID
-  , userUsername :: Username
-  , userEmail :: Email
-  , userHashedPassword :: HashedPassword
-  , userBio :: Bio
-  , userImage :: Maybe Image
-  , userCreatedAt :: UTCTime
-  , userUpdatedAt :: Maybe UTCTime
+  , username :: Username
+  , email :: Email
+  , hashedPassword :: HashedPassword
+  , bio :: Bio
+  , image :: Maybe Image
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
   }
   deriving stock (Show, Eq, Generic)
 
@@ -32,13 +33,13 @@ mkUser :: ULID -> Username -> Email -> HashedPassword -> UTCTime -> User
 mkUser userId username email hashedPassword createdAt =
   User
     { userId = userId
-    , userUsername = username
-    , userEmail = email
-    , userHashedPassword = hashedPassword
-    , userBio = emptyBio
-    , userImage = Nothing
-    , userCreatedAt = createdAt
-    , userUpdatedAt = Nothing
+    , username = username
+    , email = email
+    , hashedPassword = hashedPassword
+    , bio = emptyBio
+    , image = Nothing
+    , createdAt = createdAt
+    , updatedAt = Nothing
     }
 
 update ::
@@ -51,9 +52,9 @@ update ::
   User
 update user username email hashedPassword bio image =
   user
-    { userUsername = username ?: userUsername user
-    , userEmail = email ?: userEmail user
-    , userHashedPassword = hashedPassword ?: userHashedPassword user
-    , userBio = bio ?: userBio user
-    , userImage = image ?: userImage user
+    { username = username ?: user.username
+    , email = email ?: user.email
+    , hashedPassword = hashedPassword ?: user.hashedPassword
+    , bio = bio ?: user.bio
+    , image = image ?: user.image
     }

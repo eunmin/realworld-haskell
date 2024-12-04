@@ -1,11 +1,9 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE NoFieldSelectors #-}
 
-{-# HLINT ignore "Use newtype instead of data" #-}
 module RealWorld.Domain.Command.Article.UseCase where
 
 import Control.Error (throwE)
 import Control.Error.Util ((!?), (??))
-import Data.Text (unpack)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.ULID (getULID)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
@@ -20,18 +18,7 @@ import RealWorld.Domain.Adapter.Repository.FavoriteRepository qualified as Favor
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository qualified as UserRepository
 import RealWorld.Domain.Command.Article.Entity.Article (
-  Article (
-    articleAuthorId,
-    articleBody,
-    articleCreatedAt,
-    articleDescription,
-    articleFavoritesCount,
-    articleId,
-    articleSlug,
-    articleTags,
-    articleTitle,
-    articleUpdatedAt
-  ),
+  Article (..),
   mkArticle,
  )
 import RealWorld.Domain.Command.Article.Entity.Article qualified as Article
@@ -53,7 +40,7 @@ import RealWorld.Domain.Command.Article.Value (
   mkTag,
   mkTitle,
  )
-import RealWorld.Domain.Command.User.Entity.User (userUsername)
+import RealWorld.Domain.Command.User.Entity.User (User (..))
 import RealWorld.Domain.Command.User.Value (Token (..), Username (unUsername))
 import RealWorld.Domain.Util.BoundedText (BoundedText (unBoundedText))
 import Relude hiding ((??))
@@ -63,18 +50,18 @@ import Prelude hiding ((??))
 -- Create Article
 
 data CreateArticleCommand = CreateArticleCommand
-  { createArticleCommandTitle :: Text
-  , createArticleCommandDescription :: Text
-  , createArticleCommandBody :: Text
-  , createArticleCommandTagList :: [Text]
-  , createArticleCommandToken :: Text
+  { title :: Text
+  , description :: Text
+  , body :: Text
+  , tagList :: [Text]
+  , token :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data CreateArticleResult = CreateArticleResult
-  { createArticleResultSlug :: Text
-  , createArticleResultCreatedAt :: UTCTime
-  , createArticleResultAuthorUsername :: Text
+  { slug :: Text
+  , createdAt :: UTCTime
+  , authorUsername :: Text
   }
   deriving stock (Show, Eq)
 
@@ -91,14 +78,14 @@ createArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, TokenGateway m, TxManager m) =>
   CreateArticleCommand ->
   m (Either CreateArticleError CreateArticleResult)
-createArticle CreateArticleCommand{..} = runExceptT $ do
+createArticle command = runExceptT $ do
   articleId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
-  authorId <- TokenGateway.verify (Token createArticleCommandToken) !? CreateArticleErrorInvalidToken
-  title <- mkTitle createArticleCommandTitle ?? CreateArticleErrorInvalidTitle
-  body <- mkArticleBody createArticleCommandBody ?? CreateArticleErrorInvalidBody
-  description <- mkDescription createArticleCommandDescription ?? CreateArticleErrorInvalidDescription
-  tags <- traverse mkTag createArticleCommandTagList ?? CreateArticleErrorInvalidTag
+  authorId <- TokenGateway.verify (Token command.token) !? CreateArticleErrorInvalidToken
+  title <- mkTitle command.title ?? CreateArticleErrorInvalidTitle
+  body <- mkArticleBody command.body ?? CreateArticleErrorInvalidBody
+  description <- mkDescription command.description ?? CreateArticleErrorInvalidDescription
+  tags <- traverse mkTag command.tagList ?? CreateArticleErrorInvalidTag
   author <- UserRepository.findById authorId !? CreateArticleErrorAuthorNotFound
   let article =
         mkArticle
@@ -112,34 +99,34 @@ createArticle CreateArticleCommand{..} = runExceptT $ do
   _ <- withTx $ lift $ ArticleRepository.save article
   pure $
     CreateArticleResult
-      { createArticleResultSlug = unSlug $ articleSlug article
-      , createArticleResultCreatedAt = createdAt
-      , createArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
+      { slug = unSlug article.slug
+      , createdAt = createdAt
+      , authorUsername = unBoundedText . unUsername $ author.username
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Update Article
 
 data UpdateArticleCommand = UpdateArticleCommand
-  { updateArticleCommandToken :: Text
-  , updateArticleCommandSlug :: Text
-  , updateArticleCommandTitle :: Maybe Text
-  , updateArticleCommandDescription :: Maybe Text
-  , updateArticleCommandBody :: Maybe Text
+  { token :: Text
+  , slug :: Text
+  , title :: Maybe Text
+  , description :: Maybe Text
+  , body :: Maybe Text
   }
   deriving stock (Show, Eq, Generic)
 
 data UpdateArticleResult = UpdateArticleResult
-  { updateArticleResultSlug :: Text
-  , updateArticleResultTitle :: Text
-  , updateArticleResultDescription :: Text
-  , updateArticleResultBody :: Text
-  , updateArticleResultCreatedAt :: UTCTime
-  , updateArticleResultUpdatedAt :: Maybe UTCTime
-  , updateArticleResultTags :: [Text]
-  , updateArticleResultFavoritesCount :: Int
-  , updateArticleResultAuthorUsername :: Text
-  , updateArticleResultFavorited :: Bool
+  { slug :: Text
+  , title :: Text
+  , description :: Text
+  , body :: Text
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , tags :: [Text]
+  , favoritesCount :: Int
+  , authorUsername :: Text
+  , favorited :: Bool
   }
   deriving stock (Show, Eq)
 
@@ -158,46 +145,46 @@ updateArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TokenGateway m, TxManager m) =>
   UpdateArticleCommand ->
   m (Either UpdateArticleError UpdateArticleResult)
-updateArticle UpdateArticleCommand{..} = runExceptT $ do
-  slug <- mkSlug updateArticleCommandSlug ?? UpdateArticleErrorInvalidSlug
-  title <- traverse mkTitle updateArticleCommandTitle ?? UpdateArticleErrorInvalidTitle
-  description <- traverse mkDescription updateArticleCommandDescription ?? UpdateArticleErrorInvalidDescription
-  body <- traverse mkArticleBody updateArticleCommandBody ?? UpdateArticleErrorInvalidBody
-  actorId <- TokenGateway.verify (Token updateArticleCommandToken) !? UpdateArticleErrorInvalidToken
+updateArticle command = runExceptT $ do
+  slug <- mkSlug command.slug ?? UpdateArticleErrorInvalidSlug
+  title <- traverse mkTitle command.title ?? UpdateArticleErrorInvalidTitle
+  description <- traverse mkDescription command.description ?? UpdateArticleErrorInvalidDescription
+  body <- traverse mkArticleBody command.body ?? UpdateArticleErrorInvalidBody
+  actorId <- TokenGateway.verify (Token command.token) !? UpdateArticleErrorInvalidToken
   (article, author, favorited) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
-    author <- UserRepository.findById (articleAuthorId article) !? UpdateArticleErrorAuthorNotFound
+    author <- UserRepository.findById article.authorId !? UpdateArticleErrorAuthorNotFound
     unless (Article.isEditable article actorId) $
       throwE UpdateArticleErrorEditPermissionDenied
     let article' = Article.update article title description body
     _ <- lift $ ArticleRepository.save article'
-    favorited <- lift $ FavoriteRepository.findById $ FavoriteId (articleId article) actorId
+    favorited <- lift $ FavoriteRepository.findById (FavoriteId article.articleId actorId)
     pure (article', author, isJust favorited)
   pure $
     UpdateArticleResult
-      { updateArticleResultSlug = unSlug $ articleSlug article
-      , updateArticleResultTitle = unTitle . articleTitle $ article
-      , updateArticleResultDescription = unDescription . articleDescription $ article
-      , updateArticleResultBody = unArticleBody . articleBody $ article
-      , updateArticleResultCreatedAt = articleCreatedAt article
-      , updateArticleResultUpdatedAt = articleUpdatedAt article
-      , updateArticleResultTags = unTag <$> articleTags article
-      , updateArticleResultFavoritesCount = articleFavoritesCount article
-      , updateArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
-      , updateArticleResultFavorited = favorited
+      { slug = unSlug article.slug
+      , title = unTitle article.title
+      , description = unDescription article.description
+      , body = unArticleBody article.body
+      , createdAt = article.createdAt
+      , updatedAt = article.updatedAt
+      , tags = unTag <$> article.tags
+      , favoritesCount = article.favoritesCount
+      , authorUsername = unBoundedText . unUsername $ author.username
+      , favorited = favorited
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Article
 
 data DeleteArticleCommand = DeleteArticleCommand
-  { deleteArticleCommandToken :: Text
-  , deleteArticleCommandSlug :: Text
+  { token :: Text
+  , slug :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data DeleteArticleResult = DeleteArticleResult
-  { deleteArticleResultSlug :: Text
+  { slug :: Text
   }
   deriving stock (Show, Eq)
 
@@ -212,30 +199,30 @@ deleteArticle ::
   (MonadIO m, ArticleRepository m, TokenGateway m, TxManager m) =>
   DeleteArticleCommand ->
   m (Either DeleteArticleError DeleteArticleResult)
-deleteArticle DeleteArticleCommand{..} = runExceptT $ do
-  slug <- mkSlug deleteArticleCommandSlug ?? DeleteArticleErrorInvalidSlug
-  actorId <- TokenGateway.verify (Token deleteArticleCommandToken) !? DeleteArticleErrorInvalidToken
+deleteArticle command = runExceptT $ do
+  slug <- mkSlug command.slug ?? DeleteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token command.token) !? DeleteArticleErrorInvalidToken
   _ <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
     unless (Article.isDeletable article actorId) $
       throwE DeleteArticleErrorDeletePermissionDenied
     lift $ ArticleRepository.delete article
-  pure $ DeleteArticleResult{deleteArticleResultSlug = unSlug slug}
+  pure $ DeleteArticleResult {slug = unSlug slug}
 
 ----------------------------------------------------------------------------------------------------
 -- Add Comments to an Article
 
 data AddCommentsCommand = AddCommentsCommand
-  { addCommentsCommandToken :: Text
-  , addCommentsCommandSlug :: Text
-  , addCommentsCommandBody :: Text
+  { token :: Text
+  , slug :: Text
+  , body :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data AddCommentsResult = AddCommentsResult
-  { addCommentsResultCommentId :: Text
-  , addCommentsResultCreatedAt :: UTCTime
-  , addCommentsResultAuthorUsername :: Text
+  { commentId :: Text
+  , createdAt :: UTCTime
+  , authorUsername :: Text
   }
   deriving stock (Show, Eq)
 
@@ -257,10 +244,10 @@ addComments ::
   ) =>
   AddCommentsCommand ->
   m (Either AddCommentsError AddCommentsResult)
-addComments AddCommentsCommand{..} = runExceptT $ do
-  slug <- mkSlug addCommentsCommandSlug ?? AddCommentsErrorInvalidSlug
-  authorId <- TokenGateway.verify (Token addCommentsCommandToken) !? AddCommentsErrorInvalidToken
-  body <- mkCommentBody addCommentsCommandBody ?? AddCommentsErrorInvalidBody
+addComments command = runExceptT $ do
+  slug <- mkSlug command.slug ?? AddCommentsErrorInvalidSlug
+  authorId <- TokenGateway.verify (Token command.token) !? AddCommentsErrorInvalidToken
+  body <- mkCommentBody command.body ?? AddCommentsErrorInvalidBody
   commentId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
   author <- withTx $ do
@@ -272,29 +259,29 @@ addComments AddCommentsCommand{..} = runExceptT $ do
             body
             createdAt
             authorId
-            (articleId article)
+            article.articleId
     _ <- lift $ CommentRepository.save comment
     pure author
   pure $
     AddCommentsResult
-      { addCommentsResultCommentId = show commentId
-      , addCommentsResultCreatedAt = createdAt
-      , addCommentsResultAuthorUsername = unBoundedText . unUsername . userUsername $ author
+      { commentId = show commentId
+      , createdAt = createdAt
+      , authorUsername = unBoundedText . unUsername $ author.username
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Delete Comment
 
 data DeleteCommentCommand = DeleteCommentCommand
-  { deleteCommentCommandToken :: Text
-  , deleteCommentCommandSlug :: Text
-  , deleteCommentCommandCommentId :: Text
+  { token :: Text
+  , slug :: Text
+  , commentId :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data DeleteCommentResult = DeleteCommentResult
-  { deleteCommentResultSlug :: Text
-  , deleteCommentResultCommentId :: Text
+  { slug :: Text
+  , commentId :: Text
   }
   deriving stock (Show, Eq)
 
@@ -311,10 +298,10 @@ deleteComment ::
   (MonadIO m, ArticleRepository m, TokenGateway m, CommentRepository m, TxManager m) =>
   DeleteCommentCommand ->
   m (Either DeleteCommentError DeleteCommentResult)
-deleteComment DeleteCommentCommand{..} = runExceptT $ do
-  slug <- mkSlug deleteCommentCommandSlug ?? DeleteCommentErrorInvalidSlug
-  actorId <- TokenGateway.verify (Token deleteCommentCommandToken) !? DeleteCommentErrorInvalidToken
-  commentId <- readMaybe (unpack deleteCommentCommandCommentId) ?? DeleteCommentErrorInvalidCommentId
+deleteComment command = runExceptT $ do
+  slug <- mkSlug command.slug ?? DeleteCommentErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token command.token) !? DeleteCommentErrorInvalidToken
+  commentId <- readMaybe (toString command.commentId) ?? DeleteCommentErrorInvalidCommentId
   _ <- withTx $ do
     _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
     comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
@@ -323,29 +310,29 @@ deleteComment DeleteCommentCommand{..} = runExceptT $ do
     lift $ CommentRepository.delete comment
   pure $
     DeleteCommentResult
-      { deleteCommentResultSlug = unSlug slug
-      , deleteCommentResultCommentId = show commentId
+      { slug = unSlug slug
+      , commentId = show commentId
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Favorite Article
 
 data FavoriteArticleCommand = FavoriteArticleCommand
-  { favoriteArticleToken :: Text
-  , favoriteArticleSlug :: Text
+  { token :: Text
+  , slug :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data FavoriteArticleResult = FavoriteArticleResult
-  { favoriteArticleResultSlug :: Text
-  , favoriteArticleResultTitle :: Text
-  , favoriteArticleResultDescription :: Text
-  , favoriteArticleResultBody :: Text
-  , favoriteArticleResultCreatedAt :: UTCTime
-  , favoriteArticleResultUpdatedAt :: Maybe UTCTime
-  , favoriteArticleResultTags :: [Text]
-  , favoriteArticleResultFavoritesCount :: Int
-  , favoriteArticleResultAuthorUsername :: Text
+  { slug :: Text
+  , title :: Text
+  , description :: Text
+  , body :: Text
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , tags :: [Text]
+  , favoritesCount :: Int
+  , authorUsername :: Text
   }
   deriving stock (Show, Eq)
 
@@ -367,14 +354,14 @@ favoriteArticle ::
   ) =>
   FavoriteArticleCommand ->
   m (Either FavoriteArticleError FavoriteArticleResult)
-favoriteArticle FavoriteArticleCommand{..} = runExceptT $ do
-  slug <- mkSlug favoriteArticleSlug ?? FavoriteArticleErrorInvalidSlug
-  actorId <- TokenGateway.verify (Token favoriteArticleToken) !? FavoriteArticleErrorInvalidToken
+favoriteArticle command = runExceptT $ do
+  slug <- mkSlug command.slug ?? FavoriteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token command.token) !? FavoriteArticleErrorInvalidToken
   createdAt <- liftIO getCurrentTime
   (article, actor) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? FavoriteArticleErrorArticleNotFound
     actor <- UserRepository.findById actorId !? FavroiteArticleErrorUserNotFound
-    let favoriteId = mkFavoriteId (articleId article) actorId
+    let favoriteId = mkFavoriteId article.articleId actorId
     let favorite = mkFavorite favoriteId createdAt
     success <- lift $ FavoriteRepository.save favorite
     unless success $
@@ -384,36 +371,36 @@ favoriteArticle FavoriteArticleCommand{..} = runExceptT $ do
     pure (article', actor)
   pure $
     FavoriteArticleResult
-      { favoriteArticleResultSlug = unSlug $ articleSlug article
-      , favoriteArticleResultTitle = unTitle . articleTitle $ article
-      , favoriteArticleResultDescription = unDescription . articleDescription $ article
-      , favoriteArticleResultBody = unArticleBody . articleBody $ article
-      , favoriteArticleResultCreatedAt = articleCreatedAt article
-      , favoriteArticleResultUpdatedAt = articleUpdatedAt article
-      , favoriteArticleResultTags = unTag <$> articleTags article
-      , favoriteArticleResultFavoritesCount = articleFavoritesCount article
-      , favoriteArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ actor
+      { slug = unSlug article.slug
+      , title = unTitle article.title
+      , description = unDescription article.description
+      , body = unArticleBody article.body
+      , createdAt = article.createdAt
+      , updatedAt = article.updatedAt
+      , tags = unTag <$> article.tags
+      , favoritesCount = article.favoritesCount
+      , authorUsername = unBoundedText . unUsername $ actor.username
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Unfavorite Article
 
 data UnfavoriteArticleCommand = UnfavoriteArticleCommand
-  { unfavoriteArticleToken :: Text
-  , unfavoriteArticleSlug :: Text
+  { token :: Text
+  , slug :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data UnfavoriteArticleResult = UnfavoriteArticleResult
-  { unfavoriteArticleResultSlug :: Text
-  , unfavoriteArticleResultTitle :: Text
-  , unfavoriteArticleResultDescription :: Text
-  , unfavoriteArticleResultBody :: Text
-  , unfavoriteArticleResultCreatedAt :: UTCTime
-  , unfavoriteArticleResultUpdatedAt :: Maybe UTCTime
-  , unfavoriteArticleResultTags :: [Text]
-  , unfavoriteArticleResultFavoritesCount :: Int
-  , unfavoriteArticleResultAuthorUsername :: Text
+  { slug :: Text
+  , title :: Text
+  , description :: Text
+  , body :: Text
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , tags :: [Text]
+  , favoritesCount :: Int
+  , authorUsername :: Text
   }
   deriving stock (Show, Eq)
 
@@ -436,13 +423,13 @@ unfavoriteArticle ::
   ) =>
   UnfavoriteArticleCommand ->
   m (Either UnfavoriteArticleError UnfavoriteArticleResult)
-unfavoriteArticle UnfavoriteArticleCommand{..} = runExceptT $ do
-  slug <- mkSlug unfavoriteArticleSlug ?? UnfavoriteArticleErrorInvalidSlug
-  actorId <- TokenGateway.verify (Token unfavoriteArticleToken) !? UnfavoriteArticleErrorInvalidToken
+unfavoriteArticle command = runExceptT $ do
+  slug <- mkSlug command.slug ?? UnfavoriteArticleErrorInvalidSlug
+  actorId <- TokenGateway.verify (Token command.token) !? UnfavoriteArticleErrorInvalidToken
   (article, actor) <- withTx $ do
     article <- ArticleRepository.findBySlug slug !? UnfavoriteArticleErrorArticleNotFound
     actor <- UserRepository.findById actorId !? UnfavroiteArticleErrorUserNotFound
-    let favoriteId = mkFavoriteId (articleId article) actorId
+    let favoriteId = mkFavoriteId article.articleId actorId
     favorite <- FavoriteRepository.findById favoriteId !? UnfavroiteArticleErrorIsNotFavorited
     success <- lift $ FavoriteRepository.delete favorite
     unless success $
@@ -452,13 +439,13 @@ unfavoriteArticle UnfavoriteArticleCommand{..} = runExceptT $ do
     pure (article', actor)
   pure $
     UnfavoriteArticleResult
-      { unfavoriteArticleResultSlug = unSlug $ articleSlug article
-      , unfavoriteArticleResultTitle = unTitle . articleTitle $ article
-      , unfavoriteArticleResultDescription = unDescription . articleDescription $ article
-      , unfavoriteArticleResultBody = unArticleBody . articleBody $ article
-      , unfavoriteArticleResultCreatedAt = articleCreatedAt article
-      , unfavoriteArticleResultUpdatedAt = articleUpdatedAt article
-      , unfavoriteArticleResultTags = unTag <$> articleTags article
-      , unfavoriteArticleResultFavoritesCount = articleFavoritesCount article
-      , unfavoriteArticleResultAuthorUsername = unBoundedText . unUsername . userUsername $ actor
+      { slug = unSlug article.slug
+      , title = unTitle article.title
+      , description = unDescription article.description
+      , body = unArticleBody article.body
+      , createdAt = article.createdAt
+      , updatedAt = article.updatedAt
+      , tags = unTag <$> article.tags
+      , favoritesCount = article.favoritesCount
+      , authorUsername = unBoundedText . unUsername $ actor.username
       }

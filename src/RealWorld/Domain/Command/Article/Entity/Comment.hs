@@ -1,3 +1,5 @@
+{-# LANGUAGE NoFieldSelectors #-}
+
 module RealWorld.Domain.Command.Article.Entity.Comment where
 
 import Data.Time (UTCTime)
@@ -6,11 +8,11 @@ import RealWorld.Domain.Command.Article.Value (CommentBody)
 
 data Comment = Comment
   { commentId :: ULID
-  , commentBody :: CommentBody
-  , commentCreatedAt :: UTCTime
-  , commentUpdatedAt :: Maybe UTCTime
-  , commentAuthorId :: ULID
-  , commentArticleId :: ULID
+  , body :: CommentBody
+  , createdAt :: UTCTime
+  , updatedAt :: Maybe UTCTime
+  , authorId :: ULID
+  , articleId :: ULID
   }
   deriving stock (Show, Eq, Generic)
 
@@ -18,12 +20,12 @@ mkComment :: ULID -> CommentBody -> UTCTime -> ULID -> ULID -> Comment
 mkComment commentId body createdAt authorId articleId =
   Comment
     { commentId = commentId
-    , commentBody = body
-    , commentCreatedAt = createdAt
-    , commentUpdatedAt = Nothing
-    , commentAuthorId = authorId
-    , commentArticleId = articleId
+    , body = body
+    , createdAt = createdAt
+    , updatedAt = Nothing
+    , authorId = authorId
+    , articleId = articleId
     }
 
 isDeletable :: Comment -> ULID -> Bool
-isDeletable comment actorId = actorId /= commentAuthorId comment
+isDeletable comment actorId = actorId /= comment.authorId

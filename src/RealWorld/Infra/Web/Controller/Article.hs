@@ -1,6 +1,7 @@
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module RealWorld.Infra.Web.Controller.Article where
@@ -74,12 +75,12 @@ listArticles = do
     offset <- queryParamMaybe "offset"
     let params =
           Query.ListArticlesParams
-            { listArticlesParamsActorId = show <$> userId
-            , listArticlesParamsTag = tag
-            , listArticlesParamsAuthor = author
-            , listArticlesParamsFavorited = favorited
-            , listArticlesParamsLimit = Just $ fromMaybe 20 limit
-            , listArticlesParamsOffset = Just $ fromMaybe 0 offset
+            { actorId = show <$> userId
+            , tag = tag
+            , author = author
+            , favorited = favorited
+            , limit = Just $ fromMaybe 20 limit
+            , offset = Just $ fromMaybe 0 offset
             }
     json =<< lift (QueryService.listArticles params)
 
@@ -94,9 +95,9 @@ feedArticles = do
     offset <- queryParamMaybe "offset"
     let params =
           Query.FeedArticlesParams
-            { feedArticlesParamsActorId = show userId
-            , feedArticlesParamsLimit = fromMaybe 20 limit
-            , feedArticlesParamsOffset = fromMaybe 0 offset
+            { actorId = show userId
+            , limit = fromMaybe 20 limit
+            , offset = fromMaybe 0 offset
             }
     json =<< lift (QueryService.feedArticles params)
 
@@ -112,10 +113,10 @@ getArticle = do
 -- Create Article
 
 data CreateArticleInput = CreateArticleInput
-  { createArticleInputTitle :: Text
-  , createArticleInputDescription :: Text
-  , createArticleInputBody :: Text
-  , createArticleInputTagList :: [Text]
+  { title :: Text
+  , description :: Text
+  , body :: Text
+  , tagList :: [Text]
   }
   deriving stock (Show, Generic)
 
@@ -136,8 +137,8 @@ createArticle = do
     ArticleWrapper input <- jsonData
     result <- lift $ ArticleUseCase.createArticle $ toCommand token input
     case result of
-      Right result'@CreateArticleResult {..} -> do
-        let params = Query.GetProfileParams Nothing createArticleResultAuthorUsername
+      Right result' -> do
+        let params = Query.GetProfileParams Nothing result'.authorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle input result' profile
       Left err -> do
@@ -146,36 +147,36 @@ createArticle = do
         throw $ invalid $ show err
   where
     toCommand :: Text -> CreateArticleInput -> ArticleUseCase.CreateArticleCommand
-    toCommand token CreateArticleInput {..} =
+    toCommand token input =
       CreateArticleCommand
-        { createArticleCommandTitle = createArticleInputTitle
-        , createArticleCommandDescription = createArticleInputDescription
-        , createArticleCommandBody = createArticleInputBody
-        , createArticleCommandTagList = createArticleInputTagList
-        , createArticleCommandToken = token
+        { title = input.title
+        , description = input.description
+        , body = input.body
+        , tagList = input.tagList
+        , token = token
         }
     toArticle :: CreateArticleInput -> ArticleUseCase.CreateArticleResult -> Profile -> Article
-    toArticle CreateArticleInput {..} CreateArticleResult {..} author =
+    toArticle input result author =
       Article
-        { articleSlug = createArticleResultSlug
-        , articleTitle = createArticleInputTitle
-        , articleDescription = createArticleInputDescription
-        , articleBody = createArticleInputBody
-        , articleTagList = createArticleInputTagList
-        , articleCreatedAt = createArticleResultCreatedAt
-        , articleUpdatedAt = Nothing
-        , articleFavorited = False
-        , articleFavoritesCount = 0
-        , articleAuthor = author
+        { slug = result.slug
+        , title = input.title
+        , description = input.description
+        , body = input.body
+        , tagList = input.tagList
+        , createdAt = result.createdAt
+        , updatedAt = Nothing
+        , favorited = False
+        , favoritesCount = 0
+        , author = author
         }
 
 ----------------------------------------------------------------------------------------------------
 -- Update Article
 
 data UpdateArticleInput = UpdateArticleInput
-  { updateArticleInputTitle :: Maybe Text
-  , updateArticleInputDescription :: Maybe Text
-  , updateArticleInputBody :: Maybe Text
+  { title :: Maybe Text
+  , description :: Maybe Text
+  , body :: Maybe Text
   }
   deriving stock (Show, Generic)
 
@@ -198,8 +199,8 @@ updateArticle = do
     slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.updateArticle $ toCommand token slug input
     case result of
-      Right result'@UpdateArticleResult {..} -> do
-        let params = Query.GetProfileParams Nothing updateArticleResultAuthorUsername
+      Right result' -> do
+        let params = Query.GetProfileParams Nothing result'.authorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
@@ -208,27 +209,27 @@ updateArticle = do
         throw $ invalid $ show err
   where
     toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
-    toCommand token slug UpdateArticleInput {..} =
+    toCommand token slug input =
       UpdateArticleCommand
-        { updateArticleCommandToken = token
-        , updateArticleCommandSlug = slug
-        , updateArticleCommandTitle = updateArticleInputTitle
-        , updateArticleCommandDescription = updateArticleInputDescription
-        , updateArticleCommandBody = updateArticleInputBody
+        { token = token
+        , slug = slug
+        , title = input.title
+        , description = input.description
+        , body = input.body
         }
     toArticle :: ArticleUseCase.UpdateArticleResult -> Profile -> Article
-    toArticle UpdateArticleResult {..} author =
+    toArticle result author =
       Article
-        { articleSlug = updateArticleResultSlug
-        , articleTitle = updateArticleResultTitle
-        , articleDescription = updateArticleResultDescription
-        , articleBody = updateArticleResultBody
-        , articleTagList = updateArticleResultTags
-        , articleCreatedAt = updateArticleResultCreatedAt
-        , articleUpdatedAt = updateArticleResultUpdatedAt
-        , articleFavorited = updateArticleResultFavorited
-        , articleFavoritesCount = updateArticleResultFavoritesCount
-        , articleAuthor = author
+        { slug = result.slug
+        , title = result.title
+        , description = result.description
+        , body = result.body
+        , tagList = result.tags
+        , createdAt = result.createdAt
+        , updatedAt = result.updatedAt
+        , favorited = result.favorited
+        , favoritesCount = result.favoritesCount
+        , author = author
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -255,7 +256,7 @@ deleteArticle = do
 -- Add Comments to an Article
 
 data AddCommentsInput = AddCommentsInput
-  { addCommentsInputBody :: Text
+  { body :: Text
   }
   deriving stock (Show, Generic)
 
@@ -278,30 +279,30 @@ addComments = do
     CommentWrapper input <- jsonData
     result <- lift $ ArticleUseCase.addComments $ toCommand token slug input
     case result of
-      Right result'@AddCommentsResult {..} -> do
-        let params = Query.GetProfileParams Nothing addCommentsResultAuthorUsername
+      Right result' -> do
+        let params = Query.GetProfileParams Nothing result'.authorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
-        json $ CommentWrapper $ toComment result' (addCommentsInputBody input) profile
+        json $ CommentWrapper $ toComment result' input.body profile
       Left err -> do
         lift $ katipAddContext (sl "error" err) $ do
           $(logTM) ErrorS "addComments error"
         throw $ invalid $ show err
   where
     toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
-    toCommand token slug AddCommentsInput {..} =
+    toCommand token slug input =
       ArticleUseCase.AddCommentsCommand
-        { addCommentsCommandToken = token
-        , addCommentsCommandSlug = slug
-        , addCommentsCommandBody = addCommentsInputBody
+        { token = token
+        , slug = slug
+        , body = input.body
         }
     toComment :: ArticleUseCase.AddCommentsResult -> Text -> Profile -> Query.Comment
-    toComment AddCommentsResult {..} body profile =
+    toComment result body profile =
       Comment
-        { commentId = addCommentsResultCommentId
-        , commentCreatedAt = addCommentsResultCreatedAt
-        , commentUpdatedAt = Nothing
-        , commentBody = body
-        , commentAuthor = profile
+        { commentId = result.commentId
+        , createdAt = result.createdAt
+        , updatedAt = Nothing
+        , body = body
+        , author = profile
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -316,8 +317,8 @@ getComments = do
     slug <- pathParam "slug"
     let params =
           Query.GetCommentsParams
-            { getCommentsParamsActorId = show <$> userId
-            , getCommentsParamsSlug = slug
+            { actorId = show <$> userId
+            , slug = slug
             }
     json =<< lift (QueryService.getComments params)
 
@@ -360,8 +361,8 @@ favorite = do
     slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.favoriteArticle $ toCommand token slug
     case result of
-      Right result'@FavoriteArticleResult {..} -> do
-        let params = Query.GetProfileParams Nothing favoriteArticleResultAuthorUsername
+      Right result' -> do
+        let params = Query.GetProfileParams Nothing result'.authorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
@@ -372,18 +373,18 @@ favorite = do
     toCommand :: Text -> Text -> ArticleUseCase.FavoriteArticleCommand
     toCommand = ArticleUseCase.FavoriteArticleCommand
     toArticle :: ArticleUseCase.FavoriteArticleResult -> Profile -> Article
-    toArticle FavoriteArticleResult {..} author =
+    toArticle result author =
       Article
-        { articleSlug = favoriteArticleResultSlug
-        , articleTitle = favoriteArticleResultTitle
-        , articleDescription = favoriteArticleResultDescription
-        , articleBody = favoriteArticleResultBody
-        , articleTagList = favoriteArticleResultTags
-        , articleCreatedAt = favoriteArticleResultCreatedAt
-        , articleUpdatedAt = favoriteArticleResultUpdatedAt
-        , articleFavorited = True
-        , articleFavoritesCount = favoriteArticleResultFavoritesCount
-        , articleAuthor = author
+        { slug = result.slug
+        , title = result.title
+        , description = result.description
+        , body = result.body
+        , tagList = result.tags
+        , createdAt = result.createdAt
+        , updatedAt = result.updatedAt
+        , favorited = True
+        , favoritesCount = result.favoritesCount
+        , author = author
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -404,8 +405,8 @@ unfavorite = do
     slug <- pathParam "slug"
     result <- lift $ ArticleUseCase.unfavoriteArticle $ toCommand token slug
     case result of
-      Right result'@UnfavoriteArticleResult {..} -> do
-        let params = Query.GetProfileParams Nothing unfavoriteArticleResultAuthorUsername
+      Right result' -> do
+        let params = Query.GetProfileParams Nothing result'.authorUsername
         profile <- QueryService.getProfile params !? notFound "Author not found"
         json $ ArticleWrapper $ toArticle result' profile
       Left err -> do
@@ -416,18 +417,18 @@ unfavorite = do
     toCommand :: Text -> Text -> ArticleUseCase.UnfavoriteArticleCommand
     toCommand = ArticleUseCase.UnfavoriteArticleCommand
     toArticle :: ArticleUseCase.UnfavoriteArticleResult -> Profile -> Article
-    toArticle UnfavoriteArticleResult {..} author =
+    toArticle result author =
       Article
-        { articleSlug = unfavoriteArticleResultSlug
-        , articleTitle = unfavoriteArticleResultTitle
-        , articleDescription = unfavoriteArticleResultDescription
-        , articleBody = unfavoriteArticleResultBody
-        , articleTagList = unfavoriteArticleResultTags
-        , articleCreatedAt = unfavoriteArticleResultCreatedAt
-        , articleUpdatedAt = unfavoriteArticleResultUpdatedAt
-        , articleFavorited = False
-        , articleFavoritesCount = unfavoriteArticleResultFavoritesCount
-        , articleAuthor = author
+        { slug = result.slug
+        , title = result.title
+        , description = result.description
+        , body = result.body
+        , tagList = result.tags
+        , createdAt = result.createdAt
+        , updatedAt = result.updatedAt
+        , favorited = False
+        , favoritesCount = result.favoritesCount
+        , author = author
         }
 
 ----------------------------------------------------------------------------------------------------

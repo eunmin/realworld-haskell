@@ -62,7 +62,7 @@ instance FromRow TagList where
   fromRow = TagList <$> (fromPGArray <$> field)
 
 getCurrentUser :: (QueryDatabase r m) => GetCurrentUserParams -> m (Maybe User)
-getCurrentUser GetCurrentUserParams {..} = do
+getCurrentUser params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
@@ -70,10 +70,10 @@ getCurrentUser GetCurrentUserParams {..} = do
         <$> query
           conn
           "SELECT email, '', username, bio, image FROM users WHERE id = ?"
-          (Only getCurrentUserParamsActorId)
+          (Only params.actorId)
 
 getProfile :: (QueryDatabase r m) => GetProfileParams -> m (Maybe Profile)
-getProfile GetProfileParams {..} = do
+getProfile params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
@@ -85,43 +85,43 @@ getProfile GetProfileParams {..} = do
           \FROM users u \
           \LEFT JOIN followings f ON u.id = f.following_id AND f.user_id = ? \
           \WHERE username = ?"
-          (getProfileParamsActorId, getProfileParamsUsername)
+          (params.actorId, params.username)
 
 instance ToRow ListArticlesParams where
-  toRow ListArticlesParams {..} =
+  toRow params =
     catMaybes
-      [ toField <$> listArticlesParamsActorId
-      , toField <$> listArticlesParamsActorId
-      , toField <$> listArticlesParamsAuthor
-      , toField <$> listArticlesParamsTag
-      , toField <$> listArticlesParamsFavorited
-      , toField <$> listArticlesParamsLimit
-      , toField <$> listArticlesParamsOffset
+      [ toField <$> params.actorId
+      , toField <$> params.actorId
+      , toField <$> params.author
+      , toField <$> params.tag
+      , toField <$> params.favorited
+      , toField <$> params.limit
+      , toField <$> params.offset
       ]
 
 listArticles :: (QueryDatabase r m) => ListArticlesParams -> m ArticleList
-listArticles params@ListArticlesParams {..} = do
+listArticles params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     let selectSql =
           "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, "
-            <> ( if isJust listArticlesParamsActorId
+            <> ( if isJust params.actorId
                   then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
                   else "false, "
                )
             <> "a.favorites_count, au.username, au.bio, au.image "
-            <> ( if isJust listArticlesParamsActorId
+            <> ( if isJust params.actorId
                   then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
                   else "false "
                )
     let sql =
           "FROM articles a LEFT JOIN users au ON au.id = a.author_id "
-            <> actorFavoritedJoinQuery listArticlesParamsActorId
-            <> favoritedJoinQuery listArticlesParamsFavorited
+            <> actorFavoritedJoinQuery params.actorId
+            <> favoritedJoinQuery params.favorited
             <> "WHERE true "
-            <> authorWhereQuery listArticlesParamsAuthor
-            <> tagWhereQuery listArticlesParamsTag
-            <> favoritedWhereQuery listArticlesParamsFavorited
+            <> authorWhereQuery params.author
+            <> tagWhereQuery params.tag
+            <> favoritedWhereQuery params.favorited
     articles <-
       liftIO $
         query
@@ -136,7 +136,7 @@ listArticles params@ListArticlesParams {..} = do
         query
           conn
           ("SELECT count(*) " <> sql)
-          params {listArticlesParamsLimit = Nothing, listArticlesParamsOffset = Nothing}
+          ((params :: ListArticlesParams) {limit = Nothing, offset = Nothing})
     pure $ ArticleList articles articlesCount
   where
     actorFavoritedJoinQuery :: Maybe Text -> Query
@@ -160,15 +160,14 @@ listArticles params@ListArticlesParams {..} = do
     favoritedWhereQuery Nothing = ""
 
 instance ToRow FeedArticlesParams where
-  toRow FeedArticlesParams {..} =
-    [ toField feedArticlesParamsActorId
-    , toField feedArticlesParamsActorId
-    , toField feedArticlesParamsLimit
-    , toField feedArticlesParamsOffset
+  toRow params =
+    [ toField params.actorId
+    , toField params.limit
+    , toField params.offset
     ]
 
 feedArticles :: (QueryDatabase r m) => FeedArticlesParams -> m ArticleList
-feedArticles params@FeedArticlesParams {..} = do
+feedArticles params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     let selectSql =
@@ -195,11 +194,11 @@ feedArticles params@FeedArticlesParams {..} = do
         query
           conn
           ("SELECT count(*) " <> sql)
-          (feedArticlesParamsActorId, feedArticlesParamsActorId)
+          (params.actorId, params.actorId)
     pure $ ArticleList articles articlesCount
 
 getArticle :: (QueryDatabase r m) => GetArticleParams -> m (Maybe Article)
-getArticle GetArticleParams {..} = do
+getArticle params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
     liftIO $
@@ -211,10 +210,10 @@ getArticle GetArticleParams {..} = do
           \FROM articles a \
           \LEFT JOIN users u ON a.author_id = u.id \
           \WHERE a.slug = ?"
-          (Only getArticleParamsSlug)
+          (Only params.slug)
 
 getComments :: (QueryDatabase r m) => GetCommentsParams -> m CommentList
-getComments GetCommentsParams {..} = do
+getComments params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     comments <-
@@ -226,7 +225,7 @@ getComments GetCommentsParams {..} = do
           \LEFT JOIN articles a ON a.id = c.article_id \
           \LEFT JOIN users u ON c.author_id = u.id \
           \WHERE a.slug = ?"
-          (Only getCommentsParamsSlug)
+          (Only params.slug)
     pure $ CommentList comments
 
 getTags :: (QueryDatabase r m) => m TagList

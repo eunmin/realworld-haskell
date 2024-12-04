@@ -1,12 +1,15 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 {-# HLINT ignore "Use newtype instead of data" #-}
 
 module RealWorld.Infra.Web.Controller.User where
 
+import Control.Lens ((.~))
 import Data.Aeson (
   FromJSON (parseJSON),
   ToJSON,
@@ -15,6 +18,7 @@ import Data.Aeson (
   (.:!),
  )
 import Data.Aeson.Casing (aesonDrop, camelCase)
+import Data.Generics.Labels ()
 import Katip
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
@@ -23,7 +27,6 @@ import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.User.UseCase qualified as UserUseCase
 import RealWorld.Domain.Command.User.Value (Token (Token))
-import RealWorld.Domain.Query.Data (userToken)
 import RealWorld.Domain.Query.Data qualified as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
 import RealWorld.Domain.Query.QueryService qualified as QueryService
@@ -53,9 +56,9 @@ data ProfileWrapper a = ProfileWrapper
 -- Registration
 
 data RegistrationInput = RegistrationInput
-  { registrationInputEmail :: Text
-  , registrationInputUsername :: Text
-  , registrationInputPassword :: Text
+  { email :: Text
+  , username :: Text
+  , password :: Text
   }
   deriving stock (Show, Generic)
 
@@ -76,28 +79,27 @@ registration = do
       throw $ invalid $ show err
   where
     toCommand :: RegistrationInput -> UserUseCase.RegistrationCommand
-    toCommand RegistrationInput {..} =
+    toCommand input =
       UserUseCase.RegistrationCommand
-        { registrationCommandUsername = registrationInputEmail
-        , registrationCommandEmail = registrationInputUsername
-        , registrationCommandPassword = registrationInputPassword
+        { username = input.username
+        , email = input.email
+        , password = input.password
         }
-    toUser :: RegistrationInput -> UserUseCase.RegistrationResult -> Query.User
-    toUser RegistrationInput {..} (UserUseCase.RegistrationResult token) =
+    toUser input (UserUseCase.RegistrationResult token) =
       Query.User
-        { userEmail = registrationInputEmail
-        , userToken = token
-        , userUsername = registrationInputUsername
-        , userBio = ""
-        , userImage = Nothing
+        { email = input.email
+        , token = token
+        , username = input.username
+        , bio = ""
+        , image = Nothing
         }
 
 ----------------------------------------------------------------------------------------------------
 -- Authentication
 
 data AuthenticationInput = AuthenticationInput
-  { authenticationInputEmail :: Text
-  , authenticationInputPassword :: Text
+  { email :: Text
+  , password :: Text
   }
   deriving stock (Show, Generic)
 
@@ -118,19 +120,18 @@ authentication = do
       throw $ invalid $ show err
   where
     toCommand :: AuthenticationInput -> UserUseCase.AuthenticationCommand
-    toCommand AuthenticationInput {..} =
+    toCommand input =
       UserUseCase.AuthenticationCommand
-        { authenticationCommandEmail = authenticationInputEmail
-        , authenticationCommandPassword = authenticationInputPassword
+        { email = input.email
+        , password = input.password
         }
-    toUser :: AuthenticationInput -> UserUseCase.AuthenticationResult -> Query.User
-    toUser AuthenticationInput {..} UserUseCase.AuthenticationResult {..} =
+    toUser input result =
       Query.User
-        { userEmail = authenticationInputEmail
-        , userToken = authenticationResultToken
-        , userUsername = authenticationResultUsername
-        , userBio = authenticationResultBio
-        , userImage = authenticationResultImage
+        { email = input.email
+        , token = result.token
+        , username = result.username
+        , bio = result.bio
+        , image = result.image
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -142,17 +143,17 @@ getCurrentUser = do
     userId <- TokenGateway.verify (Token token) !? unauthorized "Unauthorized"
     let params = Query.GetCurrentUserParams $ show userId
     user <- QueryService.getCurrentUser params !? notFound "User not found"
-    json $ UserWrapper $ user {userToken = token}
+    json $ UserWrapper $ user & #token .~ token
 
 ----------------------------------------------------------------------------------------------------
 -- Update User
 
 data UpdateUserInput = UpdateUserInput
-  { updateUserInputEmail :: Maybe Text
-  , updateUserInputUsername :: Maybe Text
-  , updateUserInputPassword :: Maybe Text
-  , updateUserInputBio :: Maybe Text
-  , updateUserInputImage :: Maybe (Maybe Text)
+  { email :: Maybe Text
+  , username :: Maybe Text
+  , password :: Maybe Text
+  , bio :: Maybe Text
+  , image :: Maybe (Maybe Text)
   }
   deriving stock (Show, Generic)
 
@@ -185,23 +186,23 @@ updateUser = do
         throw $ invalid $ show err
   where
     toCommand :: UpdateUserInput -> Text -> UserUseCase.UpdateUserCommand
-    toCommand UpdateUserInput {..} token =
+    toCommand input token =
       UserUseCase.UpdateUserCommand
-        { updateUserCommandToken = token
-        , updateUserCommandUserName = updateUserInputUsername
-        , updateUserCommandEmail = updateUserInputEmail
-        , updateUserCommandPassword = updateUserInputPassword
-        , updateUserCommandBio = updateUserInputBio
-        , updateUserCommandImage = updateUserInputImage
+        { token = token
+        , username = input.username
+        , email = input.email
+        , password = input.password
+        , bio = input.bio
+        , image = input.image
         }
     toUser :: UserUseCase.UpdateUserResult -> Query.User
-    toUser UserUseCase.UpdateUserResult {..} =
+    toUser result =
       Query.User
-        { userEmail = updateUserResultEmail
-        , userToken = updateUserResultToken
-        , userUsername = updateUserResultUsername
-        , userBio = updateUserResultBio
-        , userImage = updateUserResultImage
+        { email = result.email
+        , token = result.token
+        , username = result.username
+        , bio = result.bio
+        , image = result.image
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -236,16 +237,15 @@ follow = do
     toCommand :: Text -> Text -> UserUseCase.FollowUserCommand
     toCommand token username =
       UserUseCase.FollowUserCommand
-        { followUserCommandToken = token
-        , followUserCommandUsername = username
+        { token = token
+        , username = username
         }
-    toProfile :: UserUseCase.FollowUserResult -> Query.Profile
-    toProfile UserUseCase.FollowUserResult {..} =
+    toProfile result =
       Query.Profile
-        { profileUsername = followUserResultUsername
-        , profileBio = followUserResultBio
-        , profileImage = followUserResultImage
-        , profileFollowing = followUserResultFollowing
+        { username = result.username
+        , bio = result.bio
+        , image = result.image
+        , following = result.following
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -266,14 +266,13 @@ unfollow = do
     toCommand :: Text -> Text -> UserUseCase.UnfollowUserCommand
     toCommand token username =
       UserUseCase.UnfollowUserCommand
-        { unfollowUserCommandToken = token
-        , unfollowUserCommandUsername = username
+        { token = token
+        , username = username
         }
-    toProfile :: UserUseCase.UnfollowUserResult -> Query.Profile
-    toProfile UserUseCase.UnfollowUserResult {..} =
+    toProfile result =
       Query.Profile
-        { profileUsername = unfollowUserResultUsername
-        , profileBio = unfollowUserResultBio
-        , profileImage = unfollowUserResultImage
-        , profileFollowing = unfollowUserResultFollowing
+        { username = result.username
+        , bio = result.bio
+        , image = result.image
+        , following = result.following
         }

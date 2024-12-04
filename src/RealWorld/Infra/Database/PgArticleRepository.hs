@@ -45,22 +45,22 @@ deriving newtype instance ToField Tag
 instance ToRow Article where
   toRow Article {..} =
     [ toField articleId
-    , toField articleSlug
-    , toField articleTitle
-    , toField articleDescription
-    , toField articleBody
-    , toField $ PGArray $ toList articleTags
-    , toField articleAuthorId
-    , toField articleFavoritesCount
-    , toField articleCreatedAt
+    , toField slug
+    , toField title
+    , toField description
+    , toField body
+    , toField $ PGArray $ toList tags
+    , toField authorId
+    , toField favoritesCount
+    , toField createdAt
     , -- for on conflict update
-      toField articleSlug
-    , toField articleTitle
-    , toField articleDescription
-    , toField articleBody
-    , toField $ PGArray $ toList articleTags
-    , toField articleAuthorId
-    , toField articleFavoritesCount
+      toField slug
+    , toField title
+    , toField description
+    , toField body
+    , toField $ PGArray $ toList tags
+    , toField authorId
+    , toField favoritesCount
     ]
 
 deriving newtype instance FromField Slug
@@ -124,4 +124,4 @@ findBySlug slug =
 delete :: (Database r m) => Article -> m Bool
 delete article =
   withConnection $ \conn ->
-    liftIO $ (> 0) <$> execute conn "DELETE FROM articles WHERE id = ?" (Only $ articleId article)
+    liftIO $ (> 0) <$> execute conn "DELETE FROM articles WHERE id = ?" (Only article.articleId)

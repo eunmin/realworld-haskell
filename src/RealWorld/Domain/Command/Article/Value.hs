@@ -66,8 +66,8 @@ mkTag = Just . Tag
 -- FavoriteId
 
 data FavoriteId = FavoriteId
-  { favoriteIdArticleId :: ULID
-  , favoriteIdUserId :: ULID
+  { articleId :: ULID
+  , userId :: ULID
   }
   deriving stock (Show, Eq, Generic)
 
