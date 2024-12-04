@@ -13,7 +13,7 @@
         just
         nixd
         ghciwatch
-        git
+        postgresql_14
       ];
     };
   };

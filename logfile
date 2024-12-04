@@ -1,0 +1,22 @@
+2024-12-04 14:10:47.655 KST [42614] LOG:  starting PostgreSQL 14.13 on aarch64-apple-darwin24.0.0, compiled by clang version 16.0.6, 64-bit
+2024-12-04 14:10:47.656 KST [42614] LOG:  listening on IPv6 address "::1", port 5432
+2024-12-04 14:10:47.656 KST [42614] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2024-12-04 14:10:47.656 KST [42614] LOG:  listening on Unix socket "/Users/eunmin/workspace/realworld-haskell/.s.PGSQL.5432"
+2024-12-04 14:10:47.658 KST [42615] LOG:  database system was shut down at 2024-12-04 14:09:54 KST
+2024-12-04 14:10:47.660 KST [42614] LOG:  database system is ready to accept connections
+2024-12-04 14:17:52.037 KST [45931] FATAL:  role "realworld" does not exist
+2024-12-04 14:18:47.760 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:48.472 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:48.473 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:49.185 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:49.185 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:49.882 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:49.882 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:50.592 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:50.592 KST [42620] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2024-12-04 14:18:50.813 KST [42614] LOG:  could not open file "postmaster.pid": No such file or directory
+2024-12-04 14:18:50.813 KST [42614] LOG:  performing immediate shutdown because data directory lock file is invalid
+2024-12-04 14:18:50.813 KST [42614] LOG:  received immediate shutdown request
+2024-12-04 14:18:50.813 KST [42614] LOG:  could not open file "postmaster.pid": No such file or directory
+2024-12-04 14:18:50.815 KST [42620] LOG:  could not open temporary statistics file "pg_stat/global.tmp": No such file or directory
+2024-12-04 14:18:50.819 KST [42614] LOG:  database system is shut down

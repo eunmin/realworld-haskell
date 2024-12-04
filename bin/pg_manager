@@ -1,0 +1,28 @@
+#!/bin/bash
+
+export PG=$PWD/.dev_postgres
+export PGDATA=$PG/data
+
+pg_start() {
+  pg_ctl -l $PGDATA/postgres.log start
+}
+
+pg_stop() {
+  pg_ctl stop
+}
+
+pg_setup() {
+  pg_stop;
+  rm -rf $PG;
+  initdb
+  pg_start
+  createuser -s postgres
+  createuser -s $DB_USER # from .envrc
+  createdb $DB_DATABASE # from .envrc
+}
+
+case $1 in
+  start) pg_start;;
+  stop) pg_stop;;
+  setup) pg_setup;;
+esac

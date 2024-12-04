@@ -13,3 +13,6 @@ repl *ARGS:
 # Run ghcid -- auto-recompile and run `main` function
 run:
     ghcid -T :main
+
+test:
+    cabal test
