@@ -30,11 +30,11 @@ withTransaction mode conn act = mask $ \unmask -> do
 
 withTxMode :: (MonadReader System.State m, MonadIO m, MonadMask m) => TransactionMode -> m a -> m a
 withTxMode txMode action = do
-  (Database.State {..}, _) <- ask
+  (Database.State {..}, secret) <- ask
   withResource stateConnectionPool $ \conn -> do
     withTransaction txMode conn $ do
-      -- modify (const (Database.State stateConnectionPool (Just conn), secret))
-      action
+      local (const (Database.State stateConnectionPool (Just conn), secret)) $ do
+        action
 
 withTx :: (MonadReader System.State m, MonadIO m, MonadMask m) => ExceptT e m a -> ExceptT e m a
 withTx = withTxMode defaultTransactionMode
