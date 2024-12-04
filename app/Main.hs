@@ -1,6 +1,6 @@
 module Main (main) where
 
-import qualified RealWorld.App as App
+import RealWorld.App qualified as App
 
 main :: IO ()
 main = App.main

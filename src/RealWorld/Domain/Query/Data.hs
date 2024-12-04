@@ -1,5 +1,7 @@
-{-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use newtype instead of data" #-}
 
 module RealWorld.Domain.Query.Data where
 
@@ -62,7 +64,7 @@ data Profile = Profile
   deriving stock (Generic, Show, Eq)
 
 userToProfile :: User -> Bool -> Profile
-userToProfile User{..} following =
+userToProfile User {..} following =
   Profile
     { profileUsername = userUsername
     , profileBio = userBio
