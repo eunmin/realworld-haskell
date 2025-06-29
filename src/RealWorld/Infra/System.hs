@@ -1,17 +1,16 @@
 module RealWorld.Infra.System where
 
 import Katip (Environment (..))
-import RealWorld.Infra.Component.Database qualified as Database
-import RealWorld.Infra.Component.HttpServer qualified as HttpServer
+import qualified RealWorld.Infra.Component.Database as Database
+import qualified RealWorld.Infra.Component.HttpServer as HttpServer
 import Relude hiding (State, state, withState)
 import System.Environment (getEnv)
-import Prelude hiding (State, state, withState)
 
 data Config = Config
-  { httpServer :: HttpServer.Config
-  , database :: Database.Config
-  , jwtSecret :: Text
-  , logEnv :: Environment
+  { httpServer :: HttpServer.Config,
+    database :: Database.Config,
+    jwtSecret :: Text,
+    logEnv :: Environment
   }
   deriving stock (Show, Eq)
 

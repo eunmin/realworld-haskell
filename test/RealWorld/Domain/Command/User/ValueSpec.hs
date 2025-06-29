@@ -2,20 +2,20 @@
 
 module RealWorld.Domain.Command.User.ValueSpec where
 
-import RealWorld.Domain.Command.User.Value (
-  Email (unEmail),
-  Password (unPassword),
-  Username (unUsername),
-  mkEmail,
-  mkPassword,
-  mkUsername,
- )
+import RealWorld.Domain.Command.User.Value
+  ( Email (unEmail),
+    Password (unPassword),
+    Username (unUsername),
+    mkEmail,
+    mkPassword,
+    mkUsername,
+  )
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
-import RealWorld.QuickCheck.Instances (
-  InvalidEmailText (InvalidEmailText),
-  ValidEmailText (ValidEmailText),
-  ValidPasswordText (ValidPasswordText),
- )
+import RealWorld.QuickCheck.Instances
+  ( InvalidEmailText (InvalidEmailText),
+    ValidEmailText (ValidEmailText),
+    ValidPasswordText (ValidPasswordText),
+  )
 import Relude
 import Test.Hspec (Spec, describe, shouldBe)
 import Test.Hspec.QuickCheck (prop)

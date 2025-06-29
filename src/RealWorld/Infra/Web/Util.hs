@@ -1,9 +1,10 @@
 module RealWorld.Infra.Web.Util where
 
-import Data.Text qualified as T
-import RealWorld.Infra.Web.ErrorResponse (
-  forbidden,
- )
+import qualified Data.Text as T
+import RealWorld.Infra.Web.ErrorResponse
+  ( forbidden,
+  )
+import Relude
 import Web.Scotty.Trans (ActionT, header, throw)
 
 withRequiredToken :: (MonadIO m) => (Text -> ActionT m ()) -> ActionT m ()

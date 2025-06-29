@@ -7,39 +7,38 @@ import Control.Error.Util ((!?), (??))
 import Data.Time (getCurrentTime)
 import Data.ULID (getULID)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
-import RealWorld.Domain.Adapter.Gateway.PasswordGateway qualified as PasswordGateway
+import qualified RealWorld.Domain.Adapter.Gateway.PasswordGateway as PasswordGateway
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
-import RealWorld.Domain.Adapter.Gateway.TokenGateway qualified as TokenGateway
+import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (withTx))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
-import RealWorld.Domain.Adapter.Repository.UserRepository qualified as UserRepo
+import qualified RealWorld.Domain.Adapter.Repository.UserRepository as UserRepo
 import RealWorld.Domain.Command.User.Entity.User ()
-import RealWorld.Domain.Command.User.Entity.User qualified as User
-import RealWorld.Domain.Command.User.Value (
-  Bio (unBio),
-  Email (unEmail),
-  Image (unImage),
-  Token (Token, unToken),
-  Username (unUsername),
-  mkBio,
-  mkEmail,
-  mkImage,
-  mkPassword,
-  mkUsername,
-  tokeExpiresInSec,
- )
+import qualified RealWorld.Domain.Command.User.Entity.User as User
+import RealWorld.Domain.Command.User.Value
+  ( Bio (unBio),
+    Email (unEmail),
+    Image (unImage),
+    Token (Token, unToken),
+    Username (unUsername),
+    mkBio,
+    mkEmail,
+    mkImage,
+    mkPassword,
+    mkUsername,
+    tokeExpiresInSec,
+  )
 import RealWorld.Domain.Util.BoundedText (unBoundedText)
 import RealWorld.Domain.Util.Maybe (justToNothing)
 import Relude hiding ((??))
-import Prelude hiding ((??))
 
 ----------------------------------------------------------------------------------------------------
 -- Registration
 
 data RegistrationCommand = RegistrationCommand
-  { username :: Text
-  , email :: Text
-  , password :: Text
+  { username :: Text,
+    email :: Text,
+    password :: Text
   }
   deriving stock (Show, Eq, Generic)
 
@@ -79,16 +78,16 @@ registration command = runExceptT $ do
 -- Authentication
 
 data AuthenticationCommand = AuthenticationCommand
-  { email :: Text
-  , password :: Text
+  { email :: Text,
+    password :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data AuthenticationResult = AuthenticationResult
-  { token :: Text
-  , username :: Text
-  , bio :: Text
-  , image :: Maybe Text
+  { token :: Text,
+    username :: Text,
+    bio :: Text,
+    image :: Maybe Text
   }
   deriving stock (Show, Eq)
 
@@ -106,36 +105,36 @@ authentication command = runExceptT $ do
   email <- mkEmail command.email ?? AuthenticationErrorInvalidEmail
   password <- mkPassword command.password ?? AuthenticationErrorInvalidPassword
   user <- UserRepo.findByEmail email !? AuthenticationErrorUserNotFound
-  whenM (lift $ PasswordGateway.isValidPassword user.hashedPassword password) $
-    throwE AuthenticationErrorInvalidPassword
+  whenM (lift $ PasswordGateway.isValidPassword user.hashedPassword password)
+    $ throwE AuthenticationErrorInvalidPassword
   token <- lift $ TokenGateway.generate user.userId tokeExpiresInSec
-  pure $
-    AuthenticationResult
-      { token = unToken token
-      , username = unBoundedText . unUsername $ user.username
-      , bio = unBio user.bio
-      , image = unImage <$> user.image
+  pure
+    $ AuthenticationResult
+      { token = token.unToken,
+        username = user.username.unUsername.unBoundedText,
+        bio = user.bio.unBio,
+        image = unImage <$> user.image
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Update User
 
 data UpdateUserCommand = UpdateUserCommand
-  { token :: Text
-  , username :: Maybe Text
-  , email :: Maybe Text
-  , password :: Maybe Text
-  , bio :: Maybe Text
-  , image :: Maybe (Maybe Text)
+  { token :: Text,
+    username :: Maybe Text,
+    email :: Maybe Text,
+    password :: Maybe Text,
+    bio :: Maybe Text,
+    image :: Maybe (Maybe Text)
   }
   deriving stock (Show, Eq, Generic)
 
 data UpdateUserResult = UpdateUserResult
-  { token :: Text
-  , username :: Text
-  , email :: Text
-  , bio :: Text
-  , image :: Maybe Text
+  { token :: Text,
+    username :: Text,
+    email :: Text,
+    bio :: Text,
+    image :: Maybe Text
   }
   deriving stock (Show, Eq)
 
@@ -164,7 +163,7 @@ updateUser command = runExceptT $ do
     Just password' ->
       Just
         <$> PasswordGateway.hashPassword password'
-          !? UpdateUserErrorInvalidPassword
+        !? UpdateUserErrorInvalidPassword
   user <- withTx $ do
     user <- UserRepo.findById userId !? UpdateUserErrorUserNotFound
     whenJust username $ \username' ->
@@ -174,29 +173,29 @@ updateUser command = runExceptT $ do
     let user' = User.update user username email hashedPassword bio image
     _ <- lift $ UserRepo.save user'
     pure user'
-  pure $
-    UpdateUserResult
-      { token = command.token
-      , username = unBoundedText . unUsername $ user.username
-      , email = unEmail user.email
-      , bio = unBio user.bio
-      , image = unImage <$> user.image
+  pure
+    $ UpdateUserResult
+      { token = command.token,
+        username = user.username.unUsername.unBoundedText,
+        email = user.email.unEmail,
+        bio = user.bio.unBio,
+        image = unImage <$> user.image
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Follow User
 
 data FollowUserCommand = FollowUserCommand
-  { token :: Text
-  , username :: Text
+  { token :: Text,
+    username :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data FollowUserResult = FollowUserResult
-  { username :: Text
-  , bio :: Text
-  , image :: Maybe Text
-  , following :: Bool
+  { username :: Text,
+    bio :: Text,
+    image :: Maybe Text,
+    following :: Bool
   }
   deriving stock (Show, Eq)
 
@@ -222,28 +221,28 @@ followUser command = runExceptT $ do
     when (followerId == followee.userId) $ throwE FollowUserErrorCantFollowSelf
     _ <- lift $ UserRepo.follow followerId followee.userId
     pure followee
-  pure $
-    FollowUserResult
-      { username = unBoundedText . unUsername $ user.username
-      , bio = unBio user.bio
-      , image = unImage <$> user.image
-      , following = True
+  pure
+    $ FollowUserResult
+      { username = user.username.unUsername.unBoundedText,
+        bio = user.bio.unBio,
+        image = unImage <$> user.image,
+        following = True
       }
 
 ----------------------------------------------------------------------------------------------------
 -- Unfollow User
 
 data UnfollowUserCommand = UnfollowUserCommand
-  { token :: Text
-  , username :: Text
+  { token :: Text,
+    username :: Text
   }
   deriving stock (Show, Eq, Generic)
 
 data UnfollowUserResult = UnfollowUserResult
-  { username :: Text
-  , bio :: Text
-  , image :: Maybe Text
-  , following :: Bool
+  { username :: Text,
+    bio :: Text,
+    image :: Maybe Text,
+    following :: Bool
   }
   deriving stock (Show, Eq)
 
@@ -264,10 +263,10 @@ unfollowUser command = runExceptT $ do
     followee <- UserRepo.findByUsername username !? UnfollowUserErrorUserNotFound
     _ <- lift $ UserRepo.unfollow followerId followee.userId
     pure followee
-  pure $
-    UnfollowUserResult
-      { username = unBoundedText . unUsername $ user.username
-      , bio = unBio user.bio
-      , image = unImage <$> user.image
-      , following = False
+  pure
+    $ UnfollowUserResult
+      { username = user.username.unUsername.unBoundedText,
+        bio = unBio user.bio,
+        image = unImage <$> user.image,
+        following = False
       }

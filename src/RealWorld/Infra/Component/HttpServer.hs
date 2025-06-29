@@ -1,6 +1,7 @@
 module RealWorld.Infra.Component.HttpServer where
 
 import RealWorld.Infra.Util.Env (envRead)
+import Relude
 
 data Config = Config
   { configPort :: Int

@@ -2,6 +2,7 @@ module RealWorld.Domain.Command.Article.Value where
 
 import Data.Text (replace, toLower)
 import Data.ULID (ULID)
+import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- Slug
@@ -66,8 +67,8 @@ mkTag = Just . Tag
 -- FavoriteId
 
 data FavoriteId = FavoriteId
-  { articleId :: ULID
-  , userId :: ULID
+  { articleId :: ULID,
+    userId :: ULID
   }
   deriving stock (Show, Eq, Generic)
 

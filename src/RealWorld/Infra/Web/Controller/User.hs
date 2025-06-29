@@ -1,43 +1,42 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use newtype instead of data" #-}
 
 module RealWorld.Infra.Web.Controller.User where
 
 import Control.Lens ((.~))
-import Data.Aeson (
-  FromJSON (parseJSON),
-  ToJSON,
-  genericParseJSON,
-  withObject,
-  (.:!),
- )
+import Data.Aeson
+  ( FromJSON (parseJSON),
+    ToJSON,
+    genericParseJSON,
+    withObject,
+    (.:!),
+  )
 import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Generics.Labels ()
 import Katip
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
-import RealWorld.Domain.Adapter.Gateway.TokenGateway qualified as TokenGateway
+import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
-import RealWorld.Domain.Command.User.UseCase qualified as UserUseCase
+import qualified RealWorld.Domain.Command.User.UseCase as UserUseCase
 import RealWorld.Domain.Command.User.Value (Token (Token))
-import RealWorld.Domain.Query.Data qualified as Query
+import RealWorld.Domain.Query.Data (Profile (..), User (..))
+import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
-import RealWorld.Domain.Query.QueryService qualified as QueryService
+import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Converter.Aeson ()
-import RealWorld.Infra.Web.ErrorResponse (
-  invalid,
-  notFound,
-  unauthorized,
- )
+import RealWorld.Infra.Web.ErrorResponse
+  ( invalid,
+    notFound,
+    unauthorized,
+  )
 import RealWorld.Infra.Web.Errors ()
 import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
+import Relude
 import Web.Scotty.Trans (ActionT, json, jsonData, pathParam, throw)
 
 data UserWrapper a = UserWrapper
@@ -56,9 +55,9 @@ data ProfileWrapper a = ProfileWrapper
 -- Registration
 
 data RegistrationInput = RegistrationInput
-  { email :: Text
-  , username :: Text
-  , password :: Text
+  { email :: Text,
+    username :: Text,
+    password :: Text
   }
   deriving stock (Show, Generic)
 
@@ -76,30 +75,30 @@ registration = do
     Left err -> do
       lift $ katipAddContext (sl "error" err) $ do
         $(logTM) ErrorS "registration error"
-      throw $ invalid $ show err
+      throw $ invalid $ toText err
   where
     toCommand :: RegistrationInput -> UserUseCase.RegistrationCommand
     toCommand input =
       UserUseCase.RegistrationCommand
-        { username = input.username
-        , email = input.email
-        , password = input.password
+        { username = input.username,
+          email = input.email,
+          password = input.password
         }
     toUser input (UserUseCase.RegistrationResult token) =
       Query.User
-        { email = input.email
-        , token = token
-        , username = input.username
-        , bio = ""
-        , image = Nothing
+        { email = input.email,
+          token = token,
+          username = input.username,
+          bio = "",
+          image = Nothing
         }
 
 ----------------------------------------------------------------------------------------------------
 -- Authentication
 
 data AuthenticationInput = AuthenticationInput
-  { email :: Text
-  , password :: Text
+  { email :: Text,
+    password :: Text
   }
   deriving stock (Show, Generic)
 
@@ -117,21 +116,21 @@ authentication = do
     Left err -> do
       lift $ katipAddContext (sl "error" err) $ do
         $(logTM) ErrorS "authentication error"
-      throw $ invalid $ show err
+      throw $ invalid $ toText err
   where
     toCommand :: AuthenticationInput -> UserUseCase.AuthenticationCommand
     toCommand input =
       UserUseCase.AuthenticationCommand
-        { email = input.email
-        , password = input.password
+        { email = input.email,
+          password = input.password
         }
     toUser input result =
       Query.User
-        { email = input.email
-        , token = result.token
-        , username = result.username
-        , bio = result.bio
-        , image = result.image
+        { email = input.email,
+          token = result.token,
+          username = result.username,
+          bio = result.bio,
+          image = result.image
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -149,11 +148,11 @@ getCurrentUser = do
 -- Update User
 
 data UpdateUserInput = UpdateUserInput
-  { email :: Maybe Text
-  , username :: Maybe Text
-  , password :: Maybe Text
-  , bio :: Maybe Text
-  , image :: Maybe (Maybe Text)
+  { email :: Maybe Text,
+    username :: Maybe Text,
+    password :: Maybe Text,
+    bio :: Maybe Text,
+    image :: Maybe (Maybe Text)
   }
   deriving stock (Show, Generic)
 
@@ -161,15 +160,15 @@ instance FromJSON UpdateUserInput where
   parseJSON = withObject "UpdateUserInput" $ \value -> do
     UpdateUserInput
       <$> value
-        .:! "email"
+      .:! "email"
       <*> value
-        .:! "username"
+      .:! "username"
       <*> value
-        .:! "password"
+      .:! "password"
       <*> value
-        .:! "bio"
+      .:! "bio"
       <*> value
-        .:! "image"
+      .:! "image"
 
 updateUser ::
   (KatipContext m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
@@ -188,21 +187,21 @@ updateUser = do
     toCommand :: UpdateUserInput -> Text -> UserUseCase.UpdateUserCommand
     toCommand input token =
       UserUseCase.UpdateUserCommand
-        { token = token
-        , username = input.username
-        , email = input.email
-        , password = input.password
-        , bio = input.bio
-        , image = input.image
+        { token = token,
+          username = input.username,
+          email = input.email,
+          password = input.password,
+          bio = input.bio,
+          image = input.image
         }
     toUser :: UserUseCase.UpdateUserResult -> Query.User
     toUser result =
       Query.User
-        { email = result.email
-        , token = result.token
-        , username = result.username
-        , bio = result.bio
-        , image = result.image
+        { email = result.email,
+          token = result.token,
+          username = result.username,
+          bio = result.bio,
+          image = result.image
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -232,20 +231,20 @@ follow = do
       Left err -> do
         lift $ katipAddContext (sl "error" err <> sl "username" username) $ do
           $(logTM) ErrorS "follow error"
-        throw $ invalid $ show err
+        throw $ invalid $ toText err
   where
     toCommand :: Text -> Text -> UserUseCase.FollowUserCommand
     toCommand token username =
       UserUseCase.FollowUserCommand
-        { token = token
-        , username = username
+        { token = token,
+          username = username
         }
     toProfile result =
       Query.Profile
-        { username = result.username
-        , bio = result.bio
-        , image = result.image
-        , following = result.following
+        { username = result.username,
+          bio = result.bio,
+          image = result.image,
+          following = result.following
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -266,13 +265,13 @@ unfollow = do
     toCommand :: Text -> Text -> UserUseCase.UnfollowUserCommand
     toCommand token username =
       UserUseCase.UnfollowUserCommand
-        { token = token
-        , username = username
+        { token = token,
+          username = username
         }
     toProfile result =
       Query.Profile
-        { username = result.username
-        , bio = result.bio
-        , image = result.image
-        , following = result.following
+        { username = result.username,
+          bio = result.bio,
+          image = result.image,
+          following = result.following
         }

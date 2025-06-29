@@ -5,10 +5,9 @@
 
 module RealWorld.Domain.Util.BoundedText where
 
-import Data.Text qualified as T
+import qualified Data.Text as T
 import GHC.TypeLits (natVal)
 import Relude hiding (natVal)
-import Prelude hiding (natVal)
 
 newtype BoundedText min max = BoundedText {unBoundedText :: Text}
   deriving stock (Eq, Show, Generic)
@@ -23,5 +22,5 @@ mkBoundedText t =
   if len > natVal (Proxy :: Proxy max) || len < natVal (Proxy :: Proxy min)
     then Nothing
     else Just $ BoundedText t
- where
-  len = toInteger $ T.length t
+  where
+    len = toInteger $ T.length t

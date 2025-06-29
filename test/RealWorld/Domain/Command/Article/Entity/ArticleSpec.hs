@@ -1,12 +1,12 @@
 module RealWorld.Domain.Command.Article.Entity.ArticleSpec where
 
 import Data.ULID (ULID)
-import RealWorld.Domain.Command.Article.Entity.Article (
-  Article (..),
-  decreseFavoritesCount,
-  increseFavoritesCount,
-  isDeletable,
- )
+import RealWorld.Domain.Command.Article.Entity.Article
+  ( Article (..),
+    decreseFavoritesCount,
+    increseFavoritesCount,
+    isDeletable,
+  )
 import RealWorld.QuickCheck.Instances ()
 import Relude
 import Test.Hspec (Spec, describe, shouldBe)

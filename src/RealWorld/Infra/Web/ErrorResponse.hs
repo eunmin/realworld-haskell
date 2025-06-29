@@ -8,19 +8,20 @@ module RealWorld.Infra.Web.ErrorResponse where
 
 import Data.Aeson (ToJSON (..))
 import Network.HTTP.Types (Status)
-import Network.HTTP.Types.Status (
-  status401,
-  status403,
-  status404,
-  status422,
- )
+import Network.HTTP.Types.Status
+  ( status401,
+    status403,
+    status404,
+    status422,
+  )
+import Relude
 import Web.Scotty.Internal.Types (ErrorHandler)
 import Web.Scotty.Trans (Handler (..), json)
-import Web.Scotty.Trans qualified as Scotty
+import qualified Web.Scotty.Trans as Scotty
 
 data ErrorResponse = ErrorResponse
-  { status :: Status
-  , errors :: Errors
+  { status :: Status,
+    errors :: Errors
   }
   deriving stock (Show, Generic)
 
@@ -35,8 +36,8 @@ data ErrorsBody = ErrorsBody
   deriving anyclass (ToJSON)
 
 data Except = Except
-  { status :: Status
-  , message :: Text
+  { status :: Status,
+    message :: Text
   }
   deriving stock (Show, Eq, Typeable)
   deriving anyclass (Exception)

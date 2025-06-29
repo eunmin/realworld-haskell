@@ -6,6 +6,7 @@ import Crypto.BCrypt
     validatePassword,
   )
 import RealWorld.Domain.Command.User.Value (HashedPassword (..), Password (..))
+import Relude
 
 hashPassword :: (MonadIO m) => Password -> m (Maybe HashedPassword)
 hashPassword (Password password) = do

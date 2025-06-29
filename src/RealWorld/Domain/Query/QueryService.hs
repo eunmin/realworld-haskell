@@ -14,6 +14,7 @@ import RealWorld.Domain.Query.Data
     TagList,
     User,
   )
+import Relude
 
 class QueryService m where
   getCurrentUser :: GetCurrentUserParams -> m (Maybe User)

@@ -1,6 +1,7 @@
 module RealWorld.Infra.Util.Env where
 
 import Control.Exception.Safe (throwString)
+import Relude
 import Safe (readMay)
 import System.Environment (getEnv)
 

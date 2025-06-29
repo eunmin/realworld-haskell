@@ -4,17 +4,18 @@ module RealWorld.Infra.Manager.PgTxManager where
 
 import Control.Monad.Catch (MonadMask (mask), onException)
 import Database.PostgreSQL.Simple (Connection)
-import Database.PostgreSQL.Simple.Transaction (
-  IsolationLevel (..),
-  ReadWriteMode (..),
-  TransactionMode (..),
-  beginMode,
-  commit,
-  rollback,
- )
-import RealWorld.Infra.Component.Database qualified as Database
-import RealWorld.Infra.System qualified as System
+import Database.PostgreSQL.Simple.Transaction
+  ( IsolationLevel (..),
+    ReadWriteMode (..),
+    TransactionMode (..),
+    beginMode,
+    commit,
+    rollback,
+  )
+import qualified RealWorld.Infra.Component.Database as Database
+import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Util.Pool (withResource)
+import Relude
 
 defaultTransactionMode :: TransactionMode
 defaultTransactionMode = TransactionMode ReadCommitted ReadWrite

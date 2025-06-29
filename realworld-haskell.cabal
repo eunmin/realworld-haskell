@@ -1,87 +1,101 @@
-cabal-version:      2.4
-name:               realworld-haskell
-version:            0.1.0.0
-license:            MIT
-copyright:          2022 Eunmin Kim
-maintainer:         srid@srid.ca
-author:             Eunmin Kim
-category:           Web
-homepage:           https://srid.ca/realworld-haskell
+cabal-version: 2.2
 
--- TODO: Before hackage release.
--- A short (one-line) description of the package.
-synopsis:           A template for Haskell projects using Nix
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
 
--- A longer description of the package.
--- description:
-
--- A URL where users can report bugs.
--- bug-reports:
-
+name:           realworld-haskell
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/constacts/realworld-haskell#readme>
+homepage:       https://github.com/constacts/realworld-haskell#readme
+bug-reports:    https://github.com/constacts/realworld-haskell/issues
+author:         Eunmin Kim
+maintainer:     eunmin@constacts.com
+copyright:      Constacts, Inc.
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
 extra-source-files:
-  LICENSE
-  README.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/constacts/realworld-haskell
 
 library
-  ghc-options:
-    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
-    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
-    -fprint-explicit-foralls -fprint-explicit-kinds
-
-  mixins:
-    base hiding (Prelude),
-    relude (Relude as Prelude, Relude.Container.One),
-    relude
-
+  exposed-modules:
+      RealWorld.App
+      RealWorld.Domain.Adapter.Gateway.PasswordGateway
+      RealWorld.Domain.Adapter.Gateway.TokenGateway
+      RealWorld.Domain.Adapter.Manager.TxManager
+      RealWorld.Domain.Adapter.Repository.ArticleRepository
+      RealWorld.Domain.Adapter.Repository.CommentRepository
+      RealWorld.Domain.Adapter.Repository.FavoriteRepository
+      RealWorld.Domain.Adapter.Repository.UserRepository
+      RealWorld.Domain.Command.Article.Entity.Article
+      RealWorld.Domain.Command.Article.Entity.Comment
+      RealWorld.Domain.Command.Article.Entity.Favorite
+      RealWorld.Domain.Command.Article.UseCase
+      RealWorld.Domain.Command.Article.Value
+      RealWorld.Domain.Command.User.Entity.User
+      RealWorld.Domain.Command.User.UseCase
+      RealWorld.Domain.Command.User.Value
+      RealWorld.Domain.Query.Data
+      RealWorld.Domain.Query.QueryService
+      RealWorld.Domain.Util.BoundedText
+      RealWorld.Domain.Util.Maybe
+      RealWorld.Infra.Component.Database
+      RealWorld.Infra.Component.HttpServer
+      RealWorld.Infra.Converter.Aeson
+      RealWorld.Infra.Converter.PostgreSQL
+      RealWorld.Infra.Database.PgArticleRepository
+      RealWorld.Infra.Database.PgCommentRepository
+      RealWorld.Infra.Database.PgFavoriteRepository
+      RealWorld.Infra.Database.PgQueryService
+      RealWorld.Infra.Database.PgUserRepository
+      RealWorld.Infra.Gateway.BcryptPasswordGateway
+      RealWorld.Infra.Gateway.JwtTokenGateway
+      RealWorld.Infra.Manager.PgTxManager
+      RealWorld.Infra.System
+      RealWorld.Infra.Util.Env
+      RealWorld.Infra.Util.Pool
+      RealWorld.Infra.Web.Controller.Article
+      RealWorld.Infra.Web.Controller.User
+      RealWorld.Infra.Web.ErrorResponse
+      RealWorld.Infra.Web.Errors
+      RealWorld.Infra.Web.Routes
+      RealWorld.Infra.Web.Util
+  other-modules:
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      src
   default-extensions:
-    BangPatterns
-    ConstraintKinds
-    DataKinds
-    DeriveDataTypeable
-    DeriveFoldable
-    DeriveFunctor
-    DeriveGeneric
-    DeriveLift
-    DeriveTraversable
-    DerivingStrategies
-    DerivingVia
-    DuplicateRecordFields
-    EmptyCase
-    EmptyDataDecls
-    EmptyDataDeriving
-    ExistentialQuantification
-    ExplicitForAll
-    FlexibleContexts
-    FlexibleInstances
-    GADTSyntax
-    GeneralisedNewtypeDeriving
-    ImportQualifiedPost
-    KindSignatures
-    LambdaCase
-    MultiParamTypeClasses
-    MultiWayIf
-    NoStarIsType
-    NumericUnderscores
-    OverloadedRecordDot
-    OverloadedStrings
-    PolyKinds
-    PostfixOperators
-    RankNTypes
-    RecordWildCards
-    ScopedTypeVariables
-    StandaloneDeriving
-    StandaloneKindSignatures
-    TupleSections
-    TypeApplications
-    TypeFamilies
-    TypeOperators
-    ViewPatterns
-
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+      NoImplicitPrelude
+      StrictData
+      DuplicateRecordFields
+      OverloadedRecordDot
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-    , aeson
+      aeson
     , aeson-casing
     , async
-    , base                  >=4   && <5
+    , base >=4.7 && <5
     , bcrypt
     , data-default
     , data-has
@@ -91,7 +105,7 @@ library
     , filepath
     , generic-lens
     , http-types
-    , jwt
+    , jose
     , katip
     , lens
     , mtl
@@ -100,137 +114,147 @@ library
     , postgresql-migration
     , postgresql-simple
     , profunctors
-    , relude                >=1.0
+    , relude
     , resource-pool
     , safe
     , safe-exceptions
     , scotty
-    , shower
     , time
     , ulid
     , unliftio-core
     , wai
     , wai-extra
     , with-utf8
+  default-language: Haskell2010
 
-  default-language:   Haskell2010
-  exposed-modules:
-    RealWorld.App
-    RealWorld.Domain.Adapter.Gateway.PasswordGateway
-    RealWorld.Domain.Adapter.Gateway.TokenGateway
-    RealWorld.Domain.Adapter.Manager.TxManager
-    RealWorld.Domain.Adapter.Repository.ArticleRepository
-    RealWorld.Domain.Adapter.Repository.CommentRepository
-    RealWorld.Domain.Adapter.Repository.FavoriteRepository
-    RealWorld.Domain.Adapter.Repository.UserRepository
-    RealWorld.Domain.Command.Article.Entity.Article
-    RealWorld.Domain.Command.Article.Entity.Comment
-    RealWorld.Domain.Command.Article.Entity.Favorite
-    RealWorld.Domain.Command.Article.UseCase
-    RealWorld.Domain.Command.Article.Value
-    RealWorld.Domain.Command.User.Entity.User
-    RealWorld.Domain.Command.User.UseCase
-    RealWorld.Domain.Command.User.Value
-    RealWorld.Domain.Query.Data
-    RealWorld.Domain.Query.QueryService
-    RealWorld.Domain.Util.BoundedText
-    RealWorld.Domain.Util.Maybe
-    RealWorld.Infra.Component.Database
-    RealWorld.Infra.Component.HttpServer
-    RealWorld.Infra.Converter.Aeson
-    RealWorld.Infra.Converter.PostgreSQL
-    RealWorld.Infra.Database.PgArticleRepository
-    RealWorld.Infra.Database.PgCommentRepository
-    RealWorld.Infra.Database.PgFavoriteRepository
-    RealWorld.Infra.Database.PgQueryService
-    RealWorld.Infra.Database.PgUserRepository
-    RealWorld.Infra.Gateway.BcryptPasswordGateway
-    RealWorld.Infra.Gateway.JwtTokenGateway
-    RealWorld.Infra.Manager.PgTxManager
-    RealWorld.Infra.System
-    RealWorld.Infra.Util.Env
-    RealWorld.Infra.Util.Pool
-    RealWorld.Infra.Web.Controller.Article
-    RealWorld.Infra.Web.Controller.User
-    RealWorld.Infra.Web.ErrorResponse
-    RealWorld.Infra.Web.Errors
-    RealWorld.Infra.Web.Routes
-    RealWorld.Infra.Web.Util
-
+executable realworld-haskell-exe
+  main-is: Main.hs
   other-modules:
-  hs-source-dirs:     src
-
-executable realworld-haskell
-  hs-source-dirs:     app
-  main-is:            Main.hs
-  ghc-options:
-    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
-    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
-    -fprint-explicit-foralls -fprint-explicit-kinds
-
-  build-depends:
-    , base               >=4.7 && <5
-    , realworld-haskell
-
-  default-language:   Haskell2010
-  default-extensions: ImportQualifiedPost
-
-test-suite realworld-test
-  type:               exitcode-stdio-1.0
-  main-is:            Spec.hs
-  other-modules:
-    Paths_realworld_haskell
-    RealWorld.Domain.Command.Article.Entity.ArticleSpec
-    RealWorld.Domain.Command.Article.ValueSpec
-    RealWorld.Domain.Command.Fixture
-    RealWorld.Domain.Command.TestApp
-    RealWorld.Domain.Command.User.Entity.UserSpec
-    RealWorld.Domain.Command.User.UseCaseSpec
-    RealWorld.Domain.Command.User.ValueSpec
-    RealWorld.Domain.Util.BoundedTextSpec
-    RealWorld.QuickCheck.Instances
-
-  autogen-modules:    Paths_realworld_haskell
-  hs-source-dirs:     test
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      app
   default-extensions:
-    ConstraintKinds
-    DeriveGeneric
-    DerivingStrategies
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    KindSignatures
-    LambdaCase
-    NoImplicitPrelude
-    OverloadedRecordDot
-    OverloadedStrings
-    RecordWildCards
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeApplications
-    ViewPatterns
-
-  ghc-options:
-    -Wall -Wcompat -Widentities -Wincomplete-record-updates
-    -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields
-    -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
-
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+      NoImplicitPrelude
+      StrictData
+      DuplicateRecordFields
+      OverloadedRecordDot
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-    , aeson
+      aeson
     , aeson-casing
-    , base                      >=4.7 && <5
+    , async
+    , base >=4.7 && <5
     , bcrypt
+    , data-default
     , data-has
+    , directory
     , errors
     , exceptions
-    , hspec
+    , filepath
+    , generic-lens
     , http-types
-    , jwt
+    , jose
     , katip
+    , lens
+    , mtl
+    , optics-core
     , pcre-heavy
     , postgresql-migration
     , postgresql-simple
-    , QuickCheck
+    , profunctors
+    , realworld-haskell
+    , relude
+    , resource-pool
+    , safe
+    , safe-exceptions
+    , scotty
+    , time
+    , ulid
+    , unliftio-core
+    , wai
+    , wai-extra
+    , with-utf8
+  default-language: Haskell2010
+
+test-suite realworld-haskell-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      RealWorld.Domain.Command.Article.Entity.ArticleSpec
+      RealWorld.Domain.Command.Article.ValueSpec
+      RealWorld.Domain.Command.Fixture
+      RealWorld.Domain.Command.TestApp
+      RealWorld.Domain.Command.User.Entity.UserSpec
+      RealWorld.Domain.Command.User.UseCaseSpec
+      RealWorld.Domain.Command.User.ValueSpec
+      RealWorld.Domain.Util.BoundedTextSpec
+      RealWorld.QuickCheck.Instances
+      Paths_realworld_haskell
+  autogen-modules:
+      Paths_realworld_haskell
+  hs-source-dirs:
+      test
+  default-extensions:
+      ConstraintKinds
+      DeriveGeneric
+      DerivingStrategies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      ViewPatterns
+      NoImplicitPrelude
+      StrictData
+      DuplicateRecordFields
+      OverloadedRecordDot
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , aeson-casing
+    , async
+    , base >=4.7 && <5
+    , bcrypt
+    , data-default
+    , data-has
+    , directory
+    , errors
+    , exceptions
+    , filepath
+    , generic-lens
+    , hspec
+    , http-types
+    , jose
+    , katip
+    , lens
+    , mtl
+    , optics-core
+    , pcre-heavy
+    , postgresql-migration
+    , postgresql-simple
+    , profunctors
     , quickcheck-instances
     , quickcheck-string-random
     , realworld-haskell
@@ -241,7 +265,8 @@ test-suite realworld-test
     , scotty
     , time
     , ulid
+    , unliftio-core
     , wai
     , wai-extra
-
-  default-language:   Haskell2010
+    , with-utf8
+  default-language: Haskell2010

@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedLabels #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module RealWorld.Infra.Database.PgQueryService where
 
 import Control.Error (headMay)
+import Control.Lens ((.~))
+import Data.Generics.Labels ()
 import Data.Has (Has (..))
 import Data.Pool (withResource)
 import Database.PostgreSQL.Simple (Only (Only), Query, ToRow, query)
@@ -12,22 +15,23 @@ import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (PGArray (..))
-import RealWorld.Domain.Query.Data (
-  Article (Article),
-  ArticleList (..),
-  Comment (..),
-  CommentList (..),
-  FeedArticlesParams (..),
-  GetArticleParams (..),
-  GetCommentsParams (..),
-  GetCurrentUserParams (..),
-  GetProfileParams (..),
-  ListArticlesParams (..),
-  Profile (..),
-  TagList (..),
-  User,
- )
-import RealWorld.Infra.Component.Database qualified as Database
+import RealWorld.Domain.Query.Data
+  ( Article (Article),
+    ArticleList (..),
+    Comment (..),
+    CommentList (..),
+    FeedArticlesParams (..),
+    GetArticleParams (..),
+    GetCommentsParams (..),
+    GetCurrentUserParams (..),
+    GetProfileParams (..),
+    ListArticlesParams (..),
+    Profile (..),
+    TagList (..),
+    User,
+  )
+import qualified RealWorld.Infra.Component.Database as Database
+import Relude
 
 type QueryDatabase r m = (Has Database.State r, MonadIO m, MonadReader r m)
 
@@ -65,38 +69,38 @@ getCurrentUser :: (QueryDatabase r m) => GetCurrentUserParams -> m (Maybe User)
 getCurrentUser params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
-    liftIO $
-      headMay
-        <$> query
-          conn
-          "SELECT email, '', username, bio, image FROM users WHERE id = ?"
-          (Only params.actorId)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT email, '', username, bio, image FROM users WHERE id = ?"
+        (Only params.actorId)
 
 getProfile :: (QueryDatabase r m) => GetProfileParams -> m (Maybe Profile)
 getProfile params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
-    liftIO $
-      headMay
-        <$> query
-          conn
-          "SELECT username, bio, image, \
-          \CASE WHEN f.created_at IS null THEN false ELSE true END following \
-          \FROM users u \
-          \LEFT JOIN followings f ON u.id = f.following_id AND f.user_id = ? \
-          \WHERE username = ?"
-          (params.actorId, params.username)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT username, bio, image, \
+        \CASE WHEN f.created_at IS null THEN false ELSE true END following \
+        \FROM users u \
+        \LEFT JOIN followings f ON u.id = f.following_id AND f.user_id = ? \
+        \WHERE username = ?"
+        (params.actorId, params.username)
 
 instance ToRow ListArticlesParams where
   toRow params =
     catMaybes
-      [ toField <$> params.actorId
-      , toField <$> params.actorId
-      , toField <$> params.author
-      , toField <$> params.tag
-      , toField <$> params.favorited
-      , toField <$> params.limit
-      , toField <$> params.offset
+      [ toField <$> params.actorId,
+        toField <$> params.actorId,
+        toField <$> params.author,
+        toField <$> params.tag,
+        toField <$> params.favorited,
+        toField <$> params.limit,
+        toField <$> params.offset
       ]
 
 listArticles :: (QueryDatabase r m) => ListArticlesParams -> m ArticleList
@@ -106,13 +110,13 @@ listArticles params = do
     let selectSql =
           "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, "
             <> ( if isJust params.actorId
-                  then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
-                  else "false, "
+                   then "CASE WHEN fa.user_id IS null THEN false ELSE true END favorited, "
+                   else "false, "
                )
             <> "a.favorites_count, au.username, au.bio, au.image "
             <> ( if isJust params.actorId
-                  then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
-                  else "false "
+                   then ", CASE WHEN fw.created_at IS null THEN false ELSE true END following "
+                   else "false "
                )
     let sql =
           "FROM articles a LEFT JOIN users au ON au.id = a.author_id "
@@ -123,8 +127,8 @@ listArticles params = do
             <> tagWhereQuery params.tag
             <> favoritedWhereQuery params.favorited
     articles <-
-      liftIO $
-        query
+      liftIO
+        $ query
           conn
           ( selectSql
               <> sql
@@ -132,11 +136,11 @@ listArticles params = do
           )
           params
     [Only articlesCount] <-
-      liftIO $
-        query
+      liftIO
+        $ query
           conn
           ("SELECT count(*) " <> sql)
-          ((params :: ListArticlesParams) {limit = Nothing, offset = Nothing})
+          (params & #limit .~ Nothing & #offset .~ Nothing)
     pure $ ArticleList articles articlesCount
   where
     actorFavoritedJoinQuery :: Maybe Text -> Query
@@ -161,9 +165,9 @@ listArticles params = do
 
 instance ToRow FeedArticlesParams where
   toRow params =
-    [ toField params.actorId
-    , toField params.limit
-    , toField params.offset
+    [ toField params.actorId,
+      toField params.limit,
+      toField params.offset
     ]
 
 feedArticles :: (QueryDatabase r m) => FeedArticlesParams -> m ArticleList
@@ -181,8 +185,8 @@ feedArticles params = do
           \WHERE \
           \ a.author_id in (SELECT following_id FROM followings WHERE user_id = ?) "
     articles <-
-      liftIO $
-        query
+      liftIO
+        $ query
           conn
           ( selectSql
               <> sql
@@ -190,8 +194,8 @@ feedArticles params = do
           )
           params
     [Only articlesCount] <-
-      liftIO $
-        query
+      liftIO
+        $ query
           conn
           ("SELECT count(*) " <> sql)
           (params.actorId, params.actorId)
@@ -201,24 +205,24 @@ getArticle :: (QueryDatabase r m) => GetArticleParams -> m (Maybe Article)
 getArticle params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn ->
-    liftIO $
-      headMay
-        <$> query
-          conn
-          "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
-          \false, a.favorites_count, u.username, u.bio, u.image, false \
-          \FROM articles a \
-          \LEFT JOIN users u ON a.author_id = u.id \
-          \WHERE a.slug = ?"
-          (Only params.slug)
+    liftIO
+      $ headMay
+      <$> query
+        conn
+        "SELECT a.slug, a.title, a.description, a.body, a.tags, a.created_at, a.updated_at, \
+        \false, a.favorites_count, u.username, u.bio, u.image, false \
+        \FROM articles a \
+        \LEFT JOIN users u ON a.author_id = u.id \
+        \WHERE a.slug = ?"
+        (Only params.slug)
 
 getComments :: (QueryDatabase r m) => GetCommentsParams -> m CommentList
 getComments params = do
   (Database.State pool _) <- asks getter
   liftIO $ withResource pool $ \conn -> do
     comments <-
-      liftIO $
-        query
+      liftIO
+        $ query
           conn
           "SELECT c.id, c.created_at, c.updated_at, c.body, u.username, u.bio, u.image, false \
           \FROM comments c \

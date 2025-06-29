@@ -1,13 +1,13 @@
 module RealWorld.Domain.Command.User.Entity.UserSpec where
 
 import RealWorld.Domain.Command.User.Entity.User (User, update)
-import RealWorld.Domain.Command.User.Value (
-  Bio,
-  Email,
-  HashedPassword,
-  Image,
-  Username,
- )
+import RealWorld.Domain.Command.User.Value
+  ( Bio,
+    Email,
+    HashedPassword,
+    Image,
+    Username,
+  )
 import RealWorld.QuickCheck.Instances ()
 import Relude
 import Test.Hspec (Spec, describe, shouldBe, shouldNotBe)

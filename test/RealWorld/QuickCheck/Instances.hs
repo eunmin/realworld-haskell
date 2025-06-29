@@ -3,37 +3,37 @@
 module RealWorld.QuickCheck.Instances where
 
 import Data.ULID (ULID, ulidFromInteger)
-import RealWorld.Domain.Command.Article.Entity.Article (
-  Article,
-  mkArticle,
- )
-import RealWorld.Domain.Command.Article.Value (
-  ArticleBody (ArticleBody),
-  Description (Description),
-  Slug (Slug),
-  Tag (Tag),
-  Title (Title),
- )
+import RealWorld.Domain.Command.Article.Entity.Article
+  ( Article,
+    mkArticle,
+  )
+import RealWorld.Domain.Command.Article.Value
+  ( ArticleBody (ArticleBody),
+    Description (Description),
+    Slug (Slug),
+    Tag (Tag),
+    Title (Title),
+  )
 import RealWorld.Domain.Command.User.Entity.User (User (User))
-import RealWorld.Domain.Command.User.Value (
-  Bio (Bio),
-  Email (Email),
-  HashedPassword (HashedPassword),
-  Image (Image),
-  Username (Username),
- )
-import RealWorld.Domain.Util.BoundedText (
-  BoundedText (BoundedText),
- )
+import RealWorld.Domain.Command.User.Value
+  ( Bio (Bio),
+    Email (Email),
+    HashedPassword (HashedPassword),
+    Image (Image),
+    Username (Username),
+  )
+import RealWorld.Domain.Util.BoundedText
+  ( BoundedText (BoundedText),
+  )
 import Relude hiding (max, min)
-import Test.QuickCheck (
-  Arbitrary (arbitrary),
-  Gen,
-  choose,
-  chooseInt,
-  listOf,
-  suchThat,
- )
+import Test.QuickCheck
+  ( Arbitrary (arbitrary),
+    Gen,
+    choose,
+    chooseInt,
+    listOf,
+    suchThat,
+  )
 import Test.QuickCheck.Instances ()
 import Test.QuickCheck.StringRandom (matchRegexp)
 

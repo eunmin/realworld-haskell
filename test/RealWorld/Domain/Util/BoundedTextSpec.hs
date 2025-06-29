@@ -2,10 +2,10 @@
 
 module RealWorld.Domain.Util.BoundedTextSpec where
 
-import RealWorld.Domain.Util.BoundedText (
-  BoundedText (..),
-  mkBoundedText,
- )
+import RealWorld.Domain.Util.BoundedText
+  ( BoundedText (..),
+    mkBoundedText,
+  )
 import RealWorld.QuickCheck.Instances ()
 import Relude
 import Test.Hspec (Spec, describe, shouldBe)

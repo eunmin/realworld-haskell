@@ -27,10 +27,9 @@ import Database.PostgreSQL.Simple.Migration (
   runMigrations,
  )
 import RealWorld.Infra.Util.Env (envRead)
-import RealWorld.Infra.Util.Pool qualified as Pool
+import qualified RealWorld.Infra.Util.Pool as Pool
 import Relude hiding (State, state, withState)
 import System.Environment (getEnv)
-import Prelude hiding (State, state, withState)
 
 data Config = Config
   { configHost :: Text
@@ -60,19 +59,19 @@ withPool
     , configPoolIdleTimeoutSec = idleTimeoutSec
     } =
     bracket initPool cleanPool
-    where
-      initPool = newPool $ defaultPoolConfig openConn closeConn idleTimeoutSec poolSize
-      cleanPool = destroyAllResources
-      openConn =
-        connect $
-          ConnectInfo
-            { connectHost = toString host
-            , connectPort = fromIntegral port
-            , connectUser = toString user
-            , connectPassword = toString password
-            , connectDatabase = toString database
-            }
-      closeConn = close
+   where
+    initPool = newPool $ defaultPoolConfig openConn closeConn idleTimeoutSec poolSize
+    cleanPool = destroyAllResources
+    openConn =
+      connect $
+        ConnectInfo
+          { connectHost = toString host
+          , connectPort = fromIntegral port
+          , connectUser = toString user
+          , connectPassword = toString password
+          , connectDatabase = toString database
+          }
+    closeConn = close
 
 withState :: Config -> (State -> IO ()) -> IO ()
 withState config action =
@@ -99,11 +98,11 @@ migrate (State pool _) = do
     case result of
       MigrationError err -> throwString err
       _ -> pass
-  where
-    cmds =
-      [ MigrationInitialization
-      , MigrationDirectory "sql/migrations"
-      ]
+ where
+  cmds =
+    [ MigrationInitialization
+    , MigrationDirectory "sql/migrations"
+    ]
 
 withConnection ::
   (Has State r, MonadIO m, MonadReader r m, MonadMask m) =>

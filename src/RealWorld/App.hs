@@ -1,69 +1,70 @@
 {-# LANGUAGE UndecidableInstances #-}
 
-module RealWorld.App (
-  main,
-)
+module RealWorld.App
+  ( main,
+  )
 where
 
 import Control.Exception (bracket)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Katip (
-  ColorStrategy (ColorIfTerminal),
-  Katip,
-  KatipContext,
-  KatipContextT,
-  Severity (InfoS),
-  Verbosity (V2),
-  closeScribes,
-  defaultScribeSettings,
-  initLogEnv,
-  jsonFormat,
-  mkHandleScribeWithFormatter,
-  permitItem,
-  registerScribe,
-  runKatipContextT,
- )
+import Katip
+  ( ColorStrategy (ColorIfTerminal),
+    Katip,
+    KatipContext,
+    KatipContextT,
+    Severity (InfoS),
+    Verbosity (V2),
+    closeScribes,
+    defaultScribeSettings,
+    initLogEnv,
+    jsonFormat,
+    mkHandleScribeWithFormatter,
+    permitItem,
+    registerScribe,
+    runKatipContextT,
+  )
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway (..))
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
-import RealWorld.Domain.Adapter.Repository.ArticleRepository (
-  ArticleRepository (..),
- )
-import RealWorld.Domain.Adapter.Repository.CommentRepository (
-  CommentRepository (..),
- )
+import RealWorld.Domain.Adapter.Repository.ArticleRepository
+  ( ArticleRepository (..),
+  )
+import RealWorld.Domain.Adapter.Repository.CommentRepository
+  ( CommentRepository (..),
+  )
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository (..))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.QueryService (QueryService (..))
-import RealWorld.Infra.Component.HttpServer qualified as HttpServerConfig
-import RealWorld.Infra.Database.PgArticleRepository qualified as PgArticleRepository
-import RealWorld.Infra.Database.PgCommentRepository qualified as PgCommentRepository
-import RealWorld.Infra.Database.PgFavoriteRepository qualified as PgFavoriteRepository
-import RealWorld.Infra.Database.PgQueryService qualified as PgQueryService
-import RealWorld.Infra.Database.PgUserRepository qualified as PgUserRepository
-import RealWorld.Infra.Gateway.BcryptPasswordGateway qualified as BcryptPasswordGateway
-import RealWorld.Infra.Gateway.JwtTokenGateway qualified as JwtTokenGateway
-import RealWorld.Infra.Manager.PgTxManager qualified as PgTxManager
+import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
+import qualified RealWorld.Infra.Database.PgArticleRepository as PgArticleRepository
+import qualified RealWorld.Infra.Database.PgCommentRepository as PgCommentRepository
+import qualified RealWorld.Infra.Database.PgFavoriteRepository as PgFavoriteRepository
+import qualified RealWorld.Infra.Database.PgQueryService as PgQueryService
+import qualified RealWorld.Infra.Database.PgUserRepository as PgUserRepository
+import qualified RealWorld.Infra.Gateway.BcryptPasswordGateway as BcryptPasswordGateway
+import qualified RealWorld.Infra.Gateway.JwtTokenGateway as JwtTokenGateway
+import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
 import RealWorld.Infra.System (Config (logEnv))
-import RealWorld.Infra.System qualified as System
+import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Routes (routes)
+import Relude
 import Web.Scotty.Trans (scottyT)
 
 newtype App a = App {unApp :: ReaderT System.State (KatipContextT IO) a}
   deriving newtype
-    ( Applicative
-    , Functor
-    , Monad
-    , MonadIO
-    , MonadCatch
-    , MonadThrow
-    , MonadReader System.State
-    , MonadMask
-    , MonadFail
-    , KatipContext
-    , Katip
-    , MonadUnliftIO
+    ( Applicative,
+      Functor,
+      Monad,
+      MonadIO,
+      MonadCatch,
+      MonadThrow,
+      MonadReader System.State,
+      MonadMask,
+      MonadFail,
+      KatipContext,
+      Katip,
+      MonadUnliftIO
     )
 
 instance UserRepository App where

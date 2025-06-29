@@ -11,41 +11,42 @@ import Data.Aeson.Casing (aesonDrop, camelCase)
 import Data.Aeson.Types (emptyObject)
 import Katip
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
-import RealWorld.Domain.Adapter.Gateway.TokenGateway qualified as TokenGateway
+import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
-import RealWorld.Domain.Adapter.Repository.ArticleRepository (
-  ArticleRepository,
- )
+import RealWorld.Domain.Adapter.Repository.ArticleRepository
+  ( ArticleRepository,
+  )
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
-import RealWorld.Domain.Command.Article.UseCase (
-  AddCommentsResult (..),
-  CreateArticleCommand (..),
-  CreateArticleResult (..),
-  FavoriteArticleResult (..),
-  UnfavoriteArticleResult (..),
-  UpdateArticleCommand (..),
-  UpdateArticleResult (..),
- )
-import RealWorld.Domain.Command.Article.UseCase qualified as ArticleUseCase
+import RealWorld.Domain.Command.Article.UseCase
+  ( AddCommentsResult (..),
+    CreateArticleCommand (..),
+    CreateArticleResult (..),
+    FavoriteArticleResult (..),
+    UnfavoriteArticleResult (..),
+    UpdateArticleCommand (..),
+    UpdateArticleResult (..),
+  )
+import qualified RealWorld.Domain.Command.Article.UseCase as ArticleUseCase
 import RealWorld.Domain.Command.User.Value (Token (..))
 import RealWorld.Domain.Query.Data (Article (..), Comment (..), Profile)
-import RealWorld.Domain.Query.Data qualified as Query
+import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
-import RealWorld.Domain.Query.QueryService qualified as QueryService
+import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse (invalid, notFound, unauthorized)
 import RealWorld.Infra.Web.Errors ()
 import RealWorld.Infra.Web.Util (withOptionalToken, withRequiredToken, (!?))
-import Web.Scotty.Trans (
-  ActionT,
-  json,
-  jsonData,
-  pathParam,
-  queryParamMaybe,
-  throw,
- )
+import Relude
+import Web.Scotty.Trans
+  ( ActionT,
+    json,
+    jsonData,
+    pathParam,
+    queryParamMaybe,
+    throw,
+  )
 
 data ArticleWrapper a = ArticleWrapper
   { article :: a
@@ -75,12 +76,12 @@ listArticles = do
     offset <- queryParamMaybe "offset"
     let params =
           Query.ListArticlesParams
-            { actorId = show <$> userId
-            , tag = tag
-            , author = author
-            , favorited = favorited
-            , limit = Just $ fromMaybe 20 limit
-            , offset = Just $ fromMaybe 0 offset
+            { actorId = show <$> userId,
+              tag = tag,
+              author = author,
+              favorited = favorited,
+              limit = Just $ fromMaybe 20 limit,
+              offset = Just $ fromMaybe 0 offset
             }
     json =<< lift (QueryService.listArticles params)
 
@@ -95,9 +96,9 @@ feedArticles = do
     offset <- queryParamMaybe "offset"
     let params =
           Query.FeedArticlesParams
-            { actorId = show userId
-            , limit = fromMaybe 20 limit
-            , offset = fromMaybe 0 offset
+            { actorId = show userId,
+              limit = fromMaybe 20 limit,
+              offset = fromMaybe 0 offset
             }
     json =<< lift (QueryService.feedArticles params)
 
@@ -113,10 +114,10 @@ getArticle = do
 -- Create Article
 
 data CreateArticleInput = CreateArticleInput
-  { title :: Text
-  , description :: Text
-  , body :: Text
-  , tagList :: [Text]
+  { title :: Text,
+    description :: Text,
+    body :: Text,
+    tagList :: [Text]
   }
   deriving stock (Show, Generic)
 
@@ -124,12 +125,12 @@ instance FromJSON CreateArticleInput where
   parseJSON = genericParseJSON $ aesonDrop 18 camelCase
 
 createArticle ::
-  ( KatipContext m
-  , ArticleRepository m
-  , UserRepository m
-  , TxManager m
-  , TokenGateway m
-  , QueryService m
+  ( KatipContext m,
+    ArticleRepository m,
+    UserRepository m,
+    TxManager m,
+    TokenGateway m,
+    QueryService m
   ) =>
   ActionT m ()
 createArticle = do
@@ -149,34 +150,34 @@ createArticle = do
     toCommand :: Text -> CreateArticleInput -> ArticleUseCase.CreateArticleCommand
     toCommand token input =
       CreateArticleCommand
-        { title = input.title
-        , description = input.description
-        , body = input.body
-        , tagList = input.tagList
-        , token = token
+        { title = input.title,
+          description = input.description,
+          body = input.body,
+          tagList = input.tagList,
+          token = token
         }
     toArticle :: CreateArticleInput -> ArticleUseCase.CreateArticleResult -> Profile -> Article
     toArticle input result author =
       Article
-        { slug = result.slug
-        , title = input.title
-        , description = input.description
-        , body = input.body
-        , tagList = input.tagList
-        , createdAt = result.createdAt
-        , updatedAt = Nothing
-        , favorited = False
-        , favoritesCount = 0
-        , author = author
+        { slug = result.slug,
+          title = input.title,
+          description = input.description,
+          body = input.body,
+          tagList = input.tagList,
+          createdAt = result.createdAt,
+          updatedAt = Nothing,
+          favorited = False,
+          favoritesCount = 0,
+          author = author
         }
 
 ----------------------------------------------------------------------------------------------------
 -- Update Article
 
 data UpdateArticleInput = UpdateArticleInput
-  { title :: Maybe Text
-  , description :: Maybe Text
-  , body :: Maybe Text
+  { title :: Maybe Text,
+    description :: Maybe Text,
+    body :: Maybe Text
   }
   deriving stock (Show, Generic)
 
@@ -184,13 +185,13 @@ instance FromJSON UpdateArticleInput where
   parseJSON = genericParseJSON $ aesonDrop 18 camelCase
 
 updateArticle ::
-  ( KatipContext m
-  , ArticleRepository m
-  , UserRepository m
-  , FavoriteRepository m
-  , TxManager m
-  , TokenGateway m
-  , QueryService m
+  ( KatipContext m,
+    ArticleRepository m,
+    UserRepository m,
+    FavoriteRepository m,
+    TxManager m,
+    TokenGateway m,
+    QueryService m
   ) =>
   ActionT m ()
 updateArticle = do
@@ -211,25 +212,25 @@ updateArticle = do
     toCommand :: Text -> Text -> UpdateArticleInput -> ArticleUseCase.UpdateArticleCommand
     toCommand token slug input =
       UpdateArticleCommand
-        { token = token
-        , slug = slug
-        , title = input.title
-        , description = input.description
-        , body = input.body
+        { token = token,
+          slug = slug,
+          title = input.title,
+          description = input.description,
+          body = input.body
         }
     toArticle :: ArticleUseCase.UpdateArticleResult -> Profile -> Article
     toArticle result author =
       Article
-        { slug = result.slug
-        , title = result.title
-        , description = result.description
-        , body = result.body
-        , tagList = result.tags
-        , createdAt = result.createdAt
-        , updatedAt = result.updatedAt
-        , favorited = result.favorited
-        , favoritesCount = result.favoritesCount
-        , author = author
+        { slug = result.slug,
+          title = result.title,
+          description = result.description,
+          body = result.body,
+          tagList = result.tags,
+          createdAt = result.createdAt,
+          updatedAt = result.updatedAt,
+          favorited = result.favorited,
+          favoritesCount = result.favoritesCount,
+          author = author
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -264,13 +265,13 @@ instance FromJSON AddCommentsInput where
   parseJSON = genericParseJSON $ aesonDrop 16 camelCase
 
 addComments ::
-  ( KatipContext m
-  , ArticleRepository m
-  , TxManager m
-  , TokenGateway m
-  , UserRepository m
-  , CommentRepository m
-  , QueryService m
+  ( KatipContext m,
+    ArticleRepository m,
+    TxManager m,
+    TokenGateway m,
+    UserRepository m,
+    CommentRepository m,
+    QueryService m
   ) =>
   ActionT m ()
 addComments = do
@@ -291,18 +292,18 @@ addComments = do
     toCommand :: Text -> Text -> AddCommentsInput -> ArticleUseCase.AddCommentsCommand
     toCommand token slug input =
       ArticleUseCase.AddCommentsCommand
-        { token = token
-        , slug = slug
-        , body = input.body
+        { token = token,
+          slug = slug,
+          body = input.body
         }
     toComment :: ArticleUseCase.AddCommentsResult -> Text -> Profile -> Query.Comment
     toComment result body profile =
       Comment
-        { commentId = result.commentId
-        , createdAt = result.createdAt
-        , updatedAt = Nothing
-        , body = body
-        , author = profile
+        { commentId = result.commentId,
+          createdAt = result.createdAt,
+          updatedAt = Nothing,
+          body = body,
+          author = profile
         }
 
 ----------------------------------------------------------------------------------------------------
@@ -317,8 +318,8 @@ getComments = do
     slug <- pathParam "slug"
     let params =
           Query.GetCommentsParams
-            { actorId = show <$> userId
-            , slug = slug
+            { actorId = show <$> userId,
+              slug = slug
             }
     json =<< lift (QueryService.getComments params)
 
@@ -347,13 +348,13 @@ deleteComment = do
 -- Favorite Article
 
 favorite ::
-  ( KatipContext m
-  , ArticleRepository m
-  , FavoriteRepository m
-  , UserRepository m
-  , TxManager m
-  , QueryService m
-  , TokenGateway m
+  ( KatipContext m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TxManager m,
+    QueryService m,
+    TokenGateway m
   ) =>
   ActionT m ()
 favorite = do
@@ -375,29 +376,29 @@ favorite = do
     toArticle :: ArticleUseCase.FavoriteArticleResult -> Profile -> Article
     toArticle result author =
       Article
-        { slug = result.slug
-        , title = result.title
-        , description = result.description
-        , body = result.body
-        , tagList = result.tags
-        , createdAt = result.createdAt
-        , updatedAt = result.updatedAt
-        , favorited = True
-        , favoritesCount = result.favoritesCount
-        , author = author
+        { slug = result.slug,
+          title = result.title,
+          description = result.description,
+          body = result.body,
+          tagList = result.tags,
+          createdAt = result.createdAt,
+          updatedAt = result.updatedAt,
+          favorited = True,
+          favoritesCount = result.favoritesCount,
+          author = author
         }
 
 ----------------------------------------------------------------------------------------------------
 -- Unfavorite Article
 
 unfavorite ::
-  ( KatipContext m
-  , ArticleRepository m
-  , FavoriteRepository m
-  , UserRepository m
-  , TxManager m
-  , QueryService m
-  , TokenGateway m
+  ( KatipContext m,
+    ArticleRepository m,
+    FavoriteRepository m,
+    UserRepository m,
+    TxManager m,
+    QueryService m,
+    TokenGateway m
   ) =>
   ActionT m ()
 unfavorite = do
@@ -419,16 +420,16 @@ unfavorite = do
     toArticle :: ArticleUseCase.UnfavoriteArticleResult -> Profile -> Article
     toArticle result author =
       Article
-        { slug = result.slug
-        , title = result.title
-        , description = result.description
-        , body = result.body
-        , tagList = result.tags
-        , createdAt = result.createdAt
-        , updatedAt = result.updatedAt
-        , favorited = False
-        , favoritesCount = result.favoritesCount
-        , author = author
+        { slug = result.slug,
+          title = result.title,
+          description = result.description,
+          body = result.body,
+          tagList = result.tags,
+          createdAt = result.createdAt,
+          updatedAt = result.updatedAt,
+          favorited = False,
+          favoritesCount = result.favoritesCount,
+          author = author
         }
 
 ----------------------------------------------------------------------------------------------------

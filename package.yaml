@@ -1,0 +1,113 @@
+name:                realworld-haskell
+version:             0.1.0.0
+github:              "constacts/realworld-haskell"
+license:             BSD-3-Clause
+author:              "Eunmin Kim"
+maintainer:          "eunmin@constacts.com"
+copyright:           "Constacts, Inc."
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/constacts/realworld-haskell#readme>
+
+dependencies:
+- aeson
+- aeson-casing
+- async
+- base >= 4.7 && < 5
+- bcrypt
+- data-default
+- data-has
+- directory
+- errors
+- exceptions
+- filepath
+- generic-lens
+- http-types
+- jose
+- katip
+- lens
+- mtl
+- optics-core
+- pcre-heavy
+- postgresql-migration
+- postgresql-simple
+- profunctors
+- relude 
+- resource-pool
+- safe
+- safe-exceptions
+- scotty
+- time
+- ulid
+- unliftio-core
+- wai
+- wai-extra
+- with-utf8
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+default-extensions:
+- ConstraintKinds
+- DeriveGeneric
+- DerivingStrategies
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- OverloadedStrings
+- RecordWildCards
+- ScopedTypeVariables
+- StandaloneDeriving
+- TupleSections
+- TypeApplications
+- ViewPatterns
+- NoImplicitPrelude
+- StrictData
+- DuplicateRecordFields
+- OverloadedRecordDot
+
+library:
+  source-dirs: src
+
+executables:
+  realworld-haskell-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - realworld-haskell
+
+tests:
+  realworld-haskell-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - realworld-haskell
+    - hspec
+    - QuickCheck
+    - quickcheck-instances
+    - quickcheck-string-random
