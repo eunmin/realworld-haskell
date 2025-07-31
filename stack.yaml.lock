@@ -20,8 +20,7 @@ packages:
     hackage: string-random-0.1.4.5
 snapshots:
 - completed:
-    sha256: a3501d1b61a539371d85305fe73e1134fc08e7c97498a42952455f011fd97ecf
-    size: 684278
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/25.yaml
-  original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/25.yaml
+    sha256: 069c8189232279d04bd107557d3a62132c04ae5ce3c710649e6b40f67f10b9d5
+    size: 684285
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/27.yaml
+  original: lts-23.27

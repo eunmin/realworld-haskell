@@ -14,3 +14,4 @@ result-*
 /.pre-commit-config.yaml
 
 .dev_postgres
+.stack-work
