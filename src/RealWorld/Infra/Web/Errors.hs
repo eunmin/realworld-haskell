@@ -38,7 +38,7 @@ instance ToText AuthenticationError where
   toText AuthenticationErrorInvalidEmail = toText InvalidEmail
 
 instance ToText FollowUserError where
-  toText FollowUserErrorInvalidToken = toText Unauthorized
+  toText FollowUserErrorInvalidUserId = toText Unauthorized
   toText FollowUserErrorUserNotFound = toText UserNotFound
   toText FollowUserErrorCantFollowSelf = "자신을 팔로우할 수 없습니다."
   toText FollowUserErrorAlreadyFollowing = "이미 팔로우 중인 사용자입니다."

@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -59,12 +59,31 @@ library
       RealWorld.Infra.System
       RealWorld.Infra.Util.Env
       RealWorld.Infra.Util.Pool
-      RealWorld.Infra.Web.Controller.Article
-      RealWorld.Infra.Web.Controller.User
+      RealWorld.Infra.Web.Auth
       RealWorld.Infra.Web.ErrorResponse
       RealWorld.Infra.Web.Errors
+      RealWorld.Infra.Web.Handler.Article.CreateArticle
+      RealWorld.Infra.Web.Handler.Article.CreateComment
+      RealWorld.Infra.Web.Handler.Article.DeleteArticle
+      RealWorld.Infra.Web.Handler.Article.DeleteComment
+      RealWorld.Infra.Web.Handler.Article.Favorite
+      RealWorld.Infra.Web.Handler.Article.Feed
+      RealWorld.Infra.Web.Handler.Article.GetArticle
+      RealWorld.Infra.Web.Handler.Article.ListArticle
+      RealWorld.Infra.Web.Handler.Article.ListComment
+      RealWorld.Infra.Web.Handler.Article.ListTag
+      RealWorld.Infra.Web.Handler.Article.Unfavorite
+      RealWorld.Infra.Web.Handler.Article.UpdateArticle
+      RealWorld.Infra.Web.Handler.Profile.Follow
+      RealWorld.Infra.Web.Handler.Profile.GetProfile
+      RealWorld.Infra.Web.Handler.Profile.Unfollow
+      RealWorld.Infra.Web.Handler.Types
+      RealWorld.Infra.Web.Handler.User.GetCurrentUser
+      RealWorld.Infra.Web.Handler.User.Login
+      RealWorld.Infra.Web.Handler.User.Registration
+      RealWorld.Infra.Web.Handler.User.UpdateUser
       RealWorld.Infra.Web.Routes
-      RealWorld.Infra.Web.Util
+      RealWorld.Infra.Web.Schema
   other-modules:
       Paths_realworld_haskell
   autogen-modules:
@@ -90,7 +109,7 @@ library
       StrictData
       DuplicateRecordFields
       OverloadedRecordDot
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-orphans
   build-depends:
       aeson
     , aeson-casing
@@ -105,6 +124,7 @@ library
     , filepath
     , generic-lens
     , http-types
+    , insert-ordered-containers
     , jose
     , katip
     , lens
@@ -118,12 +138,17 @@ library
     , resource-pool
     , safe
     , safe-exceptions
-    , scotty
+    , servant
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , time
     , ulid
     , unliftio-core
     , wai
     , wai-extra
+    , warp
     , with-utf8
   default-language: Haskell2010
 
@@ -154,7 +179,7 @@ executable realworld-haskell-exe
       StrictData
       DuplicateRecordFields
       OverloadedRecordDot
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-orphans -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , aeson-casing
@@ -169,6 +194,7 @@ executable realworld-haskell-exe
     , filepath
     , generic-lens
     , http-types
+    , insert-ordered-containers
     , jose
     , katip
     , lens
@@ -183,12 +209,17 @@ executable realworld-haskell-exe
     , resource-pool
     , safe
     , safe-exceptions
-    , scotty
+    , servant
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , time
     , ulid
     , unliftio-core
     , wai
     , wai-extra
+    , warp
     , with-utf8
   default-language: Haskell2010
 
@@ -229,7 +260,7 @@ test-suite realworld-haskell-test
       StrictData
       DuplicateRecordFields
       OverloadedRecordDot
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-orphans -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , aeson
@@ -246,6 +277,7 @@ test-suite realworld-haskell-test
     , generic-lens
     , hspec
     , http-types
+    , insert-ordered-containers
     , jose
     , katip
     , lens
@@ -262,11 +294,16 @@ test-suite realworld-haskell-test
     , resource-pool
     , safe
     , safe-exceptions
-    , scotty
+    , servant
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , time
     , ulid
     , unliftio-core
     , wai
     , wai-extra
+    , warp
     , with-utf8
   default-language: Haskell2010

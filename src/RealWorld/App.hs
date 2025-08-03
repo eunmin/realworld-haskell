@@ -1,38 +1,40 @@
 {-# LANGUAGE UndecidableInstances #-}
 
-module RealWorld.App
-  ( main,
-  )
+module RealWorld.App (
+  main,
+)
 where
 
 import Control.Exception (bracket)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
-import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Katip
-  ( ColorStrategy (ColorIfTerminal),
-    Katip,
-    KatipContext,
-    KatipContextT,
-    Severity (InfoS),
-    Verbosity (V2),
-    closeScribes,
-    defaultScribeSettings,
-    initLogEnv,
-    jsonFormat,
-    mkHandleScribeWithFormatter,
-    permitItem,
-    registerScribe,
-    runKatipContextT,
-  )
+import Control.Monad.Except (MonadError)
+import Katip (
+  ColorStrategy (ColorIfTerminal),
+  Katip,
+  KatipContext,
+  KatipContextT,
+  LogEnv,
+  Severity (InfoS),
+  Verbosity (V2),
+  closeScribes,
+  defaultScribeSettings,
+  initLogEnv,
+  jsonFormat,
+  mkHandleScribeWithFormatter,
+  permitItem,
+  registerScribe,
+  runKatipContextT,
+ )
+import qualified Network.Wai.Handler.Warp as Warp
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway (..))
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (..))
-import RealWorld.Domain.Adapter.Repository.ArticleRepository
-  ( ArticleRepository (..),
-  )
-import RealWorld.Domain.Adapter.Repository.CommentRepository
-  ( CommentRepository (..),
-  )
+import RealWorld.Domain.Adapter.Repository.ArticleRepository (
+  ArticleRepository (..),
+ )
+import RealWorld.Domain.Adapter.Repository.CommentRepository (
+  CommentRepository (..),
+ )
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository (..))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.QueryService (QueryService (..))
@@ -47,24 +49,31 @@ import qualified RealWorld.Infra.Gateway.JwtTokenGateway as JwtTokenGateway
 import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
 import RealWorld.Infra.System (Config (logEnv))
 import qualified RealWorld.Infra.System as System
-import RealWorld.Infra.Web.Routes (routes)
+import RealWorld.Infra.Web.Auth (authTokenHandler)
+import RealWorld.Infra.Web.Routes (Root, rootServer)
 import Relude
-import Web.Scotty.Trans (scottyT)
+import Servant (
+  Context (EmptyContext, (:.)),
+  Handler (..),
+  serveWithContext,
+ )
+import Servant.Server (ServerError)
 
-newtype App a = App {unApp :: ReaderT System.State (KatipContextT IO) a}
+newtype App a = App {unApp :: ReaderT System.State (KatipContextT (ExceptT ServerError IO)) a}
   deriving newtype
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadIO,
-      MonadCatch,
-      MonadThrow,
-      MonadReader System.State,
-      MonadMask,
-      MonadFail,
-      KatipContext,
-      Katip,
-      MonadUnliftIO
+    ( Applicative
+    , Functor
+    , Monad
+    , MonadIO
+    , MonadCatch
+    , MonadThrow
+    , MonadReader System.State
+    , MonadError ServerError
+    , MonadMask
+    , MonadFail
+    , KatipContext
+    , Katip
+    -- , MonadUnliftIO
     )
 
 instance UserRepository App where
@@ -120,10 +129,16 @@ mainWithConfig config = do
           =<< initLogEnv "RealWorld" config.logEnv
   System.withState config $ \state' -> do
     bracket mkLogEnv closeScribes $ \le -> do
-      scottyT
-        port
-        (\app -> runKatipContextT le () "main" (runReaderT (unApp app) state'))
-        routes
+      Warp.run port (serveWithContext (Proxy :: Proxy Root) context $ rootServer $ handlerRunner le state')
+ where
+  context = authTokenHandler config.jwtSecret :. EmptyContext
+
+runner :: LogEnv -> System.State -> App a -> IO (Either ServerError a)
+runner le state' app = do
+  runExceptT $ runKatipContextT le () "main" (runReaderT (unApp app) state')
+
+handlerRunner :: LogEnv -> System.State -> App a -> Handler a
+handlerRunner le state' = Handler . ExceptT . runner le state'
 
 main :: IO ()
 main = do

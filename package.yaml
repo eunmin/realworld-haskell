@@ -32,6 +32,7 @@ dependencies:
 - filepath
 - generic-lens
 - http-types
+- insert-ordered-containers
 - jose
 - katip
 - lens
@@ -45,12 +46,17 @@ dependencies:
 - resource-pool
 - safe
 - safe-exceptions
-- scotty
+- servant
+- servant-server
+- servant-swagger
+- servant-swagger-ui
+- swagger2
 - time
 - ulid
 - unliftio-core
 - wai
 - wai-extra
+- warp
 - with-utf8
 
 ghc-options:
@@ -62,6 +68,7 @@ ghc-options:
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
+- -Wno-orphans
 
 default-extensions:
 - ConstraintKinds
