@@ -1,9 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.User.UseCase where
 
 import Control.Error (throwE)
 import Control.Error.Util ((!?), (??))
+import Data.Aeson (ToJSON)
 import Data.Time (getCurrentTime)
 import Data.ULID (getULID)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
@@ -54,6 +56,7 @@ data RegistrationError
   | RegistrationErrorInvalidUsername
   | RegistrationErrorInvalidEmail
   deriving stock (Eq, Generic)
+  deriving anyclass (ToJSON)
 
 registration ::
   (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
@@ -96,6 +99,7 @@ data AuthenticationError
   | AuthenticationErrorInvalidPassword
   | AuthenticationErrorInvalidEmail
   deriving stock (Eq, Generic)
+  deriving anyclass (ToJSON)
 
 authentication ::
   (MonadIO m, UserRepository m, PasswordGateway m, TokenGateway m) =>
@@ -146,6 +150,7 @@ data UpdateUserError
   | UpdateUserErrorUserNotFound
   | UpdateUserErrorUsernameAlreadyExists
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 updateUser ::
   (MonadIO m, UserRepository m, PasswordGateway m, TxManager m) =>
@@ -206,6 +211,7 @@ data FollowUserError
   | FollowUserErrorAlreadyFollowing
   | FollowUserErrorInvalidUsername
   deriving stock (Eq, Generic)
+  deriving anyclass (ToJSON)
 
 followUser ::
   (MonadIO m, UserRepository m, TxManager m) =>
@@ -251,6 +257,7 @@ data UnfollowUserError
   | UnfollowUserErrorInvalidUsername
   | UnfollowUserErrorUserNotFound
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 unfollowUser ::
   (MonadIO m, UserRepository m, TxManager m) =>

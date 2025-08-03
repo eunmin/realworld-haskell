@@ -68,7 +68,6 @@ ghc-options:
 - -Wmissing-home-modules
 - -Wpartial-fields
 - -Wredundant-constraints
-- -Wno-orphans
 
 default-extensions:
 - ConstraintKinds

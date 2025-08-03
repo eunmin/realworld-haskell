@@ -7,8 +7,13 @@
 module RealWorld.Infra.Web.Handler.Article.DeleteComment where
 
 import Control.Monad.Except (MonadError (..))
-import Data.Aeson (ToJSON)
-import Katip
+import Katip (
+  KatipContext,
+  Severity (ErrorS),
+  katipAddContext,
+  logTM,
+  sl,
+ )
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
@@ -26,8 +31,6 @@ type Route =
     :> "comments"
     :> Capture "comment-id" Text
     :> Delete '[JSON] NoContent
-
-instance ToJSON DeleteCommentError
 
 toError :: ArticleUseCase.DeleteCommentError -> ServerError
 toError DeleteCommentErrorInvalidUserId = badRequest "Invalid User Id"

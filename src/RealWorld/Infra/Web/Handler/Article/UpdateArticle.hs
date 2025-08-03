@@ -53,8 +53,6 @@ data UpdateArticleResponse = UpdateArticleResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON UpdateArticleError
-
 toError :: ArticleUseCase.UpdateArticleError -> ServerError
 toError UpdateArticleErrorInvalidTitle = badRequest "Invalid title"
 toError UpdateArticleErrorUserId = badRequest "Invalid user id"

@@ -51,8 +51,6 @@ data CreateArticleResponse = CreateArticleResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON CreateArticleError
-
 toError :: ArticleUseCase.CreateArticleError -> ServerError
 toError CreateArticleErrorInvalidTitle = badRequest "Invalid title"
 toError CreateArticleErrorInvalidUserId = badRequest "Invalid user id"
@@ -73,7 +71,7 @@ handler ::
   CreateArticleRequest ->
   m CreateArticleResponse
 handler (ApiAuth userId _) (CreateArticleRequest input) = do
-  result <- ArticleUseCase.createArticle $ toCommand
+  result <- ArticleUseCase.createArticle toCommand
   case result of
     Right result' -> do
       let params = GetProfileParams Nothing result'.authorUsername

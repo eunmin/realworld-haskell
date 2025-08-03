@@ -1,9 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.Article.UseCase where
 
 import Control.Error (throwE)
 import Control.Error.Util ((!?), (??))
+import Data.Aeson (ToJSON)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.ULID (getULID)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (withTx))
@@ -70,6 +72,7 @@ data CreateArticleError
   | CreateArticleErrorInvalidTag
   | CreateArticleErrorAuthorNotFound
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 createArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, TxManager m) =>
@@ -137,6 +140,7 @@ data UpdateArticleError
   | UpdateArticleErrorAuthorNotFound
   | UpdateArticleErrorEditPermissionDenied
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 updateArticle ::
   (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TxManager m) =>
@@ -191,6 +195,7 @@ data DeleteArticleError
   | DeleteArticleErrorArticleNotFound
   | DeleteArticleErrorDeletePermissionDenied
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 deleteArticle ::
   (MonadIO m, ArticleRepository m, TxManager m) =>
@@ -230,6 +235,7 @@ data AddCommentsError
   | AddCommentsErrorAuthorNotFound
   | AddCommentsErrorInvalidSlug
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 addComments ::
   ( MonadIO m
@@ -289,6 +295,7 @@ data DeleteCommentError
   | DeleteCommentErrorCommentNotFound
   | DeleteCommentErrorDeletePermissionDenied
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 deleteComment ::
   (MonadIO m, ArticleRepository m, CommentRepository m, TxManager m) =>
@@ -339,6 +346,7 @@ data FavoriteArticleError
   | FavroiteArticleErrorUserNotFound
   | FavoriteArticleErrorAlreadyFavorited
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 favoriteArticle ::
   ( MonadIO m
@@ -407,6 +415,7 @@ data UnfavoriteArticleError
   | UnfavroiteArticleErrorIsNotFavorited
   | UnfavoriteArticleErrorNotFavorited
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON)
 
 unfavoriteArticle ::
   ( MonadIO m

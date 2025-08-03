@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module RealWorld.Infra.Web.Schema where
 
 import Data.Swagger (ToSchema)

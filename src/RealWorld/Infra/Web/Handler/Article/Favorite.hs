@@ -39,8 +39,6 @@ data FavoriteArticleResponse = FavoriteArticleResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON FavoriteArticleError
-
 toError :: ArticleUseCase.FavoriteArticleError -> ServerError
 toError FavoriteArticleErrorInvalidUserId = badRequest "Invalid User Id"
 toError FavoriteArticleErrorInvalidSlug = badRequest "Invalid slug"

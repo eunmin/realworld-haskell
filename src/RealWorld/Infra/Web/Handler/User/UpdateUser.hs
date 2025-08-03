@@ -56,8 +56,6 @@ data UpdateUserResponse = UpdateUserResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON UpdateUserError
-
 toError :: UpdateUserError -> ServerError
 toError UpdateUserErrorInvalidUserId = badRequest "Invalid user id"
 toError UpdateUserErrorInvalidUsername = badRequest "Invalid username"

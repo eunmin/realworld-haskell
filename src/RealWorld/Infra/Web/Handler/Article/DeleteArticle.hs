@@ -7,7 +7,6 @@
 module RealWorld.Infra.Web.Handler.Article.DeleteArticle where
 
 import Control.Monad.Except (MonadError (..))
-import Data.Aeson (ToJSON)
 import Katip (
   KatipContext,
   Severity (ErrorS),
@@ -29,8 +28,6 @@ type Route =
   "articles"
     :> Capture "slug" Text
     :> Delete '[JSON] NoContent
-
-instance ToJSON DeleteArticleError
 
 toError :: ArticleUseCase.DeleteArticleError -> ServerError
 toError DeleteArticleErrorInvalidUserId = badRequest "Invalid User Id"

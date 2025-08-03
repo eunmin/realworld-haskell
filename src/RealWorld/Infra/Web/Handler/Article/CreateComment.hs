@@ -10,7 +10,13 @@ import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Katip (
+  KatipContext,
+  Severity (ErrorS),
+  katipAddContext,
+  logTM,
+  sl,
+ )
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
@@ -51,8 +57,6 @@ data CreateCommentsResponse = CreateCommentsResponse
   }
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
-
-instance ToJSON AddCommentsError
 
 toError :: ArticleUseCase.AddCommentsError -> ServerError
 toError AddCommentsErrorInvalidUserId = badRequest "Invalid User Id"

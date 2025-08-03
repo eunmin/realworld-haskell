@@ -39,8 +39,6 @@ data UnfavoriteArticleResponse = UnfavoriteArticleResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON UnfavoriteArticleError
-
 toError :: ArticleUseCase.UnfavoriteArticleError -> ServerError
 toError UnfavoriteArticleErrorInvalidUserId = badRequest "Invalid User Id"
 toError UnfavoriteArticleErrorInvalidSlug = badRequest "Invalid slug"

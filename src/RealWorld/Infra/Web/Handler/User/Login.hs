@@ -51,8 +51,6 @@ data LoginParams = LoginParams
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-instance ToJSON AuthenticationError
-
 data LoginResponse = LoginResponse
   { user :: User
   }
