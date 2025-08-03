@@ -10,7 +10,13 @@ import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Katip (
+  KatipContext,
+  Severity (ErrorS),
+  katipAddContext,
+  logTM,
+  sl,
+ )
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.User.UseCase (FollowUserError (..), FollowUserResult (..))

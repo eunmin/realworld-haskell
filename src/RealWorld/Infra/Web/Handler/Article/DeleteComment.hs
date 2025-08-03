@@ -8,27 +8,17 @@ module RealWorld.Infra.Web.Handler.Article.DeleteComment where
 
 import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
-import Data.Aeson.Types (FromJSON)
-import Data.Swagger (ToSchema)
-import Data.Time (UTCTime)
 import Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
-import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
-import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
-import RealWorld.Domain.Command.Article.UseCase (AddCommentsError (..), CreateArticleCommand (..), CreateArticleError (..), DeleteArticleError (..), DeleteCommentError (..), UpdateArticleCommand (..), UpdateArticleError (..))
+import RealWorld.Domain.Command.Article.UseCase (DeleteCommentError (..))
 import qualified RealWorld.Domain.Command.Article.UseCase as ArticleUseCase
-import RealWorld.Domain.Query.Data (Article (..), Comment (..), GetProfileParams (..), Profile)
-import qualified RealWorld.Domain.Query.Data as Query
-import RealWorld.Domain.Query.QueryService (QueryService)
-import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Web.Auth (ApiAuth (..))
 import RealWorld.Infra.Web.ErrorResponse (badRequest, notFound')
-import RealWorld.Infra.Web.Handler.Types (ArticleWrapper, CommentWrapper, ProfileWrapper, UserWrapper)
 import RealWorld.Infra.Web.Schema ()
 import Relude
-import Servant (Capture, Delete, Get, JSON, NoContent (..), Post, Put, ReqBody, ServerError, (:>))
+import Servant (Capture, Delete, JSON, NoContent (..), ServerError, (:>))
 
 type Route =
   "articles"

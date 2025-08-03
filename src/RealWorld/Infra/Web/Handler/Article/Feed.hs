@@ -3,16 +3,12 @@
 
 module RealWorld.Infra.Web.Handler.Article.Feed where
 
-import Data.Aeson (ToJSON)
-import Data.Aeson.Types (FromJSON)
-import Data.Time (UTCTime)
-import RealWorld.Domain.Query.Data (Article, ArticleList, FeedArticlesParams (..))
+import RealWorld.Domain.Query.Data (ArticleList, FeedArticlesParams (..))
 import RealWorld.Domain.Query.QueryService (QueryService)
 import qualified RealWorld.Domain.Query.QueryService as QueryService
 import RealWorld.Infra.Web.Auth (ApiAuth (..))
-import RealWorld.Infra.Web.Handler.Types (ArticleWrapper, ProfileWrapper, UserWrapper)
 import Relude
-import Servant (Capture, Delete, Get, JSON, Post, QueryParam, ReqBody, (:>))
+import Servant (Get, JSON, QueryParam, (:>))
 
 type Route =
   "articles"

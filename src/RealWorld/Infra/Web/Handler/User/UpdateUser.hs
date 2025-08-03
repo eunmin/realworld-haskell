@@ -10,21 +10,24 @@ import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Katip (
+  KatipContext,
+  Severity (ErrorS),
+  katipAddContext,
+  logTM,
+  sl,
+ )
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
-import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.User.UseCase (UpdateUserError (..))
-import qualified RealWorld.Domain.Command.User.UseCase (UpdateUserError (..))
 import qualified RealWorld.Domain.Command.User.UseCase as UserUseCase
 import RealWorld.Domain.Query.Data (User (..))
 import RealWorld.Infra.Web.Auth (ApiAuth (..))
 import RealWorld.Infra.Web.ErrorResponse (badRequest, notFound')
-import RealWorld.Infra.Web.Handler.Types (UserWrapper)
 import RealWorld.Infra.Web.Schema ()
 import Relude
-import Servant (JSON, Post, Put, ReqBody, ServerError, (:>))
+import Servant (JSON, Put, ReqBody, ServerError, (:>))
 
 type Route =
   "users"
