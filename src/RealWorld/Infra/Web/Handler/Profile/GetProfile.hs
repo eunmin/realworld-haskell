@@ -40,6 +40,6 @@ handler ::
   Text ->
   Eff es GetProfileResponse
 handler (ApiAuth userId _) username = do
-  let params = Query.GetProfileParams (Just $ show userId) username
+  let params = Query.GetProfileParams (Just userId) username
   profile <- QueryService.getProfile params `whenNothingM` throwError (notFound' "User not found")
   pure $ GetProfileResponse profile
