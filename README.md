@@ -1,5 +1,13 @@
 # realworld-haskell
 
+## Stack
+
+* [Servant](https://www.servant.dev/)
+* [Effectful](https://haskell-effectful.github.io/)
+* [PostgreSQL](https://www.postgresql.org/)
+* [Swagger](https://swagger.io/), [Swagger UI](https://swagger.io/tools/swagger-ui/)
+* [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+
 ## Prerequisites
 
 - [stack](https://docs.haskellstack.org/en/stable)
