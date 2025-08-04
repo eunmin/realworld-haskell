@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
+
 module RealWorld.Domain.Command.Fixture where
 
 import Data.Time (getCurrentTime)
@@ -10,7 +13,9 @@ import RealWorld.Domain.Command.User.Value
     Token,
     Username (Username),
   )
-import Relude
+import Relude hiding (Reader, asks)
+import Effectful (Eff, IOE, (:>))
+import Effectful.Reader.Dynamic (Reader, asks)
 
 data Fixture m = Fixture
   { -- UserReposiotry
@@ -49,41 +54,41 @@ emptyFixture =
     }
 
 dispatch0 ::
-  (MonadIO m, MonadReader r m) =>
+  (IOE :> es, Reader r :> es) =>
   (r -> IO b) ->
-  m b
+  Eff es b
 dispatch0 getter = do
   func <- asks getter
   liftIO func
 
 dispatch1 ::
-  (MonadIO m, MonadReader r m) =>
+  (IOE :> es, Reader r :> es) =>
   (r -> a -> IO b) ->
-  (a -> m b)
+  (a -> Eff es b)
 dispatch1 getter param = do
   func <- asks getter
   liftIO $ func param
 
 dispatch2 ::
-  (MonadIO m, MonadReader r m) =>
+  (IOE :> es, Reader r :> es) =>
   (r -> a -> b -> IO c) ->
-  (a -> b -> m c)
+  (a -> b -> Eff es c)
 dispatch2 getter param1 param2 = do
   func <- asks getter
   liftIO $ func param1 param2
 
 dispatch3 ::
-  (MonadIO m, MonadReader r m) =>
+  (IOE :> es, Reader r :> es) =>
   (r -> a -> b -> c -> IO d) ->
-  (a -> b -> c -> m d)
+  (a -> b -> c -> Eff es d)
 dispatch3 getter param1 param2 param3 = do
   func <- asks getter
   liftIO $ func param1 param2 param3
 
 dispatch4 ::
-  (MonadIO m, MonadReader r m) =>
+  (IOE :> es, Reader r :> es) =>
   (r -> a -> b -> c -> d -> IO e) ->
-  (a -> b -> c -> d -> m e)
+  (a -> b -> c -> d -> Eff es e)
 dispatch4 getter param1 param2 param3 param4 = do
   func <- asks getter
   liftIO $ func param1 param2 param3 param4

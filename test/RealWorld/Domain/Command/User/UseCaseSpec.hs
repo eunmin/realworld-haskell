@@ -28,8 +28,6 @@ import RealWorld.Domain.Command.User.Value
 import Relude
 import Test.Hspec (Spec, describe, it, shouldReturn)
 
-deriving instance Show RegistrationError
-
 spec :: Spec
 spec = describe "registration" $ do
   it "should pass" $ do

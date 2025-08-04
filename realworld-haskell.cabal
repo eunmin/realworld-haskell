@@ -244,6 +244,10 @@ test-suite realworld-haskell-test
       RealWorld.Domain.Command.Article.Entity.ArticleSpec
       RealWorld.Domain.Command.Article.ValueSpec
       RealWorld.Domain.Command.Fixture
+      RealWorld.Domain.Command.Interpreter.Gateway.PasswordGateway
+      RealWorld.Domain.Command.Interpreter.Gateway.TokenGateway
+      RealWorld.Domain.Command.Interpreter.Manager.TxManager
+      RealWorld.Domain.Command.Interpreter.Repository.UserRepository
       RealWorld.Domain.Command.TestApp
       RealWorld.Domain.Command.User.Entity.UserSpec
       RealWorld.Domain.Command.User.UseCaseSpec
