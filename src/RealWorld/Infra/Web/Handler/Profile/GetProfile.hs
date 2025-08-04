@@ -5,9 +5,11 @@
 
 module RealWorld.Infra.Web.Handler.Profile.GetProfile where
 
-import Control.Monad.Except (MonadError (throwError))
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Swagger (ToSchema)
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
 import RealWorld.Domain.Query.Data (Profile)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
@@ -30,7 +32,13 @@ data GetProfileResponse = GetProfileResponse
   deriving stock (Show, Generic)
   deriving anyclass (FromJSON, ToJSON, ToSchema)
 
-handler :: (MonadIO m, QueryService m, MonadError ServerError m) => ApiAuth -> Text -> m GetProfileResponse
+handler ::
+  ( QueryService Eff.:> es
+  , Error ServerError Eff.:> es
+  ) =>
+  ApiAuth ->
+  Text ->
+  Eff es GetProfileResponse
 handler (ApiAuth userId _) username = do
   let params = Query.GetProfileParams (Just $ show userId) username
   profile <- QueryService.getProfile params `whenNothingM` throwError (notFound' "User not found")

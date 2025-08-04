@@ -18,6 +18,17 @@ packages:
       size: 489
   original:
     hackage: string-random-0.1.4.5
+- completed:
+    commit: 892077f251c916e1f7f4995c746eaa9ed8a430df
+    git: https://github.com/eldritch-cookie/katip-effectful.git
+    name: katip-effectful
+    pantry-tree:
+      sha256: 28eb1355a3b89d4559fcfee7b3e676b2c50447b4bd980c1b77b20d041dc21e24
+      size: 735
+    version: 0.0.2
+  original:
+    commit: 892077f251c916e1f7f4995c746eaa9ed8a430df
+    git: https://github.com/eldritch-cookie/katip-effectful.git
 snapshots:
 - completed:
     sha256: 069c8189232279d04bd107557d3a62132c04ae5ce3c710649e6b40f67f10b9d5

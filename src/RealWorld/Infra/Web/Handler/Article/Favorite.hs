@@ -6,11 +6,13 @@
 
 module RealWorld.Infra.Web.Handler.Article.Favorite where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Effectful (Eff, IOE)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
@@ -47,17 +49,18 @@ toError FavroiteArticleErrorUserNotFound = notFound' "User not found"
 toError FavoriteArticleErrorAlreadyFavorited = badRequest "Already favorited"
 
 handler ::
-  ( ArticleRepository m
-  , FavoriteRepository m
-  , UserRepository m
-  , TxManager m
-  , QueryService m
-  , KatipContext m
-  , MonadError ServerError m
+  ( IOE Eff.:> es
+  , KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , FavoriteRepository Eff.:> es
+  , UserRepository Eff.:> es
+  , TxManager Eff.:> es
+  , QueryService Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   ApiAuth ->
   Text ->
-  m FavoriteArticleResponse
+  Eff es FavoriteArticleResponse
 handler (ApiAuth userId _) slug = do
   result <- ArticleUseCase.favoriteArticle toCommand
   case result of

@@ -1,10 +1,21 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+
 module RealWorld.Domain.Adapter.Repository.FavoriteRepository where
 
+import Effectful (Effect)
+import Effectful.TH (makeEffect)
 import RealWorld.Domain.Command.Article.Entity.Favorite (Favorite)
 import RealWorld.Domain.Command.Article.Value (FavoriteId)
 import Relude
 
-class FavoriteRepository m where
-  findById :: FavoriteId -> m (Maybe Favorite)
-  save :: Favorite -> m Bool
-  delete :: Favorite -> m Bool
+data FavoriteRepository :: Effect where
+  FindById :: FavoriteId -> FavoriteRepository m (Maybe Favorite)
+  Save :: Favorite -> FavoriteRepository m Bool
+  Delete :: Favorite -> FavoriteRepository m Bool
+
+makeEffect ''FavoriteRepository

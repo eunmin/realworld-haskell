@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
 
 module RealWorld.Infra.Gateway.JwtTokenGateway where
 
@@ -32,11 +33,13 @@ import Data.Aeson (
 import qualified Data.Aeson.KeyMap as M
 import qualified Data.Aeson.Types as JSON
 import qualified Data.ByteString.Lazy as L
-import Data.Has (Has (getter))
 import Data.Time (NominalDiffTime, addUTCTime, getCurrentTime, secondsToNominalDiffTime)
 import Data.ULID (ULID)
+import Effectful (Eff, IOE, (:>))
+import Effectful.Reader.Dynamic (Reader, ask)
 import RealWorld.Domain.Command.User.Value (Token (..))
-import Relude hiding (State, exp, (&))
+import RealWorld.Infra.System (JwtSecret)
+import Relude hiding (Reader, State, ask, exp, (&))
 
 data AuthJwt = AuthJwt
   { claimSet :: ClaimsSet
@@ -76,9 +79,9 @@ doJwtSign jwk super = runJOSE $ do
   alg <- bestJWSAlg jwk
   signJWT jwk (newJWSHeader ((), alg)) super
 
-generate :: (Has Text r, MonadReader r m, MonadIO m) => ULID -> Int -> m Token
+generate :: (IOE :> es, Reader JwtSecret :> es) => ULID -> Int -> Eff es Token
 generate userId expiresInSec = do
-  secret :: Text <- asks getter
+  secret <- ask @JwtSecret
   claimSet <- liftIO $ mkClaimSet (secondsToNominalDiffTime (fromIntegral expiresInSec))
   let jwk = JWK.fromOctets (encodeUtf8 secret :: L.ByteString)
       super = AuthJwt claimSet (show userId)
@@ -87,9 +90,9 @@ generate userId expiresInSec = do
     Left err -> error $ "Failed to sign JWT: " <> show err
     Right jwt -> pure $ Token $ decodeUtf8 $ encodeCompact jwt
 
-verify :: (Has Text r, MonadReader r m, MonadIO m) => Token -> m (Maybe ULID)
+verify :: (IOE :> es, Reader JwtSecret :> es) => Token -> Eff es (Maybe ULID)
 verify (Token token) = do
-  secret :: Text <- asks getter
+  secret <- ask @JwtSecret
   jwt <- liftIO $ getJwtUserId secret token
   pure $ readMaybe . toString =<< jwt
 

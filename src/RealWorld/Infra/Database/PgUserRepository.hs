@@ -1,52 +1,53 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module RealWorld.Infra.Database.PgUserRepository where
 
 import Control.Error (headMay)
-import Control.Monad.Catch (MonadMask)
-import Data.Has (Has)
 import Data.ULID (ULID)
 import Database.PostgreSQL.Simple (execute, query)
-import Database.PostgreSQL.Simple.FromField
-  ( FromField (..),
-  )
+import Database.PostgreSQL.Simple.FromField (
+  FromField (..),
+ )
 import Database.PostgreSQL.Simple.FromRow (FromRow (..), field)
 import Database.PostgreSQL.Simple.ToField (ToField (..))
 import Database.PostgreSQL.Simple.ToRow (ToRow (..))
 import Database.PostgreSQL.Simple.Types (Only (..))
-import RealWorld.Domain.Command.User.Entity.User
-  ( User (..),
-  )
-import RealWorld.Domain.Command.User.Value
-  ( Bio (..),
-    Email (..),
-    HashedPassword (..),
-    Image (..),
-    Username (..),
-  )
+import Effectful (Eff, IOE, (:>))
+import Effectful.Reader.Dynamic (Reader)
+import RealWorld.Domain.Command.User.Entity.User (
+  User (..),
+ )
+import RealWorld.Domain.Command.User.Value (
+  Bio (..),
+  Email (..),
+  HashedPassword (..),
+  Image (..),
+  Username (..),
+ )
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
 import RealWorld.Infra.Component.Database (withConnection)
 import qualified RealWorld.Infra.Component.Database as Database
 import RealWorld.Infra.Converter.PostgreSQL ()
-import Relude
+import Relude hiding (Reader)
 
 instance ToRow User where
-  toRow User {..} =
-    [ toField userId,
-      toField username,
-      toField email,
-      toField hashedPassword,
-      toField bio,
-      toField image,
-      toField createdAt,
-      -- for on conflict update
-      toField username,
-      toField email,
-      toField hashedPassword,
-      toField bio,
-      toField image
+  toRow User{..} =
+    [ toField userId
+    , toField username
+    , toField email
+    , toField hashedPassword
+    , toField bio
+    , toField image
+    , toField createdAt
+    , -- for on conflict update
+      toField username
+    , toField email
+    , toField hashedPassword
+    , toField bio
+    , toField image
     ]
 
 deriving newtype instance ToField (BoundedText min max)
@@ -76,69 +77,71 @@ deriving newtype instance FromField Bio
 
 deriving newtype instance FromField Image
 
-type Database r m = (Has Database.State r, MonadIO m, MonadReader r m, MonadMask m, MonadFail m)
+type Database es = (Reader Database.State :> es, IOE :> es)
 
-save :: (Database r m) => User -> m Bool
+save :: (Database es) => User -> Eff es Bool
 save user = do
   withConnection $ \conn ->
-    liftIO
-      $ (> 0)
-      <$> execute
-        conn
-        "INSERT INTO users (id, username, email, hashed_password, bio, image, created_at)\
-        \ VALUES (?, ?, ?, ?, ?, ?, ?)\
-        \ ON CONFLICT (id) DO\
-        \ UPDATE SET\
-        \   username = ?,\
-        \   email = ?,\
-        \   hashed_password = ?,\
-        \   bio = ?,\
-        \   image = ?,\
-        \   updated_at = now()"
-        user
+    liftIO $
+      (> 0)
+        <$> execute
+          conn
+          "INSERT INTO users (id, username, email, hashed_password, bio, image, created_at)\
+          \ VALUES (?, ?, ?, ?, ?, ?, ?)\
+          \ ON CONFLICT (id) DO\
+          \ UPDATE SET\
+          \   username = ?,\
+          \   email = ?,\
+          \   hashed_password = ?,\
+          \   bio = ?,\
+          \   image = ?,\
+          \   updated_at = now()"
+          user
 
-findById :: (Database r m) => ULID -> m (Maybe User)
+findById :: (Database es) => ULID -> Eff es (Maybe User)
 findById userId = do
   withConnection $ \conn ->
     liftIO $ headMay <$> query conn "SELECT * FROM users WHERE id = ?" (Only userId)
 
-findByUsername :: (Database r m) => Username -> m (Maybe User)
+findByUsername :: (Database es) => Username -> Eff es (Maybe User)
 findByUsername (Username (BoundedText username)) = do
   withConnection $ \conn ->
     liftIO $ headMay <$> query conn "SELECT * FROM users WHERE username = ?" (Only username)
 
-findByEmail :: (Database r m) => Email -> m (Maybe User)
+findByEmail :: (Database es) => Email -> Eff es (Maybe User)
 findByEmail (Email email) = do
   withConnection $ \conn ->
     liftIO $ headMay <$> query conn "SELECT * FROM users WHERE email = ?" (Only email)
 
-follow :: (Database r m) => ULID -> ULID -> m Bool
+follow :: (Database es) => ULID -> ULID -> Eff es Bool
 follow followerId followeeId = do
   withConnection $ \conn ->
-    liftIO
-      $ (> 0)
-      <$> execute
-        conn
-        "INSERT INTO followings (user_id, following_id) VALUES (?, ?)"
-        (followerId, followeeId)
+    liftIO $
+      (> 0)
+        <$> execute
+          conn
+          "INSERT INTO followings (user_id, following_id) VALUES (?, ?)"
+          (followerId, followeeId)
 
-unfollow :: (Database r m) => ULID -> ULID -> m Bool
+unfollow :: (Database es) => ULID -> ULID -> Eff es Bool
 unfollow followerId followeeId = do
   withConnection $ \conn ->
-    liftIO
-      $ (> 0)
-      <$> execute
-        conn
-        "DELETE FROM followings WHERE user_id = ? AND following_id = ?"
-        (followerId, followeeId)
+    liftIO $
+      (> 0)
+        <$> execute
+          conn
+          "DELETE FROM followings WHERE user_id = ? AND following_id = ?"
+          (followerId, followeeId)
 
-hasFollowing :: (Database r m) => ULID -> ULID -> m Bool
+hasFollowing :: (Database es) => ULID -> ULID -> Eff es Bool
 hasFollowing followerId followeeId = do
   withConnection $ \conn -> do
-    [Only (count :: Int)] <-
-      liftIO
-        $ query
+    rows :: [Only Int] <-
+      liftIO $
+        query
           conn
           "SELECT count(*) FROM followings WHERE user_id = ? AND following_id = ?"
           (followerId, followeeId)
-    pure $ count > 0
+    case rows of
+      [Only (cnt :: Int)] -> pure (cnt > 0)
+      _ -> pure False

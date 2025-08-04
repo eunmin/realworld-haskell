@@ -7,8 +7,7 @@
 
 module RealWorld.Infra.Web.Routes where
 
-import Control.Lens (Traversal', (%~), (.~), (?~))
-import Control.Monad.Except (MonadError)
+import Control.Lens (Traversal', (%~), (&), (.~), (?~))
 import qualified Data.HashSet.InsOrd as InsOrdHS
 import Data.Swagger (
   ApiKeyLocation (ApiKeyHeader),
@@ -31,7 +30,10 @@ import Data.Swagger (
   SecuritySchemeType (SecuritySchemeApiKey),
   Swagger,
  )
-import Katip (KatipContext)
+import Effectful (Eff, IOE)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error)
+import Effectful.Katip (KatipE)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
@@ -61,7 +63,7 @@ import qualified RealWorld.Infra.Web.Handler.User.Login as User.Login
 import qualified RealWorld.Infra.Web.Handler.User.Registration as User.Registration
 import qualified RealWorld.Infra.Web.Handler.User.UpdateUser as User.UpdateUser
 import RealWorld.Infra.Web.Schema ()
-import Relude hiding (get, put)
+import Relude hiding (get, put, (&))
 import Servant (
   AuthProtect,
   EmptyAPI,
@@ -77,20 +79,21 @@ import Servant (
 import Servant.Swagger (HasSwagger (toSwagger), subOperations)
 import Servant.Swagger.UI (SwaggerSchemaUI, swaggerSchemaUIServerT)
 
-type Deps m =
-  ( KatipContext m
-  , TxManager m
-  , ArticleRepository m
-  , UserRepository m
-  , CommentRepository m
-  , FavoriteRepository m
-  , TokenGateway m
-  , PasswordGateway m
-  , QueryService m
-  , MonadError ServerError m
+type Effs es =
+  ( ArticleRepository Eff.:> es
+  , UserRepository Eff.:> es
+  , CommentRepository Eff.:> es
+  , FavoriteRepository Eff.:> es
+  , TokenGateway Eff.:> es
+  , PasswordGateway Eff.:> es
+  , QueryService Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
+  , KatipE Eff.:> es
+  , IOE Eff.:> es
   )
 
-rootServer :: (Deps m) => (forall a. m a -> Handler a) -> Server Root
+rootServer :: (Effs es) => (forall a. (Eff es) a -> Handler a) -> Server Root
 rootServer runner =
   hoistServerWithContext
     (Proxy :: Proxy Root)
@@ -100,39 +103,24 @@ rootServer runner =
 
 type Root = SwaggerAPI :<|> API
 
-rootServerT :: (Deps m) => ServerT Root m
+rootServerT :: (Effs es) => ServerT Root (Eff es)
 rootServerT = swaggerServerT :<|> apiServerT
 
 type SwaggerAPI = SwaggerSchemaUI "swagger-ui" "swagger.json"
 
-swaggerServerT :: (Deps m) => ServerT SwaggerAPI m
+swaggerServerT :: ServerT SwaggerAPI (Eff es)
 swaggerServerT = swaggerSchemaUIServerT swagger
  where
   swagger =
     toSwagger (Proxy :: Proxy AllAPI)
-      & info
-      . title
-      .~ "RealWorld API"
-        & info
-        . version
-      .~ "1.0"
-        & info
-        . description
-      ?~ "https://github.com/gothinkster/realworld"
-        & securityDefinitions
-      .~ apiAuth
-        & protectedOps
-        . security
-      .~ [SecurityRequirement [("apiAuth", [])]]
-        & userOps
-        . tags
-      %~ (<> InsOrdHS.fromList ["User"])
-        & articleOps
-        . tags
-      %~ (<> InsOrdHS.fromList ["Article"])
-        & profileOps
-        . tags
-      %~ (<> InsOrdHS.fromList ["Profile"])
+      & info . title .~ "RealWorld API"
+      & info . version .~ "1.0"
+      & info . description ?~ "https://github.com/gothinkster/realworld"
+      & securityDefinitions .~ apiAuth
+      & protectedOps . security .~ [SecurityRequirement [("apiAuth", [])]]
+      & userOps . tags %~ (<> InsOrdHS.fromList ["User"])
+      & articleOps . tags %~ (<> InsOrdHS.fromList ["Article"])
+      & profileOps . tags %~ (<> InsOrdHS.fromList ["Profile"])
 
 type AllAPI = UnprotectedRoute :<|> ProtectedRoute
 
@@ -167,7 +155,7 @@ type API =
     :<|> UnprotectedRoute
     :<|> AuthProtect "apiAuth" :> ProtectedRoute
 
-apiServerT :: (Deps m) => ServerT API m
+apiServerT :: (Effs es) => ServerT API (Eff es)
 apiServerT =
   emptyServer
     :<|> unprotectedServerT
@@ -178,7 +166,7 @@ type UnprotectedRoute =
     :<|> "api" :> User.Login.Route
     :<|> "api" :> User.Registration.Route
 
-unprotectedServerT :: (Deps m) => ServerT UnprotectedRoute m
+unprotectedServerT :: (Effs es) => ServerT UnprotectedRoute (Eff es)
 unprotectedServerT =
   emptyServer
     :<|> User.Login.handler
@@ -191,7 +179,7 @@ type ProtectedRoute =
     :<|> "api" :> ProfileAPI
     :<|> "api" :> ArticleAPI
 
-protectedServerT :: (Deps m) => ApiAuth -> ServerT ProtectedRoute m
+protectedServerT :: (Effs es) => ApiAuth -> ServerT ProtectedRoute (Eff es)
 protectedServerT auth =
   emptyServer
     :<|> User.GetCurrentUser.handler auth
@@ -212,7 +200,7 @@ type ProfileAPI =
     :<|> Profile.Follow.Route
     :<|> Profile.Unfollow.Route
 
-profileServerT :: (Deps m) => ApiAuth -> ServerT ProfileAPI m
+profileServerT :: (Effs es) => ApiAuth -> ServerT ProfileAPI (Eff es)
 profileServerT auth =
   emptyServer
     :<|> Profile.GetProfile.handler auth
@@ -234,7 +222,7 @@ type ArticleAPI =
     :<|> Article.Unfavorite.Route
     :<|> Article.ListTag.Route
 
-articleServerT :: (Deps m) => ApiAuth -> ServerT ArticleAPI m
+articleServerT :: (Effs es) => ApiAuth -> ServerT ArticleAPI (Eff es)
 articleServerT auth =
   emptyServer
     :<|> Article.ListArticle.handler auth

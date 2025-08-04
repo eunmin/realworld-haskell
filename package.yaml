@@ -27,6 +27,8 @@ dependencies:
 - data-default
 - data-has
 - directory
+- effectful
+- effectful-th
 - errors
 - exceptions
 - filepath
@@ -35,6 +37,7 @@ dependencies:
 - insert-ordered-containers
 - jose
 - katip
+- katip-effectful
 - lens
 - mtl
 - optics-core

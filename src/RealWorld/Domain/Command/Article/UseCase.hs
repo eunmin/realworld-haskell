@@ -1,14 +1,16 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.Article.UseCase where
 
-import Control.Error (throwE)
-import Control.Error.Util ((!?), (??))
 import Data.Aeson (ToJSON)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.ULID (getULID)
-import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (withTx))
+import Effectful (Eff, IOE, type (:>))
+import Effectful.Error.Dynamic (runErrorNoCallStack, throwError)
+import RealWorld.Domain.Adapter.Manager.TxManager (TxManager, withTx)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository (..))
 import qualified RealWorld.Domain.Adapter.Repository.ArticleRepository as ArticleRepository
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
@@ -43,7 +45,7 @@ import RealWorld.Domain.Command.Article.Value (
 import RealWorld.Domain.Command.User.Entity.User (User (..))
 import RealWorld.Domain.Command.User.Value (Username (..))
 import RealWorld.Domain.Util.BoundedText (BoundedText (..))
-import Relude hiding ((??))
+import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- Create Article
@@ -75,18 +77,18 @@ data CreateArticleError
   deriving anyclass (ToJSON)
 
 createArticle ::
-  (MonadIO m, ArticleRepository m, UserRepository m, TxManager m) =>
+  (IOE :> es, ArticleRepository :> es, UserRepository :> es, TxManager :> es) =>
   CreateArticleCommand ->
-  m (Either CreateArticleError CreateArticleResult)
-createArticle command = runExceptT $ do
+  Eff es (Either CreateArticleError CreateArticleResult)
+createArticle command = runErrorNoCallStack $ do
   articleId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
-  authorId <- readMaybe (toString command.userId) ?? CreateArticleErrorInvalidUserId
-  title <- mkTitle command.title ?? CreateArticleErrorInvalidTitle
-  body <- mkArticleBody command.body ?? CreateArticleErrorInvalidBody
-  description <- mkDescription command.description ?? CreateArticleErrorInvalidDescription
-  tags <- traverse mkTag command.tagList ?? CreateArticleErrorInvalidTag
-  author <- UserRepository.findById authorId !? CreateArticleErrorAuthorNotFound
+  authorId <- readMaybe (toString command.userId) `whenNothing` throwError CreateArticleErrorInvalidUserId
+  title <- mkTitle command.title `whenNothing` throwError CreateArticleErrorInvalidTitle
+  body <- mkArticleBody command.body `whenNothing` throwError CreateArticleErrorInvalidBody
+  description <- mkDescription command.description `whenNothing` throwError CreateArticleErrorInvalidDescription
+  tags <- traverse mkTag command.tagList `whenNothing` throwError CreateArticleErrorInvalidTag
+  author <- UserRepository.findById authorId `whenNothingM` throwError CreateArticleErrorAuthorNotFound
   let article =
         mkArticle
           articleId
@@ -96,7 +98,7 @@ createArticle command = runExceptT $ do
           tags
           createdAt
           authorId
-  _ <- withTx $ lift $ ArticleRepository.save article
+  _ <- withTx $ ArticleRepository.save article
   pure $
     CreateArticleResult
       { slug = unSlug article.slug
@@ -143,23 +145,23 @@ data UpdateArticleError
   deriving anyclass (ToJSON)
 
 updateArticle ::
-  (MonadIO m, ArticleRepository m, UserRepository m, FavoriteRepository m, TxManager m) =>
+  (ArticleRepository :> es, UserRepository :> es, FavoriteRepository :> es, TxManager :> es) =>
   UpdateArticleCommand ->
-  m (Either UpdateArticleError UpdateArticleResult)
-updateArticle command = runExceptT $ do
-  slug <- mkSlug command.slug ?? UpdateArticleErrorInvalidSlug
-  title <- traverse mkTitle command.title ?? UpdateArticleErrorInvalidTitle
-  description <- traverse mkDescription command.description ?? UpdateArticleErrorInvalidDescription
-  body <- traverse mkArticleBody command.body ?? UpdateArticleErrorInvalidBody
-  actorId <- readMaybe (toString command.userId) ?? UpdateArticleErrorUserId
+  Eff es (Either UpdateArticleError UpdateArticleResult)
+updateArticle command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError UpdateArticleErrorInvalidSlug
+  title <- traverse mkTitle command.title `whenNothing` throwError UpdateArticleErrorInvalidTitle
+  description <- traverse mkDescription command.description `whenNothing` throwError UpdateArticleErrorInvalidDescription
+  body <- traverse mkArticleBody command.body `whenNothing` throwError UpdateArticleErrorInvalidBody
+  actorId <- readMaybe (toString command.userId) `whenNothing` throwError UpdateArticleErrorUserId
   (article, author, favorited) <- withTx $ do
-    article <- ArticleRepository.findBySlug slug !? UpdateArticleErrorArticleNotFound
-    author <- UserRepository.findById article.authorId !? UpdateArticleErrorAuthorNotFound
+    article <- ArticleRepository.findBySlug slug `whenNothingM` throwError UpdateArticleErrorArticleNotFound
+    author <- UserRepository.findById article.authorId `whenNothingM` throwError UpdateArticleErrorAuthorNotFound
     unless (Article.isEditable article actorId) $
-      throwE UpdateArticleErrorEditPermissionDenied
+      throwError UpdateArticleErrorEditPermissionDenied
     let article' = Article.update article title description body
-    _ <- lift $ ArticleRepository.save article'
-    favorited <- lift $ FavoriteRepository.findById (FavoriteId article.articleId actorId)
+    _ <- ArticleRepository.save article'
+    favorited <- FavoriteRepository.findById (FavoriteId article.articleId actorId)
     pure (article', author, isJust favorited)
   pure $
     UpdateArticleResult
@@ -198,17 +200,17 @@ data DeleteArticleError
   deriving anyclass (ToJSON)
 
 deleteArticle ::
-  (MonadIO m, ArticleRepository m, TxManager m) =>
+  (ArticleRepository :> es, TxManager :> es) =>
   DeleteArticleCommand ->
-  m (Either DeleteArticleError DeleteArticleResult)
-deleteArticle command = runExceptT $ do
-  slug <- mkSlug command.slug ?? DeleteArticleErrorInvalidSlug
-  actorId <- readMaybe (toString command.userId) ?? DeleteArticleErrorInvalidUserId
+  Eff es (Either DeleteArticleError DeleteArticleResult)
+deleteArticle command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError DeleteArticleErrorInvalidSlug
+  actorId <- readMaybe (toString command.userId) `whenNothing` throwError DeleteArticleErrorInvalidUserId
   _ <- withTx $ do
-    article <- ArticleRepository.findBySlug slug !? DeleteArticleErrorArticleNotFound
+    article <- ArticleRepository.findBySlug slug `whenNothingM` throwError DeleteArticleErrorArticleNotFound
     unless (Article.isDeletable article actorId) $
-      throwE DeleteArticleErrorDeletePermissionDenied
-    lift $ ArticleRepository.delete article
+      throwError DeleteArticleErrorDeletePermissionDenied
+    ArticleRepository.delete article
   pure $ DeleteArticleResult{slug = unSlug slug}
 
 ----------------------------------------------------------------------------------------------------
@@ -238,23 +240,18 @@ data AddCommentsError
   deriving anyclass (ToJSON)
 
 addComments ::
-  ( MonadIO m
-  , ArticleRepository m
-  , UserRepository m
-  , CommentRepository m
-  , TxManager m
-  ) =>
+  (IOE :> es, ArticleRepository :> es, UserRepository :> es, CommentRepository :> es, TxManager :> es) =>
   AddCommentsCommand ->
-  m (Either AddCommentsError AddCommentsResult)
-addComments command = runExceptT $ do
-  slug <- mkSlug command.slug ?? AddCommentsErrorInvalidSlug
-  authorId <- readMaybe (toString command.userId) ?? AddCommentsErrorInvalidUserId
-  body <- mkCommentBody command.body ?? AddCommentsErrorInvalidBody
+  Eff es (Either AddCommentsError AddCommentsResult)
+addComments command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError AddCommentsErrorInvalidSlug
+  authorId <- readMaybe (toString command.userId) `whenNothing` throwError AddCommentsErrorInvalidUserId
+  body <- mkCommentBody command.body `whenNothing` throwError AddCommentsErrorInvalidBody
   commentId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
   author <- withTx $ do
-    author <- UserRepository.findById authorId !? AddCommentsErrorAuthorNotFound
-    article <- ArticleRepository.findBySlug slug !? AddCommentsErrorArticleNotFound
+    author <- UserRepository.findById authorId `whenNothingM` throwError AddCommentsErrorAuthorNotFound
+    article <- ArticleRepository.findBySlug slug `whenNothingM` throwError AddCommentsErrorArticleNotFound
     let comment =
           mkComment
             commentId
@@ -262,7 +259,7 @@ addComments command = runExceptT $ do
             createdAt
             authorId
             article.articleId
-    _ <- lift $ CommentRepository.save comment
+    _ <- CommentRepository.save comment
     pure author
   pure $
     AddCommentsResult
@@ -298,19 +295,19 @@ data DeleteCommentError
   deriving anyclass (ToJSON)
 
 deleteComment ::
-  (MonadIO m, ArticleRepository m, CommentRepository m, TxManager m) =>
+  (ArticleRepository :> es, CommentRepository :> es, TxManager :> es) =>
   DeleteCommentCommand ->
-  m (Either DeleteCommentError DeleteCommentResult)
-deleteComment command = runExceptT $ do
-  slug <- mkSlug command.slug ?? DeleteCommentErrorInvalidSlug
-  actorId <- readMaybe (toString command.userId) ?? DeleteCommentErrorInvalidUserId
-  commentId <- readMaybe (toString command.commentId) ?? DeleteCommentErrorInvalidCommentId
+  Eff es (Either DeleteCommentError DeleteCommentResult)
+deleteComment command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError DeleteCommentErrorInvalidSlug
+  actorId <- readMaybe (toString command.userId) `whenNothing` throwError DeleteCommentErrorInvalidUserId
+  commentId <- readMaybe (toString command.commentId) `whenNothing` throwError DeleteCommentErrorInvalidCommentId
   _ <- withTx $ do
-    _ <- ArticleRepository.findBySlug slug !? DeleteCommentErrorArticleNotFound
-    comment <- CommentRepository.findById commentId !? DeleteCommentErrorCommentNotFound
+    _ <- ArticleRepository.findBySlug slug `whenNothingM` throwError DeleteCommentErrorArticleNotFound
+    comment <- CommentRepository.findById commentId `whenNothingM` throwError DeleteCommentErrorCommentNotFound
     unless (Comment.isDeletable comment actorId) $
-      throwE DeleteCommentErrorDeletePermissionDenied
-    lift $ CommentRepository.delete comment
+      throwError DeleteCommentErrorDeletePermissionDenied
+    CommentRepository.delete comment
   pure $
     DeleteCommentResult
       { slug = unSlug slug
@@ -349,28 +346,23 @@ data FavoriteArticleError
   deriving anyclass (ToJSON)
 
 favoriteArticle ::
-  ( MonadIO m
-  , ArticleRepository m
-  , FavoriteRepository m
-  , UserRepository m
-  , TxManager m
-  ) =>
+  (IOE :> es, ArticleRepository :> es, FavoriteRepository :> es, UserRepository :> es, TxManager :> es) =>
   FavoriteArticleCommand ->
-  m (Either FavoriteArticleError FavoriteArticleResult)
-favoriteArticle command = runExceptT $ do
-  slug <- mkSlug command.slug ?? FavoriteArticleErrorInvalidSlug
-  actorId <- readMaybe (toString command.userId) ?? FavoriteArticleErrorInvalidUserId
+  Eff es (Either FavoriteArticleError FavoriteArticleResult)
+favoriteArticle command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError FavoriteArticleErrorInvalidSlug
+  actorId <- readMaybe (toString command.userId) `whenNothing` throwError FavoriteArticleErrorInvalidUserId
   createdAt <- liftIO getCurrentTime
   (article, actor) <- withTx $ do
-    article <- ArticleRepository.findBySlug slug !? FavoriteArticleErrorArticleNotFound
-    actor <- UserRepository.findById actorId !? FavroiteArticleErrorUserNotFound
+    article <- ArticleRepository.findBySlug slug `whenNothingM` throwError FavoriteArticleErrorArticleNotFound
+    actor <- UserRepository.findById actorId `whenNothingM` throwError FavroiteArticleErrorUserNotFound
     let favoriteId = mkFavoriteId article.articleId actorId
     let favorite = mkFavorite favoriteId createdAt
-    success <- lift $ FavoriteRepository.save favorite
+    success <- FavoriteRepository.save favorite
     unless success $
-      throwE FavoriteArticleErrorAlreadyFavorited
+      throwError FavoriteArticleErrorAlreadyFavorited
     let article' = Article.increseFavoritesCount article
-    _ <- lift $ ArticleRepository.save article'
+    _ <- ArticleRepository.save article'
     pure (article', actor)
   pure $
     FavoriteArticleResult
@@ -418,27 +410,22 @@ data UnfavoriteArticleError
   deriving anyclass (ToJSON)
 
 unfavoriteArticle ::
-  ( MonadIO m
-  , ArticleRepository m
-  , FavoriteRepository m
-  , UserRepository m
-  , TxManager m
-  ) =>
+  (ArticleRepository :> es, FavoriteRepository :> es, UserRepository :> es, TxManager :> es) =>
   UnfavoriteArticleCommand ->
-  m (Either UnfavoriteArticleError UnfavoriteArticleResult)
-unfavoriteArticle command = runExceptT $ do
-  slug <- mkSlug command.slug ?? UnfavoriteArticleErrorInvalidSlug
-  actorId <- readMaybe (toString command.userId) ?? UnfavoriteArticleErrorInvalidUserId
+  Eff es (Either UnfavoriteArticleError UnfavoriteArticleResult)
+unfavoriteArticle command = runErrorNoCallStack $ do
+  slug <- mkSlug command.slug `whenNothing` throwError UnfavoriteArticleErrorInvalidSlug
+  actorId <- readMaybe (toString command.userId) `whenNothing` throwError UnfavoriteArticleErrorInvalidUserId
   (article, actor) <- withTx $ do
-    article <- ArticleRepository.findBySlug slug !? UnfavoriteArticleErrorArticleNotFound
-    actor <- UserRepository.findById actorId !? UnfavroiteArticleErrorUserNotFound
+    article <- ArticleRepository.findBySlug slug `whenNothingM` throwError UnfavoriteArticleErrorArticleNotFound
+    actor <- UserRepository.findById actorId `whenNothingM` throwError UnfavroiteArticleErrorUserNotFound
     let favoriteId = mkFavoriteId article.articleId actorId
-    favorite <- FavoriteRepository.findById favoriteId !? UnfavroiteArticleErrorIsNotFavorited
-    success <- lift $ FavoriteRepository.delete favorite
+    favorite <- FavoriteRepository.findById favoriteId `whenNothingM` throwError UnfavroiteArticleErrorIsNotFavorited
+    success <- FavoriteRepository.delete favorite
     unless success $
-      throwE UnfavoriteArticleErrorNotFavorited
+      throwError UnfavoriteArticleErrorNotFavorited
     let article' = Article.decreseFavoritesCount article
-    _ <- lift $ ArticleRepository.save article'
+    _ <- ArticleRepository.save article'
     pure (article', actor)
   pure $
     UnfavoriteArticleResult

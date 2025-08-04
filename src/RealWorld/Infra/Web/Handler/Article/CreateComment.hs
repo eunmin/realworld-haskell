@@ -6,17 +6,13 @@
 
 module RealWorld.Infra.Web.Handler.Article.CreateComment where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip (
-  KatipContext,
-  Severity (ErrorS),
-  katipAddContext,
-  logTM,
-  sl,
- )
+import Effectful (Eff, IOE)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
@@ -66,18 +62,19 @@ toError AddCommentsErrorAuthorNotFound = notFound' "Author not found"
 toError AddCommentsErrorInvalidSlug = badRequest "Invalid slug"
 
 handler ::
-  ( KatipContext m
-  , ArticleRepository m
-  , TxManager m
-  , UserRepository m
-  , CommentRepository m
-  , QueryService m
-  , MonadError ServerError m
+  ( IOE Eff.:> es
+  , KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , TxManager Eff.:> es
+  , UserRepository Eff.:> es
+  , CommentRepository Eff.:> es
+  , QueryService Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   ApiAuth ->
   Text ->
   CreateCommentsRequest ->
-  m CreateCommentsResponse
+  Eff es CreateCommentsResponse
 handler (ApiAuth userId _) slug (CreateCommentsRequest input) = do
   result <- ArticleUseCase.addComments toCommand
   case result of

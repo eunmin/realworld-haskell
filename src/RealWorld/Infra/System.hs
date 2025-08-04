@@ -7,12 +7,14 @@ import Relude hiding (State, state, withState)
 import System.Environment (getEnv)
 
 data Config = Config
-  { httpServer :: HttpServer.Config,
-    database :: Database.Config,
-    jwtSecret :: Text,
-    logEnv :: Environment
+  { httpServer :: HttpServer.Config
+  , database :: Database.Config
+  , jwtSecret :: JwtSecret
+  , logEnv :: Environment
   }
   deriving stock (Show, Eq)
+
+type JwtSecret = Text
 
 type State = (Database.State, Text)
 

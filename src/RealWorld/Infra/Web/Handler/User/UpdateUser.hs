@@ -6,17 +6,13 @@
 
 module RealWorld.Infra.Web.Handler.User.UpdateUser where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip (
-  KatipContext,
-  Severity (ErrorS),
-  katipAddContext,
-  logTM,
-  sl,
- )
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
@@ -65,12 +61,17 @@ toError UpdateUserErrorUserNotFound = notFound' "User not found"
 toError UpdateUserErrorUsernameAlreadyExists = badRequest "Username already exists"
 
 handler ::
-  (KatipContext m, UserRepository m, PasswordGateway m, TxManager m, MonadError ServerError m) =>
+  ( KatipE Eff.:> es
+  , UserRepository Eff.:> es
+  , PasswordGateway Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
+  ) =>
   ApiAuth ->
   UpdateUserRequest ->
-  m UpdateUserResponse
+  Eff es UpdateUserResponse
 handler (ApiAuth userId token) (UpdateUserRequest input) = do
-  result <- UserUseCase.updateUser $ toCommand
+  result <- UserUseCase.updateUser toCommand
   case result of
     Right result' -> pure $ UpdateUserResponse $ toUser result'
     Left err -> do

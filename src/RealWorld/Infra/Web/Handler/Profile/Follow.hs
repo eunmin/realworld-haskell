@@ -6,17 +6,13 @@
 
 module RealWorld.Infra.Web.Handler.Profile.Follow where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip (
-  KatipContext,
-  Severity (ErrorS),
-  katipAddContext,
-  logTM,
-  sl,
- )
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Command.User.UseCase (FollowUserError (..), FollowUserResult (..))
@@ -49,12 +45,16 @@ toError FollowUserErrorAlreadyFollowing = badRequest "Already following"
 toError FollowUserErrorInvalidUsername = badRequest "Invalid username"
 
 handler ::
-  (KatipContext m, UserRepository m, TxManager m, MonadError ServerError m) =>
+  ( KatipE Eff.:> es
+  , UserRepository Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
+  ) =>
   ApiAuth ->
   Text ->
-  m FollowResponse
+  Eff es FollowResponse
 handler (ApiAuth userId _) username = do
-  result <- UserUseCase.followUser $ toCommand
+  result <- UserUseCase.followUser toCommand
   case result of
     Right result' -> pure $ FollowResponse $ toProfile result'
     Left err -> do

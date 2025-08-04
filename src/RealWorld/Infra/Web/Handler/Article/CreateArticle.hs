@@ -6,11 +6,13 @@
 
 module RealWorld.Infra.Web.Handler.Article.CreateArticle where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Effectful (Eff, IOE)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
@@ -60,16 +62,17 @@ toError CreateArticleErrorInvalidTag = badRequest "Invalid tag"
 toError CreateArticleErrorAuthorNotFound = notFound' "Author not found"
 
 handler ::
-  ( KatipContext m
-  , ArticleRepository m
-  , UserRepository m
-  , TxManager m
-  , QueryService m
-  , MonadError ServerError m
+  ( IOE Eff.:> es
+  , KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , UserRepository Eff.:> es
+  , TxManager Eff.:> es
+  , QueryService Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   ApiAuth ->
   CreateArticleRequest ->
-  m CreateArticleResponse
+  Eff es CreateArticleResponse
 handler (ApiAuth userId _) (CreateArticleRequest input) = do
   result <- ArticleUseCase.createArticle toCommand
   case result of

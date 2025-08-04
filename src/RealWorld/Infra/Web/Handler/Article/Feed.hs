@@ -1,8 +1,11 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
 
 module RealWorld.Infra.Web.Handler.Article.Feed where
 
+import Effectful (Eff)
+import qualified Effectful as Eff
 import RealWorld.Domain.Query.Data (ArticleList, FeedArticlesParams (..))
 import RealWorld.Domain.Query.QueryService (QueryService)
 import qualified RealWorld.Domain.Query.QueryService as QueryService
@@ -18,11 +21,11 @@ type Route =
     :> Get '[JSON] ArticleList
 
 handler ::
-  (QueryService m) =>
+  (QueryService Eff.:> es) =>
   ApiAuth ->
   Maybe Int ->
   Maybe Int ->
-  m ArticleList
+  Eff es ArticleList
 handler (ApiAuth userId _) limit offset = do
   let params =
         FeedArticlesParams

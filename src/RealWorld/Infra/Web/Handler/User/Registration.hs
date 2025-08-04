@@ -8,11 +8,13 @@
 
 module RealWorld.Infra.Web.Handler.User.Registration where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Effectful (Eff, IOE)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
@@ -66,36 +68,37 @@ toError RegistrationErrorInvalidUsername = badRequest "Invalid username"
 toError RegistrationErrorInvalidPassword = badRequest "Invalid password"
 
 handler ::
-  ( KatipContext m
-  , UserRepository m
-  , TokenGateway m
-  , PasswordGateway m
-  , TxManager m
-  , MonadError ServerError m
+  ( IOE Eff.:> es
+  , KatipE Eff.:> es
+  , UserRepository Eff.:> es
+  , TokenGateway Eff.:> es
+  , PasswordGateway Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   RegistrationRequest ->
-  m RegistrationResponse
+  Eff es RegistrationResponse
 handler (RegistrationRequest input) = do
-  result <- UserUseCase.registration $ toCommand input
+  result <- UserUseCase.registration toCommand
   case result of
-    Right result' -> pure $ RegistrationResponse $ toUser input result'
+    Right result' -> pure $ RegistrationResponse $ toUser result'
     Left err -> do
       katipAddContext (sl "error" err) $ do
         $(logTM) ErrorS "registration error"
       throwError $ toError err
  where
-  toCommand :: RegistrationParams -> UserUseCase.RegistrationCommand
-  toCommand request =
+  toCommand :: UserUseCase.RegistrationCommand
+  toCommand =
     UserUseCase.RegistrationCommand
-      { username = request.username
-      , email = request.email
-      , password = request.password
+      { username = input.username
+      , email = input.email
+      , password = input.password
       }
-  toUser request (UserUseCase.RegistrationResult token) =
+  toUser (UserUseCase.RegistrationResult token) =
     User
-      { email = request.email
+      { email = input.email
       , token = token
-      , username = request.username
+      , username = input.username
       , bio = ""
       , image = Nothing
       }

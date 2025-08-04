@@ -1,6 +1,16 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
+
 module RealWorld.Domain.Adapter.Manager.TxManager where
 
-import Relude
+import Effectful (Effect)
+import Effectful.TH (makeEffect)
 
-class TxManager m where
-  withTx :: ExceptT e m a -> ExceptT e m a
+data TxManager :: Effect where
+  WithTx :: m a -> TxManager m a
+
+makeEffect ''TxManager

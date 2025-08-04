@@ -8,17 +8,13 @@
 
 module RealWorld.Infra.Web.Handler.User.Login where
 
-import Control.Monad.Except (MonadError)
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip (
-  KatipContext,
-  Severity (ErrorS),
-  katipAddContext,
-  logTM,
-  sl,
- )
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
@@ -29,7 +25,7 @@ import RealWorld.Domain.Query.Data (User (..))
 import RealWorld.Infra.Web.ErrorResponse (badRequest, notFound')
 import RealWorld.Infra.Web.Schema ()
 import Relude
-import Servant (JSON, Post, ReqBody, throwError, (:>))
+import Servant (JSON, Post, ReqBody, (:>))
 import Servant.Server (ServerError)
 
 type Route =
@@ -63,33 +59,33 @@ toError AuthenticationErrorInvalidPassword = badRequest "Invalid password"
 toError AuthenticationErrorInvalidEmail = badRequest "Invalid email"
 
 handler ::
-  ( KatipContext m
-  , UserRepository m
-  , TokenGateway m
-  , PasswordGateway m
-  , MonadError ServerError m
+  ( KatipE Eff.:> es
+  , UserRepository Eff.:> es
+  , TokenGateway Eff.:> es
+  , PasswordGateway Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   LoginRequest ->
-  m LoginResponse
+  Eff es LoginResponse
 handler (LoginRequest input) = do
-  result <- UserUseCase.authentication $ toCommand input
+  result <- UserUseCase.authentication toCommand
   case result of
-    Right result' -> pure $ LoginResponse $ toUser input result'
+    Right result' -> pure $ LoginResponse $ toUser result'
     Left err -> do
       katipAddContext (sl "error" err) $ do
         $(logTM) ErrorS "authentication error"
       throwError $ toError err
  where
-  toCommand :: LoginParams -> UserUseCase.AuthenticationCommand
-  toCommand request =
+  toCommand :: UserUseCase.AuthenticationCommand
+  toCommand =
     UserUseCase.AuthenticationCommand
-      { email = request.email
-      , password = request.password
+      { email = input.email
+      , password = input.password
       }
-  toUser :: LoginParams -> AuthenticationResult -> User
-  toUser request result =
+  toUser :: AuthenticationResult -> User
+  toUser result =
     User
-      { email = request.email
+      { email = input.email
       , token = result.token
       , username = result.username
       , bio = result.bio

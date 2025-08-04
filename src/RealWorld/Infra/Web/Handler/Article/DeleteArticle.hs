@@ -6,9 +6,11 @@
 
 module RealWorld.Infra.Web.Handler.Article.DeleteArticle where
 
-import Control.Monad.Except (MonadError (..))
-import Katip (
-  KatipContext,
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip (
+  KatipE,
   Severity (ErrorS),
   katipAddContext,
   logTM,
@@ -36,10 +38,14 @@ toError DeleteArticleErrorArticleNotFound = notFound' "Article not found"
 toError DeleteArticleErrorDeletePermissionDenied = badRequest "Delete permission denied"
 
 handler ::
-  (KatipContext m, ArticleRepository m, TxManager m, MonadError ServerError m) =>
+  ( KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
+  ) =>
   ApiAuth ->
   Text ->
-  m NoContent
+  Eff es NoContent
 handler (ApiAuth userId _) slug = do
   result <- ArticleUseCase.deleteArticle toCommand
   case result of

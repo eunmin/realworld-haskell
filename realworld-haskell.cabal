@@ -55,6 +55,14 @@ library
       RealWorld.Infra.Database.PgUserRepository
       RealWorld.Infra.Gateway.BcryptPasswordGateway
       RealWorld.Infra.Gateway.JwtTokenGateway
+      RealWorld.Infra.Interpreter.Adapter.Gateway.PasswordGateway
+      RealWorld.Infra.Interpreter.Adapter.Gateway.TokenGateway
+      RealWorld.Infra.Interpreter.Adapter.Manager.TxManager
+      RealWorld.Infra.Interpreter.Adapter.Repository.ArticleRepository
+      RealWorld.Infra.Interpreter.Adapter.Repository.CommentRepository
+      RealWorld.Infra.Interpreter.Adapter.Repository.FavoriteRepository
+      RealWorld.Infra.Interpreter.Adapter.Repository.QueryService
+      RealWorld.Infra.Interpreter.Adapter.Repository.UserRepository
       RealWorld.Infra.Manager.PgTxManager
       RealWorld.Infra.System
       RealWorld.Infra.Util.Env
@@ -119,6 +127,8 @@ library
     , data-default
     , data-has
     , directory
+    , effectful
+    , effectful-th
     , errors
     , exceptions
     , filepath
@@ -127,8 +137,8 @@ library
     , insert-ordered-containers
     , jose
     , katip
+    , katip-effectful
     , lens
-    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration
@@ -189,6 +199,8 @@ executable realworld-haskell-exe
     , data-default
     , data-has
     , directory
+    , effectful
+    , effectful-th
     , errors
     , exceptions
     , filepath
@@ -197,8 +209,8 @@ executable realworld-haskell-exe
     , insert-ordered-containers
     , jose
     , katip
+    , katip-effectful
     , lens
-    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration
@@ -271,6 +283,8 @@ test-suite realworld-haskell-test
     , data-default
     , data-has
     , directory
+    , effectful
+    , effectful-th
     , errors
     , exceptions
     , filepath
@@ -280,8 +294,8 @@ test-suite realworld-haskell-test
     , insert-ordered-containers
     , jose
     , katip
+    , katip-effectful
     , lens
-    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration

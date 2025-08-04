@@ -1,11 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
 
 module RealWorld.Infra.Component.Database where
 
 import Control.Exception (bracket)
 import Control.Exception.Safe (throwString)
-import Control.Monad.Catch (MonadMask)
-import Data.Has (Has (..))
 import Data.Pool
 import Database.PostgreSQL.Simple (
   ConnectInfo (
@@ -18,7 +17,9 @@ import Database.PostgreSQL.Simple (
   ),
   Connection,
   close,
+  commit,
   connect,
+  rollback,
  )
 import Database.PostgreSQL.Simple.Migration (
   MigrationCommand (MigrationDirectory, MigrationInitialization),
@@ -26,9 +27,16 @@ import Database.PostgreSQL.Simple.Migration (
   defaultOptions,
   runMigrations,
  )
+import Database.PostgreSQL.Simple.Transaction (
+  beginMode,
+  defaultTransactionMode,
+ )
+import Effectful (Eff, IOE, type (:>))
+import Effectful.Exception (onException)
+import Effectful.Reader.Dynamic (Reader, ask, local)
 import RealWorld.Infra.Util.Env (envRead)
 import qualified RealWorld.Infra.Util.Pool as Pool
-import Relude hiding (State, state, withState)
+import Relude hiding (Reader, State, ask, local, state, withState)
 import System.Environment (getEnv)
 
 data Config = Config
@@ -105,11 +113,35 @@ migrate (State pool _) = do
     ]
 
 withConnection ::
-  (Has State r, MonadIO m, MonadReader r m, MonadMask m) =>
-  (Connection -> m a) ->
-  m a
+  (IOE :> es, Reader State :> es) =>
+  (Connection -> Eff es a) ->
+  Eff es a
 withConnection action = do
-  (State pool conn) <- asks getter
+  (State pool conn) <- ask @State
   case conn of
     Nothing -> Pool.withResource pool $ \conn' -> action conn'
     Just conn' -> action conn'
+
+withTransaction ::
+  (IOE :> es) =>
+  Connection ->
+  Eff es a ->
+  Eff es a
+withTransaction conn action = do
+  liftIO $ beginMode mode conn
+  r <- action `onException` liftIO (rollback conn)
+  liftIO $ commit conn
+  pure r
+ where
+  mode = defaultTransactionMode
+
+withTx ::
+  (IOE :> es, Reader State :> es) =>
+  Eff es a ->
+  Eff es a
+withTx action = do
+  State pool _ <- ask @State
+  Pool.withResource pool $ \conn -> do
+    withTransaction conn $ do
+      local (const (State pool (Just conn))) $ do
+        action

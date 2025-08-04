@@ -6,11 +6,19 @@
 
 module RealWorld.Infra.Web.Handler.Article.UpdateArticle where
 
-import Control.Monad.Except (MonadError (..))
 import Data.Aeson (ToJSON)
 import Data.Aeson.Types (FromJSON)
 import Data.Swagger (ToSchema)
-import Katip
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip (
+  KatipE,
+  Severity (ErrorS),
+  katipAddContext,
+  logTM,
+  sl,
+ )
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository)
@@ -64,18 +72,18 @@ toError UpdateArticleErrorAuthorNotFound = notFound' "Author not found"
 toError UpdateArticleErrorEditPermissionDenied = badRequest "Edit permission denied"
 
 handler ::
-  ( KatipContext m
-  , ArticleRepository m
-  , UserRepository m
-  , FavoriteRepository m
-  , TxManager m
-  , QueryService m
-  , MonadError ServerError m
+  ( KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , UserRepository Eff.:> es
+  , FavoriteRepository Eff.:> es
+  , TxManager Eff.:> es
+  , QueryService Eff.:> es
+  , Error ServerError Eff.:> es
   ) =>
   ApiAuth ->
   Text ->
   UpdateArticleRequest ->
-  m UpdateArticleResponse
+  Eff es UpdateArticleResponse
 handler (ApiAuth userId _) slug (UpdateArticleRequest input) = do
   result <- ArticleUseCase.updateArticle toCommand
   case result of

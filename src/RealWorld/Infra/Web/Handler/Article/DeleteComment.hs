@@ -6,14 +6,10 @@
 
 module RealWorld.Infra.Web.Handler.Article.DeleteComment where
 
-import Control.Monad.Except (MonadError (..))
-import Katip (
-  KatipContext,
-  Severity (ErrorS),
-  katipAddContext,
-  logTM,
-  sl,
- )
+import Effectful (Eff)
+import qualified Effectful as Eff
+import Effectful.Error.Dynamic (Error, throwError)
+import Effectful.Katip
 import RealWorld.Domain.Adapter.Manager.TxManager (TxManager)
 import RealWorld.Domain.Adapter.Repository.ArticleRepository (ArticleRepository)
 import RealWorld.Domain.Adapter.Repository.CommentRepository (CommentRepository)
@@ -41,13 +37,18 @@ toError DeleteCommentErrorCommentNotFound = notFound' "Comment not found"
 toError DeleteCommentErrorDeletePermissionDenied = badRequest "Delete permission denied"
 
 handler ::
-  (KatipContext m, ArticleRepository m, CommentRepository m, TxManager m, MonadError ServerError m) =>
+  ( KatipE Eff.:> es
+  , ArticleRepository Eff.:> es
+  , CommentRepository Eff.:> es
+  , TxManager Eff.:> es
+  , Error ServerError Eff.:> es
+  ) =>
   ApiAuth ->
   Text ->
   Text ->
-  m NoContent
+  Eff es NoContent
 handler (ApiAuth userId _) slug commentId = do
-  result <- ArticleUseCase.deleteComment $ toCommand
+  result <- ArticleUseCase.deleteComment toCommand
   case result of
     Right _ -> pure NoContent
     Left err -> do

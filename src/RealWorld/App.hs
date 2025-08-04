@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module RealWorld.App (
@@ -6,13 +7,12 @@ module RealWorld.App (
 where
 
 import Control.Exception (bracket)
-import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
-import Control.Monad.Except (MonadError)
+import Effectful (Eff, IOE, runEff)
+import Effectful.Error.Dynamic (Error, runErrorNoCallStack)
+import Effectful.Katip (KatipE, runKatipContextE)
+import Effectful.Reader.Dynamic (Reader, runReader)
 import Katip (
   ColorStrategy (ColorIfTerminal),
-  Katip,
-  KatipContext,
-  KatipContextT,
   LogEnv,
   Severity (InfoS),
   Verbosity (V2),
@@ -23,7 +23,6 @@ import Katip (
   mkHandleScribeWithFormatter,
   permitItem,
   registerScribe,
-  runKatipContextT,
  )
 import qualified Network.Wai.Handler.Warp as Warp
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway (..))
@@ -38,20 +37,21 @@ import RealWorld.Domain.Adapter.Repository.CommentRepository (
 import RealWorld.Domain.Adapter.Repository.FavoriteRepository (FavoriteRepository (..))
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository (..))
 import RealWorld.Domain.Query.QueryService (QueryService (..))
+import qualified RealWorld.Infra.Component.Database as Database
 import qualified RealWorld.Infra.Component.HttpServer as HttpServerConfig
-import qualified RealWorld.Infra.Database.PgArticleRepository as PgArticleRepository
-import qualified RealWorld.Infra.Database.PgCommentRepository as PgCommentRepository
-import qualified RealWorld.Infra.Database.PgFavoriteRepository as PgFavoriteRepository
-import qualified RealWorld.Infra.Database.PgQueryService as PgQueryService
-import qualified RealWorld.Infra.Database.PgUserRepository as PgUserRepository
-import qualified RealWorld.Infra.Gateway.BcryptPasswordGateway as BcryptPasswordGateway
-import qualified RealWorld.Infra.Gateway.JwtTokenGateway as JwtTokenGateway
-import qualified RealWorld.Infra.Manager.PgTxManager as PgTxManager
-import RealWorld.Infra.System (Config (logEnv))
+import qualified RealWorld.Infra.Interpreter.Adapter.Gateway.PasswordGateway as PasswordGatewayInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Gateway.TokenGateway as TokenGatewayInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Manager.TxManager as TxManagerInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Repository.ArticleRepository as ArticleRepositoryInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Repository.CommentRepository as CommentRepositoryInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Repository.FavoriteRepository as FavoriteRepositoryInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Repository.QueryService as QueryServiceInterpreter
+import qualified RealWorld.Infra.Interpreter.Adapter.Repository.UserRepository as UserRepositoryInterpreter
+import RealWorld.Infra.System (Config (logEnv), JwtSecret)
 import qualified RealWorld.Infra.System as System
 import RealWorld.Infra.Web.Auth (authTokenHandler)
 import RealWorld.Infra.Web.Routes (Root, rootServer)
-import Relude
+import Relude hiding (Reader, runReader)
 import Servant (
   Context (EmptyContext, (:.)),
   Handler (..),
@@ -59,66 +59,22 @@ import Servant (
  )
 import Servant.Server (ServerError)
 
-newtype App a = App {unApp :: ReaderT System.State (KatipContextT (ExceptT ServerError IO)) a}
-  deriving newtype
-    ( Applicative
-    , Functor
-    , Monad
-    , MonadIO
-    , MonadCatch
-    , MonadThrow
-    , MonadReader System.State
-    , MonadError ServerError
-    , MonadMask
-    , MonadFail
-    , KatipContext
-    , Katip
-    -- , MonadUnliftIO
-    )
-
-instance UserRepository App where
-  save = PgUserRepository.save
-  findById = PgUserRepository.findById
-  findByUsername = PgUserRepository.findByUsername
-  findByEmail = PgUserRepository.findByEmail
-  follow = PgUserRepository.follow
-  unfollow = PgUserRepository.unfollow
-  hasFollowing = PgUserRepository.hasFollowing
-
-instance ArticleRepository App where
-  save = PgArticleRepository.save
-  findBySlug = PgArticleRepository.findBySlug
-  delete = PgArticleRepository.delete
-
-instance CommentRepository App where
-  save = PgCommentRepository.save
-  findById = PgCommentRepository.findById
-  delete = PgCommentRepository.delete
-
-instance FavoriteRepository App where
-  findById = PgFavoriteRepository.findById
-  save = PgFavoriteRepository.save
-  delete = PgFavoriteRepository.delete
-
-instance TokenGateway App where
-  generate = JwtTokenGateway.generate
-  verify = JwtTokenGateway.verify
-
-instance PasswordGateway App where
-  hashPassword = BcryptPasswordGateway.hashPassword
-  isValidPassword = BcryptPasswordGateway.isValidPassword
-
-instance TxManager App where
-  withTx = PgTxManager.withTx
-
-instance QueryService App where
-  getCurrentUser = PgQueryService.getCurrentUser
-  getProfile = PgQueryService.getProfile
-  listArticles = PgQueryService.listArticles
-  feedArticles = PgQueryService.feedArticles
-  getArticle = PgQueryService.getArticle
-  getComments = PgQueryService.getComments
-  getTags = PgQueryService.getTags
+type App =
+  Eff
+    '[ QueryService
+     , UserRepository
+     , ArticleRepository
+     , CommentRepository
+     , FavoriteRepository
+     , TokenGateway
+     , PasswordGateway
+     , TxManager
+     , Reader JwtSecret
+     , Reader Database.State
+     , Error ServerError
+     , KatipE
+     , IOE
+     ]
 
 mainWithConfig :: System.Config -> IO ()
 mainWithConfig config = do
@@ -134,8 +90,20 @@ mainWithConfig config = do
   context = authTokenHandler config.jwtSecret :. EmptyContext
 
 runner :: LogEnv -> System.State -> App a -> IO (Either ServerError a)
-runner le state' app = do
-  runExceptT $ runKatipContextT le () "main" (runReaderT (unApp app) state')
+runner le (database, jwtSecret) = do
+  runEff -- IOE
+    . runKatipContextE le () "main" -- KatipE
+    . runErrorNoCallStack -- Error ServerError
+    . runReader database -- Reader Database.State
+    . runReader jwtSecret -- Reader JwtSecret
+    . TxManagerInterpreter.run -- TxManager
+    . PasswordGatewayInterpreter.run -- PasswordGateway
+    . TokenGatewayInterpreter.run -- TokenGateway
+    . FavoriteRepositoryInterpreter.run -- FavoriteRepository
+    . CommentRepositoryInterpreter.run -- CommentRepository
+    . ArticleRepositoryInterpreter.run -- ArticleRepository
+    . UserRepositoryInterpreter.run -- UserRepository
+    . QueryServiceInterpreter.run -- QueryService
 
 handlerRunner :: LogEnv -> System.State -> App a -> Handler a
 handlerRunner le state' = Handler . ExceptT . runner le state'

@@ -1,8 +1,11 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeOperators #-}
 
 module RealWorld.Infra.Web.Handler.Article.ListComment where
 
+import Effectful (Eff)
+import qualified Effectful as Eff
 import RealWorld.Domain.Query.Data (CommentList)
 import qualified RealWorld.Domain.Query.Data as Query
 import RealWorld.Domain.Query.QueryService (QueryService)
@@ -17,7 +20,7 @@ type Route =
     :> "comments"
     :> Get '[JSON] CommentList
 
-handler :: (QueryService m) => ApiAuth -> Text -> m CommentList
+handler :: (QueryService Eff.:> es) => ApiAuth -> Text -> Eff es CommentList
 handler (ApiAuth userId _) slug = do
   let params =
         Query.GetCommentsParams

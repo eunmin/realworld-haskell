@@ -1,18 +1,20 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module RealWorld.Domain.Command.User.UseCase where
 
-import Control.Error (throwE)
-import Control.Error.Util ((!?), (??))
 import Data.Aeson (ToJSON)
 import Data.Time (getCurrentTime)
 import Data.ULID (getULID)
+import Effectful (Eff, IOE, type (:>))
+import Effectful.Error.Dynamic (runErrorNoCallStack, throwError)
 import RealWorld.Domain.Adapter.Gateway.PasswordGateway (PasswordGateway)
 import qualified RealWorld.Domain.Adapter.Gateway.PasswordGateway as PasswordGateway
 import RealWorld.Domain.Adapter.Gateway.TokenGateway (TokenGateway)
 import qualified RealWorld.Domain.Adapter.Gateway.TokenGateway as TokenGateway
-import RealWorld.Domain.Adapter.Manager.TxManager (TxManager (withTx))
+import RealWorld.Domain.Adapter.Manager.TxManager (TxManager, withTx)
 import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import qualified RealWorld.Domain.Adapter.Repository.UserRepository as UserRepo
 import RealWorld.Domain.Command.User.Entity.User ()
@@ -31,8 +33,7 @@ import RealWorld.Domain.Command.User.Value (
   tokeExpiresInSec,
  )
 import RealWorld.Domain.Util.BoundedText (unBoundedText)
-import RealWorld.Domain.Util.Maybe (justToNothing)
-import Relude hiding ((??))
+import Relude
 
 ----------------------------------------------------------------------------------------------------
 -- Registration
@@ -55,26 +56,26 @@ data RegistrationError
   | RegistrationErrorInvalidPassword
   | RegistrationErrorInvalidUsername
   | RegistrationErrorInvalidEmail
-  deriving stock (Eq, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
 registration ::
-  (MonadIO m, UserRepository m, TokenGateway m, PasswordGateway m, TxManager m) =>
+  (IOE :> es, UserRepository :> es, TokenGateway :> es, PasswordGateway :> es, TxManager :> es) =>
   RegistrationCommand ->
-  m (Either RegistrationError RegistrationResult)
-registration command = runExceptT $ do
+  Eff es (Either RegistrationError RegistrationResult)
+registration command = runErrorNoCallStack $ do
   userId <- liftIO getULID
   createdAt <- liftIO getCurrentTime
-  username <- mkUsername command.username ?? RegistrationErrorInvalidUsername
-  email <- mkEmail command.email ?? RegistrationErrorInvalidEmail
-  password <- mkPassword command.password ?? RegistrationErrorInvalidPassword
-  hashedPassword <- PasswordGateway.hashPassword password !? RegistrationErrorInvalidPassword
+  username <- mkUsername command.username `whenNothing` throwError RegistrationErrorInvalidUsername
+  email <- mkEmail command.email `whenNothing` throwError RegistrationErrorInvalidEmail
+  password <- mkPassword command.password `whenNothing` throwError RegistrationErrorInvalidPassword
+  hashedPassword <- PasswordGateway.hashPassword password `whenNothingM` throwError RegistrationErrorInvalidPassword
   _ <- withTx $ do
-    (justToNothing <$> UserRepo.findByUsername username) !? RegistrationErrorUsernameAlreadyExists
-    (justToNothing <$> UserRepo.findByEmail email) !? RegistrationErrorEmailAlreadyExists
+    UserRepo.findByUsername username `whenJustM` const (throwError RegistrationErrorUsernameAlreadyExists)
+    UserRepo.findByEmail email `whenJustM` const (throwError RegistrationErrorEmailAlreadyExists)
     let user = User.mkUser userId username email hashedPassword createdAt
-    lift $ UserRepo.save user
-  token <- lift $ TokenGateway.generate userId tokeExpiresInSec
+    UserRepo.save user
+  token <- TokenGateway.generate userId tokeExpiresInSec
   pure $ RegistrationResult $ unToken token
 
 ----------------------------------------------------------------------------------------------------
@@ -98,20 +99,20 @@ data AuthenticationError
   = AuthenticationErrorUserNotFound
   | AuthenticationErrorInvalidPassword
   | AuthenticationErrorInvalidEmail
-  deriving stock (Eq, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
 authentication ::
-  (MonadIO m, UserRepository m, PasswordGateway m, TokenGateway m) =>
+  (UserRepository :> es, PasswordGateway :> es, TokenGateway :> es) =>
   AuthenticationCommand ->
-  m (Either AuthenticationError AuthenticationResult)
-authentication command = runExceptT $ do
-  email <- mkEmail command.email ?? AuthenticationErrorInvalidEmail
-  password <- mkPassword command.password ?? AuthenticationErrorInvalidPassword
-  user <- UserRepo.findByEmail email !? AuthenticationErrorUserNotFound
-  whenM (lift $ PasswordGateway.isValidPassword user.hashedPassword password) $
-    throwE AuthenticationErrorInvalidPassword
-  token <- lift $ TokenGateway.generate user.userId tokeExpiresInSec
+  Eff es (Either AuthenticationError AuthenticationResult)
+authentication command = runErrorNoCallStack $ do
+  email <- mkEmail command.email `whenNothing` throwError AuthenticationErrorInvalidEmail
+  password <- mkPassword command.password `whenNothing` throwError AuthenticationErrorInvalidPassword
+  user <- UserRepo.findByEmail email `whenNothingM` throwError AuthenticationErrorUserNotFound
+  whenM (PasswordGateway.isValidPassword user.hashedPassword password) $
+    throwError AuthenticationErrorInvalidPassword
+  token <- TokenGateway.generate user.userId tokeExpiresInSec
   pure $
     AuthenticationResult
       { token = token.unToken
@@ -153,14 +154,14 @@ data UpdateUserError
   deriving anyclass (ToJSON)
 
 updateUser ::
-  (MonadIO m, UserRepository m, PasswordGateway m, TxManager m) =>
+  (UserRepository :> es, PasswordGateway :> es, TxManager :> es) =>
   UpdateUserCommand ->
-  m (Either UpdateUserError UpdateUserResult)
-updateUser command = runExceptT $ do
-  username <- traverse mkUsername command.username ?? UpdateUserErrorInvalidUsername
-  email <- traverse mkEmail command.email ?? UpdateUserErrorInvalidEmail
-  password <- traverse mkPassword command.password ?? UpdateUserErrorInvalidPassword
-  userId <- readMaybe (toString command.userId) ?? UpdateUserErrorInvalidUserId
+  Eff es (Either UpdateUserError UpdateUserResult)
+updateUser command = runErrorNoCallStack $ do
+  username <- traverse mkUsername command.username `whenNothing` throwError UpdateUserErrorInvalidUsername
+  email <- traverse mkEmail command.email `whenNothing` throwError UpdateUserErrorInvalidEmail
+  password <- traverse mkPassword command.password `whenNothing` throwError UpdateUserErrorInvalidPassword
+  userId <- readMaybe (toString command.userId) `whenNothing` throwError UpdateUserErrorInvalidUserId
   let bio = mkBio <$> command.bio
   let image = mkImage <$> command.image
   hashedPassword <- case password of
@@ -168,15 +169,14 @@ updateUser command = runExceptT $ do
     Just password' ->
       Just
         <$> PasswordGateway.hashPassword password'
-          !? UpdateUserErrorInvalidPassword
+          `whenNothingM` throwError UpdateUserErrorInvalidPassword
   user <- withTx $ do
-    user <- UserRepo.findById userId !? UpdateUserErrorUserNotFound
+    user <- UserRepo.findById userId `whenNothingM` throwError UpdateUserErrorUserNotFound
     whenJust username $ \username' ->
       when (username' /= user.username) $ do
-        (justToNothing <$> UserRepo.findByUsername username')
-          !? UpdateUserErrorUsernameAlreadyExists
+        UserRepo.findByUsername username' `whenJustM` const (throwError UpdateUserErrorUsernameAlreadyExists)
     let user' = User.update user username email hashedPassword bio image
-    _ <- lift $ UserRepo.save user'
+    _ <- UserRepo.save user'
     pure user'
   pure $
     UpdateUserResult
@@ -210,22 +210,22 @@ data FollowUserError
   | FollowUserErrorCantFollowSelf
   | FollowUserErrorAlreadyFollowing
   | FollowUserErrorInvalidUsername
-  deriving stock (Eq, Generic)
+  deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON)
 
 followUser ::
-  (MonadIO m, UserRepository m, TxManager m) =>
+  (UserRepository :> es, TxManager :> es) =>
   FollowUserCommand ->
-  m (Either FollowUserError FollowUserResult)
-followUser command = runExceptT $ do
-  followerId <- readMaybe (toString command.userId) ?? FollowUserErrorInvalidUserId
-  username <- mkUsername command.username ?? FollowUserErrorInvalidUsername
+  Eff es (Either FollowUserError FollowUserResult)
+followUser command = runErrorNoCallStack $ do
+  followerId <- readMaybe (toString command.userId) `whenNothing` throwError FollowUserErrorInvalidUserId
+  username <- mkUsername command.username `whenNothing` throwError FollowUserErrorInvalidUsername
   user <- withTx $ do
-    followee <- UserRepo.findByUsername username !? FollowUserErrorUserNotFound
-    isAlreadyFollow <- lift $ UserRepo.hasFollowing followerId followee.userId
-    when isAlreadyFollow $ throwE FollowUserErrorAlreadyFollowing
-    when (followerId == followee.userId) $ throwE FollowUserErrorCantFollowSelf
-    _ <- lift $ UserRepo.follow followerId followee.userId
+    followee <- UserRepo.findByUsername username `whenNothingM` throwError FollowUserErrorUserNotFound
+    isAlreadyFollow <- UserRepo.hasFollowing followerId followee.userId
+    when isAlreadyFollow $ throwError FollowUserErrorAlreadyFollowing
+    when (followerId == followee.userId) $ throwError FollowUserErrorCantFollowSelf
+    _ <- UserRepo.follow followerId followee.userId
     pure followee
   pure $
     FollowUserResult
@@ -260,15 +260,15 @@ data UnfollowUserError
   deriving anyclass (ToJSON)
 
 unfollowUser ::
-  (MonadIO m, UserRepository m, TxManager m) =>
+  (UserRepository :> es, TxManager :> es) =>
   UnfollowUserCommand ->
-  m (Either UnfollowUserError UnfollowUserResult)
-unfollowUser command = runExceptT $ do
-  followerId <- readMaybe (toString command.userId) ?? UnfollowUserErrorInvalidUserId
-  username <- mkUsername command.username ?? UnfollowUserErrorInvalidUsername
+  Eff es (Either UnfollowUserError UnfollowUserResult)
+unfollowUser command = runErrorNoCallStack $ do
+  followerId <- readMaybe (toString command.userId) `whenNothing` throwError UnfollowUserErrorInvalidUserId
+  username <- mkUsername command.username `whenNothing` throwError UnfollowUserErrorInvalidUsername
   user <- withTx $ do
-    followee <- UserRepo.findByUsername username !? UnfollowUserErrorUserNotFound
-    _ <- lift $ UserRepo.unfollow followerId followee.userId
+    followee <- UserRepo.findByUsername username `whenNothingM` throwError UnfollowUserErrorUserNotFound
+    _ <- UserRepo.unfollow followerId followee.userId
     pure followee
   pure $
     UnfollowUserResult
