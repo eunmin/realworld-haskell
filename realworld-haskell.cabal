@@ -139,6 +139,7 @@ library
     , katip
     , katip-effectful
     , lens
+    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration
@@ -211,6 +212,7 @@ executable realworld-haskell-exe
     , katip
     , katip-effectful
     , lens
+    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration
@@ -296,6 +298,7 @@ test-suite realworld-haskell-test
     , katip
     , katip-effectful
     , lens
+    , mtl
     , optics-core
     , pcre-heavy
     , postgresql-migration
