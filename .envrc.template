@@ -1,0 +1,10 @@
+export PORT=3000
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=realworld
+export DB_PASSWORD=
+export DB_DATABASE=realworld_hs
+export JWT_SECRET=994c4a30-6f61-11f0-a468-7ba1ac2cff7a
+export DB_POOL_MAX_SIZE=10
+export DB_POOL_IDLE_TIMEOUT_SEC=3.0
+export ENV_NAME=dev

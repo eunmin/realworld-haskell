@@ -13,6 +13,18 @@
 - [stack](https://docs.haskellstack.org/en/stable)
 - [direnv](https://direnv.net/docs/installation.html)
 
+## Getting Started
+
+```sh
+$ git clone https://github.com/eunmin/realworld-haskell
+$ cp .envrc.template .envrc
+$ direnv allow .
+$ stack run
+```
+
+Open your browser and enter [http://localhost:3000/swagger-ui](http://localhost:3000/swagger-ui) in
+the address bar.
+
 ## nix
 
 If you're interested in the Nix project, please refer to the [nix tag](https://github.com/eunmin/realworld-haskell/tree/nix).
