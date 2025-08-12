@@ -24,7 +24,6 @@ import qualified RealWorld.Domain.Command.User.UseCase as UserUseCase
 import RealWorld.Domain.Query.Data (User (..))
 import RealWorld.Infra.Converter.Aeson ()
 import RealWorld.Infra.Web.ErrorResponse (badRequest)
-import RealWorld.Infra.Web.Handler.Types ()
 import RealWorld.Infra.Web.Schema ()
 import Relude
 import Servant (JSON, Post, ReqBody, ServerError, (:>))

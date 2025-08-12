@@ -44,12 +44,12 @@ import RealWorld.Domain.Adapter.Repository.UserRepository (UserRepository)
 import RealWorld.Domain.Query.QueryService (QueryService)
 import RealWorld.Infra.Web.Auth (ApiAuth, AuthContext)
 import qualified RealWorld.Infra.Web.Handler.Article.CreateArticle as Article.CreateArticle
-import qualified RealWorld.Infra.Web.Handler.Article.CreateArticle as Article.GetArticle
 import qualified RealWorld.Infra.Web.Handler.Article.CreateComment as Article.CreateComment
 import qualified RealWorld.Infra.Web.Handler.Article.DeleteArticle as Article.DeleteArticle
 import qualified RealWorld.Infra.Web.Handler.Article.DeleteComment as Article.DeleteComment
 import qualified RealWorld.Infra.Web.Handler.Article.Favorite as Article.Favorite
 import qualified RealWorld.Infra.Web.Handler.Article.Feed as Article.Feed
+import qualified RealWorld.Infra.Web.Handler.Article.GetArticle as Article.GetArticle
 import qualified RealWorld.Infra.Web.Handler.Article.ListArticle as Article.ListArticle
 import qualified RealWorld.Infra.Web.Handler.Article.ListComment as Article.ListComment
 import qualified RealWorld.Infra.Web.Handler.Article.ListTag as Article.ListTag
@@ -131,7 +131,15 @@ userOps :: Traversal' Swagger Operation
 userOps = subOperations (Proxy :: Proxy ("api" :> UserAPI)) (Proxy :: Proxy AllAPI)
 
 articleOps :: Traversal' Swagger Operation
-articleOps = subOperations (Proxy :: Proxy ("api" :> ArticleAPI)) (Proxy :: Proxy AllAPI)
+articleOps =
+  subOperations
+    ( Proxy ::
+        Proxy
+          ( "api" :> ArticleAPI
+              :<|> "api" :> Article.GetArticle.Route
+          )
+    )
+    (Proxy :: Proxy AllAPI)
 
 profileOps :: Traversal' Swagger Operation
 profileOps = subOperations (Proxy :: Proxy ("api" :> ProfileAPI)) (Proxy :: Proxy AllAPI)
@@ -165,12 +173,14 @@ type UnprotectedRoute =
   EmptyAPI
     :<|> "api" :> User.Login.Route
     :<|> "api" :> User.Registration.Route
+    :<|> "api" :> Article.GetArticle.Route
 
 unprotectedServerT :: (Effs es) => ServerT UnprotectedRoute (Eff es)
 unprotectedServerT =
   emptyServer
     :<|> User.Login.handler
     :<|> User.Registration.handler
+    :<|> Article.GetArticle.handler
 
 type ProtectedRoute =
   EmptyAPI
@@ -211,7 +221,6 @@ type ArticleAPI =
   EmptyAPI
     :<|> Article.ListArticle.Route
     :<|> Article.Feed.Route
-    :<|> Article.GetArticle.Route
     :<|> Article.CreateArticle.Route
     :<|> Article.UpdateArticle.Route
     :<|> Article.DeleteArticle.Route
@@ -227,7 +236,6 @@ articleServerT auth =
   emptyServer
     :<|> Article.ListArticle.handler auth
     :<|> Article.Feed.handler auth
-    :<|> Article.GetArticle.handler auth
     :<|> Article.CreateArticle.handler auth
     :<|> Article.UpdateArticle.handler auth
     :<|> Article.DeleteArticle.handler auth

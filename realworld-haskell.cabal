@@ -85,7 +85,6 @@ library
       RealWorld.Infra.Web.Handler.Profile.Follow
       RealWorld.Infra.Web.Handler.Profile.GetProfile
       RealWorld.Infra.Web.Handler.Profile.Unfollow
-      RealWorld.Infra.Web.Handler.Types
       RealWorld.Infra.Web.Handler.User.GetCurrentUser
       RealWorld.Infra.Web.Handler.User.Login
       RealWorld.Infra.Web.Handler.User.Registration
